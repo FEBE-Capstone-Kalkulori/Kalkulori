@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kalkulori - Aplikasi Penghitung Kalori</title>
+    <link rel="stylesheet" href=".\styles\style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header dengan Logo dan Navigation -->
+    <header>
+        <div class="header-top">
+            <div class="logo">
+                    <img src="./public/image/logo-text.png" alt="Kalkulori Logo" width="400" height="400">
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="history.html">History</a>
+                <a href="profile.html">Profile</a>
+            </nav>
+        </div>
+        <!-- Slider Gambar -->
+        <div class="slider-container">
+            <div class="slider">
+                <div class="slide slide-2">
+                    <h2>Welcome to Kalkulori!</h2>
+                    <p>Ready to live a healthy life?</p>
+                </div>
+                <div class="slide slide-1">
+                    <h2>Count your calories easily everyday</h2>
+                    <p>Maintain a healthy eating habit with Kalkulori</p>
+                </div>
+                <div class="slide slide-3">
+                    <h2>Track your progress</h2>
+                    <p>view charts and statistics of your eating habits over a selected period of time</p>
+                </div>
+            </div>
+            <div class="slider-dots">
+                <span class="dot active" onclick="currentSlide(0)"></span>
+                <span class="dot" onclick="currentSlide(1)"></span>
+                <span class="dot" onclick="currentSlide(2)"></span>
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Area (Placeholder) -->
+    <main>
+        <div class="main-content">
+            <h1>Selamat Datang di kalkulori</h1>
+            <p>Isi konten utama halaman Anda akan ditampilkan di sini</p>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>About Kalkulori</h3>
+                <p>Kalkulori is a comprehensive calorie tracking application designed to help you effortlessly monitor and manage your daily food intake. By offering detailed information on the calorie content of various foods and personalized recommendations, Kalkulori empowers you to make informed dietary choices and maintain a healthier, more balanced lifestyle.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="index.html"><i class="fas fa-home"></i> Home</a>
+                <a href="history.html"><i class="fas fa-history"></i> History</a>
+                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Our Team</h3>
+                <div class="team-list">
+                    <div class="team-member">
+                        <span class="name">Muhammad Akmal Athallah</span>
+                        <span class="id">MC006D5Y1912</span>
+                    </div>
+                    <div class="team-member">
+                        <span class="name">Andri Martin</span>
+                        <span class="id">MC331D5Y2088</span>
+                    </div>
+                    <div class="team-member">
+                        <span class="name">Muhammad Adika Zahran</span>
+                        <span class="id">MC624D5Y2108</span>
+                    </div>
+                    <div class="team-member">
+                        <span class="name">Audi Aulia</span>
+                        <span class="id">FC331D5X2378</span>
+                    </div>
+                    <div class="team-member">
+                        <span class="name">Vania Rahma Dewi</span>
+                        <span class="id">FC331D5X2382</span>
+                    </div>
+                    <div class="team-member">
+                        <span class="name">Kharisma Maulida Saara</span>
+                        <span class="id">FC331D5X2383</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <p>&copy; 2025 Kalkulori. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src=".\index.js"></script>
+</body>
+</html>
