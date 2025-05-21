@@ -1,0 +1,35 @@
+{
+  "name": "kalkulori",
+  "version": "1.0.0",
+  "description": "Aplikasi Penghitung Kalori",
+  "main": "index.js",
+  "scripts": {
+    "start-dev": "webpack serve --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js",
+    "serve": "http-server dist",
+    "lint": "eslint ./src"
+  },
+  "dependencies": {
+    "regenerator-runtime": "^0.14.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "babel-loader": "^9.1.2",
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.7.3",
+    "css-minimizer-webpack-plugin": "^5.0.0",
+    "eslint": "^8.38.0",
+    "html-webpack-plugin": "^5.5.1",
+    "http-server": "^14.1.1",
+    "mini-css-extract-plugin": "^2.7.5",
+    "style-loader": "^3.3.2",
+    "terser-webpack-plugin": "^5.3.7",
+    "webpack": "^5.80.0",
+    "webpack-cli": "^5.0.2",
+    "webpack-dev-server": "^4.13.3",
+    "webpack-merge": "^5.8.0",
+    "workbox-webpack-plugin": "^6.5.4"
+  }
+}

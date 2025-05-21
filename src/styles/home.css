@@ -1,0 +1,316 @@
+/* Home page layout and styles - Final */
+
+/* Main page wrappers */
+.page-outer-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+}
+
+.page-inner-wrapper {
+  background-color: #FEFFD8;
+  padding: 2rem;
+  border-radius: 15px;
+}
+
+/* Content layout */
+.content-layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.left-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.right-column {
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Content boxes */
+.content-box {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* Shared heading styles */
+.content-box h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Daily Calories Box */
+.calorie-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.calorie-display {
+  display: flex;
+  flex-direction: column;
+}
+
+.calorie-number {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #333;
+  line-height: 1;
+}
+
+.calorie-remaining {
+  color: #777;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+.add-meal-btn {
+  background-color: #6B4423;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.add-meal-btn:hover {
+  background-color: #9BCF53;
+  transform: translateY(-2px);
+}
+
+.add-meal-btn:active {
+  transform: translateY(0);
+}
+
+/* Meal Plan Box */
+.meal-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.meal-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.meal-calorie-info {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.calorie-limit-text {
+  color: #9BCF53;
+}
+
+.meal-plan-items {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.meal-item {
+  flex: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.meal-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.meal-item-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.meal-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.meal-item-label {
+  background-color: #f9f9f9;
+  padding: 0.7rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.meal-item-name {
+  padding: 1rem 0.8rem;
+  text-align: center;
+  font-weight: 600;
+  color: #4F3422;
+  font-size: 1.05rem;
+}
+
+/* Suggestion Box */
+.suggestion-question {
+  color: #333;
+  font-size: 1.05rem;
+  margin-bottom: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.suggestion-option {
+  width: 100%;
+  background-color: #F9F7E8;
+  color: #4F3422;
+  border: 1px solid #9BCF53;
+  border-radius: 30px;
+  padding: 0.8rem;
+  margin-bottom: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.suggestion-option:hover {
+  background-color: #F5EFD5;
+}
+
+.suggestion-done {
+  width: 100%;
+  background-color: #BABABA;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.suggestion-done:hover {
+  background-color: #9BCF53;
+}
+
+/* Suggestions Grid */
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.suggestion-meal-item {
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.suggestion-meal-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-meal-image {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+}
+
+.suggestion-meal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.suggestion-meal-details {
+  padding: 1rem;
+  text-align: center;
+}
+
+.suggestion-meal-name {
+  font-weight: 600;
+  color: #4F3422;
+  margin-bottom: 0.3rem;
+  font-size: 1.05rem;
+}
+
+.suggestion-meal-calories {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1100px) {
+  .content-layout {
+    flex-direction: column;
+  }
+  
+  .right-column {
+    width: 100%;
+  }
+  
+  .suggestions-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-outer-wrapper,
+  .page-inner-wrapper {
+    padding: 1.5rem;
+  }
+  
+  .suggestions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .meal-plan-items {
+    flex-direction: column;
+  }
+  
+  .calorie-number {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .content-box {
+    padding: 1.25rem;
+  }
+  
+  .page-outer-wrapper,
+  .page-inner-wrapper {
+    padding: 1rem;
+  }
+}

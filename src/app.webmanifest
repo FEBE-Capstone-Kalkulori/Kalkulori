@@ -1,0 +1,16 @@
+{
+  "name": "Kalkulori - Aplikasi Penghitung Kalori",
+  "short_name": "Kalkulori",
+  "description": "Aplikasi untuk menghitung dan melacak kalori makanan sehari-hari",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#FEFFD8",
+  "theme_color": "#9BCF53",
+  "icons": [
+    {
+      "src": "/public/image/logo-text.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
