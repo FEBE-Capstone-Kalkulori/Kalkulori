@@ -17,6 +17,16 @@ const profile = {
     const container = document.getElementById('profile-container');
     const profilePresenter = new ProfilePresenter({ container });
     await profilePresenter.init();
+    
+    // Simpan reference ke presenter untuk cleanup
+    this.presenter = profilePresenter;
+  },
+
+  // Method untuk cleanup ketika leave profile page
+  onLeave() {
+    if (this.presenter && this.presenter.onLeave) {
+      this.presenter.onLeave();
+    }
   }
 };
 

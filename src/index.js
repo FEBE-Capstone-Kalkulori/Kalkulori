@@ -4,6 +4,7 @@ import './styles/style.css';
 import './styles/home.css';
 import './styles/profile.css';
 import './styles/history.css';
+import './styles/add-meal.css';
 import App from './scripts/app';
 import SliderComponent from './scripts/pages/slider';
 

@@ -60,8 +60,6 @@ class HomePresenter {
 
   async init() {
     try {
-      // In a real app, you'd fetch user data, meal plans, etc.
-      // await this._fetchUserData();
       this._renderView();
     } catch (error) {
       console.error('Failed to initialize Home page:', error);
@@ -69,8 +67,6 @@ class HomePresenter {
   }
 
   async _fetchUserData() {
-    // This would be implemented to fetch real data from your API
-    // For now, we're using mock data in the constructor
   }
 
   _renderView() {
@@ -79,29 +75,18 @@ class HomePresenter {
   }
 
   _handleAddMeal() {
-    // In a real app, this would navigate to the add meal page or open a modal
-    console.log('Add Meal button clicked');
-    // For demonstration, we'll just add 200 calories
-    this.data.currentCalories += 200;
-    if (this.data.currentCalories > this.data.calorieLimit) {
-      this.data.currentCalories = this.data.calorieLimit;
-    }
-    this._renderView();
+    window.location.hash = '#/add-meal';
   }
 
   _handleSuggestionOption(option) {
     console.log(`Suggestion option selected: ${option}`);
-    // In a real app, this would filter suggestions based on the selected option
     this.data.selectedOptions.push(option);
-    // Re-render the view with updated data
     this._renderView();
   }
 
   _handleSuggestionDone() {
     console.log('Suggestion done button clicked');
-    // In a real app, this would finalize the suggestion process
     this.data.selectedOptions = [];
-    // Re-render the view with updated data
     this._renderView();
   }
 }

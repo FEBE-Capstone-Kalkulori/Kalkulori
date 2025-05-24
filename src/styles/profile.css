@@ -1,3 +1,87 @@
+
+/* Header khusus untuk Profile Page */
+.profile-header-container {
+  background-color: #fff67e;
+  padding: 15px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 0;
+}
+
+.profile-navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.profile-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #5a4a3a;
+  font-family: 'Cal Sans', sans-serif;
+}
+
+.profile-logo .green-text {
+  color: #8fbc5f;
+}
+
+.profile-nav-menu {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-nav-menu li {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.profile-nav-menu a {
+  text-decoration: none;
+  color: #5a4a3a;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: 'Roboto Slab', serif;
+}
+
+.profile-nav-menu a:hover {
+  color: #8fbc5f;
+  background-color: rgba(143, 188, 95, 0.1);
+}
+
+.profile-nav-menu a.active {
+  color: #8fbc5f;
+  font-weight: 600;
+  background-color: rgba(143, 188, 95, 0.2);
+}
+
+/* Responsive styling untuk profile header */
+@media (max-width: 768px) {
+  .profile-navbar {
+    padding: 0 15px;
+  }
+  
+  .profile-logo {
+    font-size: 1.8rem;
+  }
+  
+  .profile-nav-menu {
+    gap: 20px;
+  }
+  
+  .profile-nav-menu li {
+    font-size: 1rem;
+  }
+}
+
 /* Profile page styles */
 .page-outer-wrapper {
   max-width: 1400px;
@@ -47,13 +131,33 @@
   background-color: #fff;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 4px solid #9BCF53;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
 }
 
 .profile-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+/* Avatar Edit Mode Overlay */
+.profile-avatar.edit-mode::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(155, 207, 83, 0.1);
+  border-radius: 50%;
 }
 
 .avatar-edit-button {
@@ -302,6 +406,254 @@ select.form-control {
   background-color: #FFE26A;
 }
 
+/* Camera Modal Styles */
+.camera-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.camera-modal-content {
+  background-color: white;
+  border-radius: 15px;
+  max-width: 90%;
+  max-height: 90%;
+  width: 600px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.camera-modal-header {
+  background-color: #9BCF53;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.camera-modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.camera-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.camera-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.camera-modal-body {
+  padding: 20px;
+  text-align: center;
+  background-color: #f8f9fa;
+}
+
+#camera-video, #camera-preview-canvas {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.camera-modal-footer {
+  padding: 20px;
+  background-color: white;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  border-top: 1px solid #e9ecef;
+}
+
+.camera-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.camera-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.camera-btn.primary {
+  background-color: #9BCF53;
+  color: white;
+}
+
+.camera-btn.primary:hover {
+  background-color: #8ab847;
+}
+
+.camera-btn.secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.camera-btn.secondary:hover {
+  background-color: #5a6268;
+}
+
+.camera-btn:not(.primary):not(.secondary) {
+  background-color: #FFEA85;
+  color: #6B4423;
+}
+
+.camera-btn:not(.primary):not(.secondary):hover {
+  background-color: #FFE26A;
+}
+
+/* Avatar Options Enhancement */
+.avatar-option {
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-option:hover {
+  background-color: #f5f5f5;
+}
+
+.avatar-option i {
+  width: 16px;
+  color: #6B4423;
+}
+
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9BCF53;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+/* Responsive Design for Camera Modal */
+@media (max-width: 768px) {
+  .camera-modal-content {
+    width: 95%;
+    max-height: 95%;
+  }
+  
+  .camera-modal-header {
+    padding: 15px;
+  }
+  
+  .camera-modal-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .camera-modal-body {
+    padding: 15px;
+  }
+  
+  .camera-modal-footer {
+    padding: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .camera-btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .camera-modal-content {
+    width: 98%;
+    margin: 10px;
+  }
+  
+  .camera-modal-footer {
+    flex-direction: column;
+  }
+  
+  .camera-btn {
+    width: 100%;
+  }
+}
+
+/* Success Message Animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.success-message {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background-color: #9BCF53;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: slideInRight 0.5s ease-out;
+  z-index: 1001;
+}
+
+/* Error Message */
+.error-message {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background-color: #dc3545;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: slideInRight 0.5s ease-out;
+  z-index: 1001;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .profile-main {
@@ -331,5 +683,23 @@ select.form-control {
   
   .gender-options {
     flex-direction: column;
+  }
+  .profile-navbar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .profile-logo {
+    font-size: 1.6rem;
+  }
+  
+  .profile-nav-menu {
+    gap: 15px;
+  }
+  
+  .profile-nav-menu a {
+    padding: 6px 12px;
+    font-size: 0.9rem;
   }
 }

@@ -1,9 +1,73 @@
+/* Header khusus untuk History Page */
+.history-header-container {
+  background-color: #fff67e;
+  padding: 15px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 0;
+}
+
+.history-navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.history-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #5a4a3a;
+  font-family: 'Cal Sans', sans-serif;
+}
+
+.history-logo .green-text {
+  color: #8fbc5f;
+}
+
+.history-nav-menu {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-nav-menu li {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.history-nav-menu a {
+  text-decoration: none;
+  color: #5a4a3a;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: 'Roboto Slab', serif;
+}
+
+.history-nav-menu a:hover {
+  color: #8fbc5f;
+  background-color: rgba(143, 188, 95, 0.1);
+}
+
+.history-nav-menu a.active {
+  color: #8fbc5f;
+  font-weight: 600;
+  background-color: rgba(143, 188, 95, 0.2);
+}
+
 .history-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
-  background-color: #f8f5e8;
-  min-height: 100vh;
+  background-color: #fff67e79;
+  min-height: 60vh;
 }
 
 .history-header {

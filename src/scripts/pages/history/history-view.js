@@ -8,16 +8,16 @@ class HistoryView {
             <select id="month-dropdown" class="month-dropdown">
               <option value="january">January</option>
               <option value="february">February</option>
-              <option value="february">March</option>
-              <option value="february">April</option>
-              <option value="february">May</option>
-              <option value="february">June</option>
-              <option value="february">July</option>
-              <option value="february">August</option>
-              <option value="february">September</option>
-              <option value="february">October</option>
-              <option value="february">November</option>
-              <option value="february">Desember</option>
+              <option value="march">March</option>
+              <option value="april">April</option>
+              <option value="may">May</option>
+              <option value="june">June</option>
+              <option value="july">July</option>
+              <option value="august">August</option>
+              <option value="september">September</option>
+              <option value="october">October</option>
+              <option value="november">November</option>
+              <option value="december">December</option>
             </select>
           </div>
         </div>
@@ -32,17 +32,18 @@ class HistoryView {
               <span>500</span>
               <span>0</span>
             </div>
-            <!-- <div class="chart-bars" id="chart-bars"> -->
+            <div class="chart-bars" id="chart-bars">
+              <!-- Chart bars akan dirender di sini -->
             </div>
-            <div class="chart-x-axis">
-              <span>8/5</span>
-              <span>9/5</span>
-              <span>10/5</span>
-              <span>11/5</span>
-              <span>12/5</span>
-              <span>13/5</span>
-              <span>14/5</span>
-            </div>
+          </div>
+          <div class="chart-x-axis">
+            <span>8/5</span>
+            <span>9/5</span>
+            <span>10/5</span>
+            <span>11/5</span>
+            <span>12/5</span>
+            <span>13/5</span>
+            <span>14/5</span>
           </div>
         </div>
         
@@ -54,6 +55,55 @@ class HistoryView {
         </div>
       </div>
     `;
+  }
+
+  // Method untuk membuat header khusus history
+  createHistoryHeader() {
+    return `
+      <div class="history-header-container">
+        <div class="history-navbar">
+          <div class="history-logo">
+            <span class="green-text">kalku</span>lori
+          </div>
+          <nav>
+            <ul class="history-nav-menu">
+              <li><a href="#/">Home</a></li>
+              <li><a href="#/history" class="active">History</a></li>
+              <li><a href="#/profile">Profile</a></li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    `;
+  }
+
+  // Method untuk hide/show header
+  toggleHeaders(showHistoryHeader = true) {
+    const homeHeader = document.querySelector('header');
+    const existingHistoryHeader = document.querySelector('.history-header-container');
+    
+    if (showHistoryHeader) {
+      // Sembunyikan header home
+      if (homeHeader) {
+        homeHeader.style.display = 'none';
+      }
+      
+      // Tampilkan header history jika belum ada
+      if (!existingHistoryHeader) {
+        const historyHeaderHTML = this.createHistoryHeader();
+        document.body.insertAdjacentHTML('afterbegin', historyHeaderHTML);
+      }
+    } else {
+      // Tampilkan header home
+      if (homeHeader) {
+        homeHeader.style.display = 'block';
+      }
+      
+      // Hapus header history
+      if (existingHistoryHeader) {
+        existingHistoryHeader.remove();
+      }
+    }
   }
 }
 
