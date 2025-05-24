@@ -3,11 +3,22 @@ import routes from './routes/routes';
 class App {
   constructor({ content }) {
     this.content = content;
-    this.initialPage = window.location.pathname;
   }
 
   async renderPage() {
-    const url = window.location.hash.slice(1) || this.initialPage;
+    let url = window.location.hash.slice(1);
+    
+    if (!url) {
+      const pathname = window.location.pathname;
+      if (pathname.includes('/profile')) {
+        url = '/profile';
+        window.location.hash = '#/profile';
+      } else {
+        url = '/';
+        window.location.hash = '#/';
+      }
+    }
+    
     const page = routes[url] || routes['/'];
     this.content.innerHTML = await page.render();
     await page.afterRender();
@@ -16,14 +27,10 @@ class App {
   }
 
   async init() {
-    const { content } = this;
-
-    // Initialize the app
     window.addEventListener('hashchange', () => {
       this.renderPage();
     });
 
-    // Load the initial page
     await this.renderPage();
   }
 }

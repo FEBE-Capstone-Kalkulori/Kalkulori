@@ -1,13 +1,13 @@
 import HomePage from '../pages/home';
+import ProfilePage from '../pages/profile';
+import History from '../pages/history';
 
 const routes = {
   '/': HomePage,
   '/index.html': HomePage,
   '/home': HomePage,
-  // Komentar route-route lain untuk menghindari error
-  // '/history': HistoryPage,
-  // '/profile': ProfilePage,
-  // '/add-meal': AddMealPage,
+  '/profile': ProfilePage,
+  '/history': History,
 };
 
 export default routes;

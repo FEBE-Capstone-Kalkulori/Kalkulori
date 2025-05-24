@@ -16,12 +16,12 @@
     <header>
         <div class="header-top">
             <div class="logo">
-                    <img src="./public/image/logo-text.png" alt="Kalkulori Logo" width="400" height="400">
+                <img src="./public/image/logo-text.png" alt="Kalkulori Logo" width="400" height="400">
             </div>
             <nav>
-                <a href="index.html">Home</a>
-                <a href="history.html">History</a>
-                <a href="profile.html">Profile</a>
+                <a href="#/">Home</a>
+                <a href="#/history">History</a>
+                <a href="#/profile">Profile</a>
             </nav>
         </div>
         <!-- Slider Gambar -->
@@ -41,17 +41,17 @@
                 </div>
             </div>
             <div class="slider-dots">
-                <span class="dot active" onclick="currentSlide(0)"></span>
-                <span class="dot" onclick="currentSlide(1)"></span>
-                <span class="dot" onclick="currentSlide(2)"></span>
+                <span class="dot active" data-slide="0"></span>
+                <span class="dot" data-slide="1"></span>
+                <span class="dot" data-slide="2"></span>
             </div>
         </div>
     </header>
-    <!-- Main Content Area (Placeholder) -->
-    <main>
+    <!-- Main Content Area -->
+    <main id="main-content">
         <div class="main-content">
             <h1>Selamat Datang di kalkulori</h1>
-            <p>Isi konten utama halaman Anda akan ditampilkan di sini</p>
+            <p>Loading content...</p>
         </div>
     </main>
     <!-- Footer -->
@@ -64,9 +64,9 @@
             
             <div class="footer-section">
                 <h3>Quick Links</h3>
-                <a href="index.html"><i class="fas fa-home"></i> Home</a>
-                <a href="history.html"><i class="fas fa-history"></i> History</a>
-                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                <a href="#/"><i class="fas fa-home"></i> Home</a>
+                <a href="#/history"><i class="fas fa-history"></i> History</a>
+                <a href="#/profile"><i class="fas fa-user"></i> Profile</a>
             </div>
             
             <div class="footer-section">
@@ -110,6 +110,5 @@
             </div>
         </div>
     </footer>
-    <script src=".\scripts\pages\slider\slider.js"></script>
 </body>
 </html>

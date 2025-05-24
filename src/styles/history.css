@@ -1,0 +1,116 @@
+.history-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background-color: #f8f5e8;
+  min-height: 100vh;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.history-header h1 {
+  font-family: 'Roboto Slab', serif;
+  font-size: 2.5rem;
+  color: #5a4a3a;
+  font-weight: 600;
+}
+
+.dropdown-container {
+  position: relative;
+}
+
+.month-dropdown {
+  padding: 12px 20px;
+  background-color: #8b6f47;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 120px;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="white" d="M6 9L1.5 4.5h9L6 9z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+}
+
+.month-dropdown:hover {
+  background-color: #7a5f40;
+}
+
+.chart-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  border: 3px solid #b8d88a;
+}
+
+.chart-area {
+  display: flex;
+  align-items: flex-end;
+  height: 350px;
+  position: relative;
+}
+
+.chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 300px;
+  margin-right: 20px;
+  font-weight: 500;
+  color: #666;
+}
+
+.chart-bars {
+  flex: 1;
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+}
+
+.chart-x-axis {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+  color: #666;
+  font-weight: 500;
+  margin-left: 40px;
+}
+
+.week-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.week-btn {
+  padding: 12px 24px;
+  background-color: #b8d88a;
+  color: #5a4a3a;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.week-btn:hover {
+  background-color: #a8c87a;
+  transform: translateY(-2px);
+}
+
+.week-btn.active {
+  background-color: #8fbc5f;
+  color: white;
+}
