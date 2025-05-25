@@ -1,11 +1,6 @@
 const createProfileTemplate = (userData, isEditMode = false) => {
   const getActivityLevelDisplay = (level) => {
     const mapping = {
-      'sedentary': 'Sedentary',
-      'light': 'Light Activity',
-      'moderate': 'Moderate Activity', 
-      'high': 'High Activity',
-      'very-high': 'Very High Activity',
       'daily': 'Daily',
       'regularly': 'Regularly',
       'occasionally': 'Occasionally',
@@ -140,11 +135,11 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                   <div class="select-container">
                     <select id="activityLevel" class="form-control">
                       <option value="" disabled ${!userData.activityLevel ? 'selected' : ''}>Select level</option>
-                      <option value="sedentary" ${userData.activityLevel === 'sedentary' ? 'selected' : ''}>Sedentary</option>
-                      <option value="light" ${userData.activityLevel === 'light' ? 'selected' : ''}>Light Activity</option>
-                      <option value="moderate" ${userData.activityLevel === 'moderate' ? 'selected' : ''}>Moderate Activity</option>
-                      <option value="high" ${userData.activityLevel === 'high' ? 'selected' : ''}>High Activity</option>
-                      <option value="very-high" ${userData.activityLevel === 'very-high' ? 'selected' : ''}>Very High Activity</option>
+                      <option value="daily" ${userData.activityLevel === 'daily' ? 'selected' : ''}>Daily</option>
+                      <option value="regularly" ${userData.activityLevel === 'regularly' ? 'selected' : ''}>Regularly</option>
+                      <option value="occasionally" ${userData.activityLevel === 'occasionally' ? 'selected' : ''}>Occasionally</option>
+                      <option value="rarely" ${userData.activityLevel === 'rarely' ? 'selected' : ''}>Rarely</option>
+                      <option value="never" ${userData.activityLevel === 'never' ? 'selected' : ''}>Never</option>
                     </select>
                     <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
                   </div>

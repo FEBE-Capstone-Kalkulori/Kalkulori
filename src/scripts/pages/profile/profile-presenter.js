@@ -14,7 +14,7 @@ class ProfilePresenter {
       weight: '',
       height: '',
       targetWeight: '',
-      activityLevel: 'sedentary',
+      activityLevel: 'Never',
       avatar: null
     };
     
