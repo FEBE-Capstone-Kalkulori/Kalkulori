@@ -3,18 +3,11 @@ import AuthGuard from '../../utils/auth-guard.js';
 
 const SignUpPresenter = {
   async init() {
-    // Cek apakah user sudah login, jika ya redirect ke home
     if (AuthGuard.redirectIfAuthenticated()) {
-      return;
+      return '';
     }
     
-    await this._render();
-    this._initEventListeners();
-  },
-
-  async _render() {
-    const content = document.querySelector('#main-content');
-    content.innerHTML = createSignUpView();
+    return createSignUpView();
   },
 
   _initEventListeners() {
@@ -22,9 +15,9 @@ const SignUpPresenter = {
     const form2 = document.querySelector('#signup-form-2');
     const signInLink = document.querySelector('a[href="#signin"]');
 
-    form1.addEventListener('submit', this._handleStep1Submit.bind(this));
-    form2.addEventListener('submit', this._handleStep2Submit.bind(this));
-    signInLink.addEventListener('click', this._handleSignInLink.bind(this));
+    if (form1) form1.addEventListener('submit', this._handleStep1Submit.bind(this));
+    if (form2) form2.addEventListener('submit', this._handleStep2Submit.bind(this));
+    if (signInLink) signInLink.addEventListener('click', this._handleSignInLink.bind(this));
   },
 
   _handleStep1Submit(event) {
@@ -53,7 +46,7 @@ const SignUpPresenter = {
       age: formData.get('age'),
       weight: formData.get('weight'),
       height: formData.get('height'),
-      targetWeight: formData.get('targetWeight'),
+      targetWeight: formData.get('targetWeight') || '',
       activityLevel: formData.get('activityLevel')
     };
 
@@ -109,6 +102,21 @@ const SignUpPresenter = {
       return false;
     }
 
+    if (data.weight < 30 || data.weight > 300) {
+      alert('Please enter a valid weight between 30 and 300 kg');
+      return false;
+    }
+
+    if (data.height < 100 || data.height > 250) {
+      alert('Please enter a valid height between 100 and 250 cm');
+      return false;
+    }
+
+    if (data.targetWeight && (data.targetWeight < 30 || data.targetWeight > 300)) {
+      alert('Please enter a valid target weight between 30 and 300 kg');
+      return false;
+    }
+
     return true;
   },
 
@@ -120,28 +128,24 @@ const SignUpPresenter = {
     const step1 = document.querySelector('#step-1');
     const step2 = document.querySelector('#step-2');
    
-    step1.classList.add('hidden');
-    step2.classList.remove('hidden');
+    if (step1) step1.classList.add('hidden');
+    if (step2) step2.classList.remove('hidden');
   },
 
   _completeSignUp(step2Data) {
     const completeData = {
       ...this.step1Data,
       ...step2Data,
+      avatar: null,
       signupTime: new Date().toISOString()
     };
 
     console.log('Sign up completed with data:', completeData);
    
-    // Simpan data user (dalam real app, ini akan dikirim ke server)
-    localStorage.setItem('pendingUserData', JSON.stringify(completeData));
+    localStorage.setItem('userData', JSON.stringify(completeData));
    
-    // Mark sebagai sudah visited
-    AuthGuard.markAsVisited();
-    
     alert('Account created successfully! Redirecting to sign in...');
    
-    // Redirect ke signin setelah signup berhasil
     setTimeout(() => {
       window.location.hash = '#/signin';
     }, 1000);

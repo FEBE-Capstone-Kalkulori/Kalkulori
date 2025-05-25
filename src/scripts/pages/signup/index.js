@@ -2,7 +2,12 @@ import { SignUpPresenter } from './signup-presenter.js';
 
 const signupPage = {
   async render() {
-    return await SignUpPresenter.init();
+    const content = await SignUpPresenter.init();
+    return content;
+  },
+  
+  async afterRender() {
+    SignUpPresenter._initEventListeners();
   }
 };
 

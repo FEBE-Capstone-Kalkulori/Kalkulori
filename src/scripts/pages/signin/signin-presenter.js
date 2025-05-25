@@ -3,18 +3,11 @@ import AuthGuard from '../../utils/auth-guard.js';
 
 const SignInPresenter = {
   async init() {
-    // Cek apakah user sudah login, jika ya redirect ke home
     if (AuthGuard.redirectIfAuthenticated()) {
-      return;
+      return '';
     }
     
-    await this._render();
-    this._initEventListeners();
-  },
-
-  async _render() {
-    const content = document.querySelector('#main-content');
-    content.innerHTML = createSignInView();
+    return createSignInView();
   },
 
   _initEventListeners() {
@@ -23,10 +16,10 @@ const SignInPresenter = {
     const signUpLink = document.querySelector('a[href="#signup"]');
     const forgotPasswordLink = document.querySelector('a[href="#forgot-password"]');
 
-    form.addEventListener('submit', this._handleSignInSubmit.bind(this));
-    passwordToggle.addEventListener('click', this._togglePassword.bind(this));
-    signUpLink.addEventListener('click', this._handleSignUpLink.bind(this));
-    forgotPasswordLink.addEventListener('click', this._handleForgotPasswordLink.bind(this));
+    if (form) form.addEventListener('submit', this._handleSignInSubmit.bind(this));
+    if (passwordToggle) passwordToggle.addEventListener('click', this._togglePassword.bind(this));
+    if (signUpLink) signUpLink.addEventListener('click', this._handleSignUpLink.bind(this));
+    if (forgotPasswordLink) forgotPasswordLink.addEventListener('click', this._handleForgotPasswordLink.bind(this));
   },
 
   _handleSignInSubmit(event) {
@@ -91,7 +84,6 @@ const SignInPresenter = {
     button.disabled = true;
 
     setTimeout(() => {
-      // Set user sebagai authenticated
       AuthGuard.login({ 
         email, 
         loginTime: new Date().toISOString() 
@@ -99,7 +91,6 @@ const SignInPresenter = {
      
       alert('Sign in successful! Redirecting to home...');
      
-      // Redirect ke home setelah signin berhasil
       setTimeout(() => {
         window.location.hash = '#/home';
       }, 1000);

@@ -58,45 +58,22 @@ const createSignUpView = () => {
               </div>
               <div class="form-group">
                 <label for="age">Age</label>
-                <input type="number" id="age" name="age" placeholder="Enter your age..." required>
+                <input type="number" id="age" name="age" placeholder="Enter your age..." min="13" max="120" required>
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label for="weight">Weight</label>
-                  <select id="weight" name="weight" required>
-                    <option value="">Kilogram (kg)</option>
-                    <option value="40-50">40-50 kg</option>
-                    <option value="50-60">50-60 kg</option>
-                    <option value="60-70">60-70 kg</option>
-                    <option value="70-80">70-80 kg</option>
-                    <option value="80-90">80-90 kg</option>
-                    <option value="90+">90+ kg</option>
-                  </select>
+                  <label for="weight">Weight (kg)</label>
+                  <input type="number" id="weight" name="weight" placeholder="Enter weight..." min="30" max="300" required>
                 </div>
                 <div class="form-group">
-                  <label for="height">Height</label>
-                  <select id="height" name="height" required>
-                    <option value="">Centimeter (cm)</option>
-                    <option value="150-160">150-160 cm</option>
-                    <option value="160-170">160-170 cm</option>
-                    <option value="170-180">170-180 cm</option>
-                    <option value="180-190">180-190 cm</option>
-                    <option value="190+">190+ cm</option>
-                  </select>
+                  <label for="height">Height (cm)</label>
+                  <input type="number" id="height" name="height" placeholder="Enter height..." min="100" max="250" required>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label for="targetWeight">Target Weight (Optional)</label>
-                  <select id="targetWeight" name="targetWeight">
-                    <option value="">Kilogram (kg)</option>
-                    <option value="40-50">40-50 kg</option>
-                    <option value="50-60">50-60 kg</option>
-                    <option value="60-70">60-70 kg</option>
-                    <option value="70-80">70-80 kg</option>
-                    <option value="80-90">80-90 kg</option>
-                    <option value="90+">90+ kg</option>
-                  </select>
+                  <label for="targetWeight">Target Weight (kg) - Optional</label>
+                  <input type="number" id="targetWeight" name="targetWeight" placeholder="Enter target weight..." min="30" max="300">
                 </div>
                 <div class="form-group">
                   <label for="activityLevel">Activity Level</label>

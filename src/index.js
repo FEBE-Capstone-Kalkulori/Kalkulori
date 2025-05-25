@@ -1,4 +1,3 @@
-// src/index.js
 import 'regenerator-runtime';
 import './styles/style.css';
 import './styles/home.css';
@@ -7,8 +6,8 @@ import './styles/history.css';
 import './styles/add-meal.css';
 import App from './scripts/app';
 import SliderComponent from './scripts/pages/slider';
+import AuthGuard from './scripts/utils/auth-guard';
 
-// Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js')
@@ -21,12 +20,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Initialize the app when the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize slider
+  if (!AuthGuard.isAuthenticated() && !window.location.hash.includes('signin') && !window.location.hash.includes('signup')) {
+    window.location.hash = '#/signin';
+  }
+
   SliderComponent.init();
 
-  // Initialize main app
   const app = new App({
     content: document.querySelector('main'),
   });

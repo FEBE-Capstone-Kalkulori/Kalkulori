@@ -1,4 +1,5 @@
 import routes from './routes/routes';
+import AuthGuard from './utils/auth-guard';
 
 class App {
   constructor({ content }) {
@@ -9,17 +10,29 @@ class App {
     let url = window.location.hash.slice(1);
     
     if (!url) {
-      const pathname = window.location.pathname;
-      if (pathname.includes('/profile')) {
-        url = '/profile';
-        window.location.hash = '#/profile';
+      if (!AuthGuard.isAuthenticated()) {
+        url = '/signin';
+        window.location.hash = '#/signin';
       } else {
-        url = '/';
-        window.location.hash = '#/';
+        url = '/home';
+        window.location.hash = '#/home';
       }
     }
+
+    const protectedRoutes = ['/', '/home', '/profile', '/history', '/add-meal'];
+    const authRoutes = ['/signin', '/signup'];
+
+    if (protectedRoutes.includes(url) && !AuthGuard.isAuthenticated()) {
+      url = '/signin';
+      window.location.hash = '#/signin';
+    }
+
+    if (authRoutes.includes(url) && AuthGuard.isAuthenticated()) {
+      url = '/home';
+      window.location.hash = '#/home';
+    }
     
-    const page = routes[url] || routes['/'];
+    const page = routes[url] || routes['/signin'];
     this.content.innerHTML = await page.render();
     await page.afterRender();
     

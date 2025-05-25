@@ -1,4 +1,20 @@
 const createProfileTemplate = (userData, isEditMode = false) => {
+  const getActivityLevelDisplay = (level) => {
+    const mapping = {
+      'sedentary': 'Sedentary',
+      'light': 'Light Activity',
+      'moderate': 'Moderate Activity', 
+      'high': 'High Activity',
+      'very-high': 'Very High Activity',
+      'daily': 'Daily',
+      'regularly': 'Regularly',
+      'occasionally': 'Occasionally',
+      'rarely': 'Rarely',
+      'never': 'Never'
+    };
+    return mapping[level] || level;
+  };
+
   return `
     <div class="profile-content">
       <h2 class="profile-title">User Profile</h2>
@@ -19,9 +35,7 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                   <i class="fas fa-images"></i> Choose from gallery
                 </div>
               </div>
-              <!-- Hidden file input untuk gallery -->
               <input type="file" id="file-input" accept="image/*" style="display: none;">
-              <!-- Hidden canvas untuk camera capture -->
               <canvas id="camera-canvas" style="display: none;"></canvas>
             ` : ''}
           </div>
@@ -116,7 +130,7 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                       <button class="number-control-down" data-input="targetWeight"><i class="fas fa-chevron-down"></i></button>
                     </div>
                   </div>` : 
-                  `<div class="form-control-static">${userData.targetWeight || ''} kg</div>`
+                  `<div class="form-control-static">${userData.targetWeight || ''} ${userData.targetWeight ? 'kg' : ''}</div>`
                 }
               </div>
               
@@ -126,16 +140,16 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                   <div class="select-container">
                     <select id="activityLevel" class="form-control">
                       <option value="" disabled ${!userData.activityLevel ? 'selected' : ''}>Select level</option>
-                      <option value="daily" ${userData.activityLevel === 'daily' ? 'selected' : ''}>Daily</option>
-                      <option value="regularly" ${userData.activityLevel === 'regularly' ? 'selected' : ''}>Regularly</option>
-                      <option value="occasionally" ${userData.activityLevel === 'occasionally' ? 'selected' : ''}>Occasionally</option>
-                      <option value="rarely" ${userData.activityLevel === 'rarely' ? 'selected' : ''}>Rarely</option>
-                      <option value="never" ${userData.activityLevel === 'never' ? 'selected' : ''}>Never</option>
+                      <option value="sedentary" ${userData.activityLevel === 'sedentary' ? 'selected' : ''}>Sedentary</option>
+                      <option value="light" ${userData.activityLevel === 'light' ? 'selected' : ''}>Light Activity</option>
+                      <option value="moderate" ${userData.activityLevel === 'moderate' ? 'selected' : ''}>Moderate Activity</option>
+                      <option value="high" ${userData.activityLevel === 'high' ? 'selected' : ''}>High Activity</option>
+                      <option value="very-high" ${userData.activityLevel === 'very-high' ? 'selected' : ''}>Very High Activity</option>
                     </select>
                     <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
                   </div>
                 ` : `
-                  <div class="form-control-static">${userData.activityLevel ? userData.activityLevel.charAt(0).toUpperCase() + userData.activityLevel.slice(1) : 'Never'}</div>
+                  <div class="form-control-static">${getActivityLevelDisplay(userData.activityLevel)}</div>
                 `}
               </div>
             </div>
@@ -152,7 +166,6 @@ const createProfileTemplate = (userData, isEditMode = false) => {
       </div>
     </div>
 
-    <!-- Camera Modal (akan ditambahkan ketika camera option diklik) -->
     <div id="camera-modal" class="camera-modal" style="display: none;">
       <div class="camera-modal-content">
         <div class="camera-modal-header">
@@ -184,7 +197,6 @@ export default {
     container.innerHTML = createProfileTemplate(userData, isEditMode);
   },
   
-  // Method untuk membuat header khusus profile
   createProfileHeader() {
     return `
       <div class="profile-header-container">
@@ -204,29 +216,24 @@ export default {
     `;
   },
 
-  // Method untuk hide/show header
   toggleHeaders(showProfileHeader = true) {
     const homeHeader = document.querySelector('header');
     const existingProfileHeader = document.querySelector('.profile-header-container');
     
     if (showProfileHeader) {
-      // Sembunyikan header home
       if (homeHeader) {
         homeHeader.style.display = 'none';
       }
       
-      // Tampilkan header profile jika belum ada
       if (!existingProfileHeader) {
         const profileHeaderHTML = this.createProfileHeader();
         document.body.insertAdjacentHTML('afterbegin', profileHeaderHTML);
       }
     } else {
-      // Tampilkan header home
       if (homeHeader) {
         homeHeader.style.display = 'block';
       }
       
-      // Hapus header profile
       if (existingProfileHeader) {
         existingProfileHeader.remove();
       }
@@ -247,10 +254,9 @@ export default {
     }
   },
 
-  // Method untuk validasi file image
   validateImageFile(file) {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
@@ -265,7 +271,6 @@ export default {
     return true;
   },
 
-  // Method untuk resize image
   resizeImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
@@ -273,7 +278,6 @@ export default {
       const img = new Image();
 
       img.onload = () => {
-        // Calculate new dimensions
         let { width, height } = img;
         
         if (width > height) {
@@ -291,7 +295,6 @@ export default {
         canvas.width = width;
         canvas.height = height;
 
-        // Draw and compress
         ctx.drawImage(img, 0, 0, width, height);
         
         canvas.toBlob(resolve, 'image/jpeg', quality);
@@ -301,7 +304,6 @@ export default {
     });
   },
 
-  // Method untuk convert blob to base64
   blobToBase64(blob) {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -310,7 +312,6 @@ export default {
     });
   },
 
-  // Method untuk show camera modal
   showCameraModal() {
     const modal = document.getElementById('camera-modal');
     if (modal) {
@@ -319,7 +320,6 @@ export default {
     }
   },
 
-  // Method untuk hide camera modal
   hideCameraModal() {
     const modal = document.getElementById('camera-modal');
     const video = document.getElementById('camera-video');
@@ -329,7 +329,6 @@ export default {
       document.body.style.overflow = 'auto';
     }
 
-    // Stop camera stream
     if (video && video.srcObject) {
       const tracks = video.srcObject.getTracks();
       tracks.forEach(track => track.stop());
@@ -382,7 +381,6 @@ export default {
     const numberControlsUp = document.querySelectorAll('.number-control-up');
     const numberControlsDown = document.querySelectorAll('.number-control-down');
     
-    // Camera modal elements
     const cameraCloseBtn = document.getElementById('camera-close-btn');
     const cameraCaptureBtn = document.getElementById('camera-capture-btn');
     const cameraRetakeBtn = document.getElementById('camera-retake-btn');
@@ -400,12 +398,10 @@ export default {
       galleryOption.addEventListener('click', handlers.onGalleryOptionClicked);
     }
 
-    // File input handler
     if (fileInput && handlers.onFileSelected) {
       fileInput.addEventListener('change', handlers.onFileSelected);
     }
 
-    // Camera modal handlers
     if (cameraCloseBtn && handlers.onCameraModalClose) {
       cameraCloseBtn.addEventListener('click', handlers.onCameraModalClose);
     }
@@ -460,7 +456,6 @@ export default {
       }
     });
     
-    // Close avatar options when clicking outside
     document.addEventListener('click', (event) => {
       const avatarOptions = document.getElementById('avatar-options');
       const editAvatarBtn = document.getElementById('edit-avatar-btn');
@@ -472,7 +467,6 @@ export default {
       }
     });
 
-    // Close camera modal when clicking backdrop
     const cameraModal = document.getElementById('camera-modal');
     if (cameraModal && handlers.onCameraModalClose) {
       cameraModal.addEventListener('click', (event) => {
