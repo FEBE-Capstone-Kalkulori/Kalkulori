@@ -1,355 +1,363 @@
-/* Reset dan style dasar */
+@import url("home.css");
+@import url("signup.css");
+@import url("signin.css");
+
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    background-color: #FEFFD8;
-    color: #333;
-    font-weight: 36;
-    font-style: normal;
+  background-color: #feffd8;
+  color: #333;
+  font-weight: 36;
+  font-style: normal;
+}
+
+#content {
+  min-height: 100vh;
 }
 
 /* Header Styles */
 header {
-    position: relative;
-    letter-spacing: 3px; /* menambah jarak antar huruf sebesar 2 piksel */
-    font-family: 'Cal Sans', sans-serif;
+  position: relative;
+  letter-spacing: 3px; /* menambah jarak antar huruf sebesar 2 piksel */
+  font-family: "Cal Sans", sans-serif;
 }
 
 .header-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 2rem; /* Mengurangi padding dari 1rem menjadi 0.5rem */
-    background-color: rgba(0,0,0,0);
-    height: 5rem; /* Menambahkan height spesifik */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 2rem; /* Mengurangi padding dari 1rem menjadi 0.5rem */
+  background-color: rgba(0, 0, 0, 0);
+  height: 5rem; /* Menambahkan height spesifik */
 }
 
 .logo {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .logo img {
-    height: auto; /* Tinggi logo yang sesuai untuk header yang lebih rendah */
-    width: 15rem; /* Menjaga rasio aspek */
-    margin-right: 5px;
+  height: auto; /* Tinggi logo yang sesuai untuk header yang lebih rendah */
+  width: 15rem; /* Menjaga rasio aspek */
+  margin-right: 5px;
 }
 
 nav {
-    display: flex;
-    gap: 1.5rem;
+  display: flex;
+  gap: 1.5rem;
 }
 
 nav a {
-    color: rgb(79, 52, 34, 0.7);
-    text-decoration: none;
-    font-size: 0.9rem; /* Memperkecil ukuran font menu navigasi */
-    transition: color 0.3s ease;
+  color: rgb(79, 52, 34, 0.7);
+  text-decoration: none;
+  font-size: 0.9rem; /* Memperkecil ukuran font menu navigasi */
+  transition: color 0.3s ease;
 }
 
 nav a:hover {
-    color: rgb(79, 52, 34, 1);
-    text-decoration: underline;
+  color: rgb(79, 52, 34, 1);
+  text-decoration: underline;
 }
 
 /* Slider styles */
 .slider-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    height: 100vh;
-    max-height: 600px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  height: 100vh;
+  max-height: 600px;
 }
 
 .slider {
-    display: flex;
-    transition: transform 0.5s ease-in-out;
-    height: 100%;
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  height: 100%;
 }
 
 .slide {
-    min-width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #4F3422;
-    text-align: center;
-    padding: 1rem;
+  min-width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #4f3422;
+  text-align: center;
+  padding: 1rem;
 }
 
 .slide::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 223, 100, 0.5); /* soft yellow */
-    box-shadow: inset 0 0 200px rgba(255, 200, 0, 0.4); /* yellow shadow inside */
-    z-index: 1;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 223, 100, 0.5); /* soft yellow */
+  box-shadow: inset 0 0 200px rgba(255, 200, 0, 0.4); /* yellow shadow inside */
+  z-index: 1;
 }
 
-.slide h2, .slide p {
-    position: relative;
-    z-index: 2;
+.slide h2,
+.slide p {
+  position: relative;
+  z-index: 2;
 }
 
 .slide h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(184, 147, 0, 0.7);
-    max-width: 80%;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(184, 147, 0, 0.7);
+  max-width: 80%;
 }
 
 .slide p {
-    font-size: 1.5rem;
-    max-width: 60%;
-    text-shadow: 1px 1px 2px rgba(255, 174, 0, 0.7);
+  font-size: 1.5rem;
+  max-width: 60%;
+  text-shadow: 1px 1px 2px rgba(255, 174, 0, 0.7);
 }
 
 .slide-1 {
-    background-image: url('../public/image/flat-lay-delicious-food-plate.jpg');
+  background-image: url("../public/image/flat-lay-delicious-food-plate.jpg");
 }
 
 .slide-2 {
-    background-image: url('../public/image/different-goodies-with-copy-space.jpg');
+  background-image: url("../public/image/different-goodies-with-copy-space.jpg");
 }
 
 .slide-3 {
-    background-image: url('../public/image/measuring-tape-near-slices-fruit-crisp-bread.jpg');
+  background-image: url("../public/image/measuring-tape-near-slices-fruit-crisp-bread.jpg");
 }
 
 .slider-dots {
-    display: flex;
-    justify-content: center;
-    position: absolute;
-    bottom: 20px;
-    width: 100%;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
 }
 
 .dot {
-    width: 12px;
-    height: 12px;
-    background-color: #4F3422;
-    border-radius: 50%;
-    margin: 0 5px;
-    cursor: pointer;
+  width: 12px;
+  height: 12px;
+  background-color: #4f3422;
+  border-radius: 50%;
+  margin: 0 5px;
+  cursor: pointer;
 }
 
 .dot.active {
-    background-color: #9BCF53;
+  background-color: #9bcf53;
 }
 
 /* Main content area */
 main {
-    font-family: 'Roboto Slab', serif;
-    min-height: 500px;
-    max-width: 1200px;
-    letter-spacing: 2px; /* menambah jarak antar huruf sebesar 2 piksel */
-    margin: 2rem auto;
-    padding: 0 1rem;
-    color: #4F3422;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-family: "Roboto Slab", serif;
+  min-height: 500px;
+  max-width: 1200px;
+  letter-spacing: 2px; /* menambah jarak antar huruf sebesar 2 piksel */
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #4f3422;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .main-content {
-    padding: 2rem;
-    text-align: center;
+  padding: 2rem;
+  text-align: center;
 }
 
 /* Footer Styles */
 footer {
-    background-color: #9BCF53;
-    color: #4F3422;
-    padding: 3rem 2rem 1rem;
-    position: relative;
-    font-family: 'Roboto Slab', sans-serif;
-    letter-spacing: 1px;
+  background-color: #9bcf53;
+  color: #4f3422;
+  padding: 3rem 2rem 1rem;
+  position: relative;
+  font-family: "Roboto Slab", sans-serif;
+  letter-spacing: 1px;
 }
 
 footer::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 10px;
-    background: linear-gradient(90deg, #ffdf64, #9BCF53, #ffdf64);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(90deg, #ffdf64, #9bcf53, #ffdf64);
 }
 
 .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
 }
 
 .footer-logo {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
 }
 
 .footer-logo img {
-    max-width: 180px;
-    height: auto;
+  max-width: 180px;
+  height: auto;
 }
 
 .footer-section {
-    display: flex;
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-    flex-direction: column;
+  display: flex;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  flex-direction: column;
 }
 
 .footer-section h3 {
-    font-size: 1.3rem;
-    margin-bottom: 1.5rem;
-    color: #4F3422;
-    position: relative;
-    padding-bottom: 10px;
-    font-weight: 600;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  color: #4f3422;
+  position: relative;
+  padding-bottom: 10px;
+  font-weight: 600;
 }
 
 .footer-section h3::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 50px;
-    height: 3px;
-    background-color: #ffdf64;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50px;
+  height: 3px;
+  background-color: #ffdf64;
 }
 
 .footer-section p {
-    color: #4F3422;
-    margin-bottom: 0.7rem;
-    line-height: 1.6;
-    font-weight: 300;
+  color: #4f3422;
+  margin-bottom: 0.7rem;
+  line-height: 1.6;
+  font-weight: 300;
 }
 
 .footer-section a {
-    color: #4F3422;
-    margin-bottom: 0.7rem;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    transition: transform 0.2s, color 0.2s;
+  color: #4f3422;
+  margin-bottom: 0.7rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s, color 0.2s;
 }
 
 .footer-section a i {
-    margin-right: 10px;
-    width: 20px;
-    text-align: center;
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
 }
 
 .footer-section a:hover {
-    color: #4F3422;
-    transform: translateX(5px);
-    font-weight: 600;
+  color: #4f3422;
+  transform: translateX(5px);
+  font-weight: 600;
 }
 
 .team-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
 }
 
 .team-member {
-    display: flex;
-    flex-direction: column;
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 10px;
-    border-radius: 6px;
-    transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 6px;
+  transition: transform 0.2s;
 }
 
 .team-member:hover {
-    transform: translateY(-3px);
-    background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .team-member .name {
-    font-weight: 600;
-    margin-bottom: 3px;
+  font-weight: 600;
+  margin-bottom: 3px;
 }
 
 .team-member .id {
-    font-size: 0.8rem;
-    opacity: 0.9;
+  font-size: 0.8rem;
+  opacity: 0.9;
 }
 
 .copyright {
-    text-align: center;
-    padding-top: 2rem;
-    margin-top: 2rem;
-    border-top: 1px solid rgba(79, 52, 34, 0.3);
-    grid-column: 1 / -1;
-    font-weight: 600;
+  text-align: center;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 1px solid rgba(79, 52, 34, 0.3);
+  grid-column: 1 / -1;
+  font-weight: 600;
 }
 
 .social-links {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .social-links a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    color: #4F3422;
-    transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: #4f3422;
+  transition: all 0.3s ease;
 }
 
 .social-links a:hover {
-    background-color: #4F3422;
-    color: #ffdf64;
-    transform: translateY(-3px);
+  background-color: #4f3422;
+  color: #ffdf64;
+  transform: translateY(-3px);
 }
 
 @media (max-width: 900px) {
-    .footer-container {
-        grid-template-columns: 1fr 1fr;
-    }
-    
-    .footer-section:nth-child(1) {
-        grid-column: span 2;
-    }
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-section:nth-child(1) {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 600px) {
-    .footer-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .footer-section:nth-child(1) {
-        grid-column: span 1;
-    }
-    
-    .team-list {
-        grid-template-columns: 1fr;
-    }
+  .footer-container {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-section:nth-child(1) {
+    grid-column: span 1;
+  }
+
+  .team-list {
+    grid-template-columns: 1fr;
+  }
 }
