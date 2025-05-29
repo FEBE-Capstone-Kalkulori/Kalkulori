@@ -22,7 +22,7 @@ const createAddMealTemplate = (data) => {
         </div>
       </div>
       
-      <div class="meals-grid" id="meals-grid">
+      <div class="container" id="food-container">
         ${data.meals.length > 0 ? createMealsGrid(data.meals) : ''}
       </div>
     </div>
@@ -30,18 +30,9 @@ const createAddMealTemplate = (data) => {
 };
 
 const createMealsGrid = (meals) => {
-  return meals.map(meal => `
-    <div class="meal-card">
-      <div class="meal-image">
-        <img src="${meal.image}" alt="${meal.name}">
-      </div>
-      <div class="meal-info">
-        <div class="meal-name">${meal.name}</div>
-        <div class="meal-calories">${meal.calories} kcal</div>
-      </div>
-      <button class="add-meal-card-button">+</button>
-    </div>
-  `).join('');
+  return meals.map(meal => 
+    window.FoodCard.createFoodCard(meal.image, meal.name, meal.calories)
+  ).join('');
 };
 
 export default {
@@ -53,6 +44,7 @@ export default {
     const backButton = document.getElementById('back-button');
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
+    const foodContainer = document.getElementById('food-container');
     
     if (backButton && eventHandlers.onBackClicked) {
       backButton.addEventListener('click', eventHandlers.onBackClicked);
@@ -72,6 +64,10 @@ export default {
           eventHandlers.onSearchClicked(query);
         }
       });
+    }
+    
+    if (foodContainer) {
+      window.FoodCard.bindFoodCardEvents('food-container');
     }
   }
 };

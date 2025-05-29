@@ -1,11 +1,12 @@
 import AddMealView from './add-meal-view';
+import { defaultMealsData } from '../../pages/templates/foodCard';
 
 class AddMealPresenter {
   constructor({ container }) {
     this.container = container;
     this.data = {
       searchQuery: '',
-      meals: []
+      meals: defaultMealsData
     };
     
     this.eventHandlers = {
@@ -29,6 +30,13 @@ class AddMealPresenter {
 
   _handleSearch(query) {
     this.data.searchQuery = query;
+    if (query.trim()) {
+      this.data.meals = defaultMealsData.filter(meal => 
+        meal.name.toLowerCase().includes(query.toLowerCase())
+      );
+    } else {
+      this.data.meals = defaultMealsData;
+    }
     console.log(`Searching for: ${query}`);
     this._renderView();
   }
