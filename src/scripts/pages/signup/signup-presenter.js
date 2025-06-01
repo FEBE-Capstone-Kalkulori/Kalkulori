@@ -178,6 +178,7 @@ const SignUpPresenter = {
         age: step2Data.age,
         weight: step2Data.weight,
         height: step2Data.height,
+        target_weight: step2Data.targetWeight, // FIXED: Menambahkan target_weight
         fitness_level: step2Data.activityLevel
       };
 

@@ -17,14 +17,55 @@ const createAddMealTemplate = (data) => {
             id="search-input"
             placeholder="What food that you ate?"
             value="${data.searchQuery}"
+            ${data.loading ? 'disabled' : ''}
           />
-          <button class="search-button" id="search-button">Search</button>
+          <button class="search-button" id="search-button" ${data.loading ? 'disabled' : ''}>
+            ${data.loading ? 'Loading...' : 'Search'}
+          </button>
         </div>
       </div>
       
-      <div class="container" id="food-container">
-        ${data.meals.length > 0 ? createMealsGrid(data.meals) : ''}
+      ${createContentSection(data)}
+    </div>
+  `;
+};
+
+const createContentSection = (data) => {
+  if (data.loading) {
+    return `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading foods...</p>
       </div>
+    `;
+  }
+
+  if (data.error) {
+    return `
+      <div class="error-container">
+        <p class="error-message">${data.error}</p>
+        ${data.meals.length > 0 ? createMealsContainer(data.meals) : ''}
+      </div>
+    `;
+  }
+
+  if (data.meals.length === 0) {
+    return `
+      <div class="no-results-container">
+        <p class="no-results-message">
+          ${data.searchQuery ? `No foods found for "${data.searchQuery}"` : 'No foods available'}
+        </p>
+      </div>
+    `;
+  }
+
+  return createMealsContainer(data.meals);
+};
+
+const createMealsContainer = (meals) => {
+  return `
+    <div class="container" id="food-container">
+      ${createMealsGrid(meals)}
     </div>
   `;
 };
@@ -66,6 +107,7 @@ export default {
       });
     }
     
+    // Bind food card events jika container ada dan tidak dalam loading state
     if (foodContainer) {
       window.FoodCard.bindFoodCardEvents('food-container');
     }
