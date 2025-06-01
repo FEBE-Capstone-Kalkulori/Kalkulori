@@ -65,7 +65,7 @@ class FoodApiService {
     }
   }
 
-  async searchFoods(searchQuery, limit = 50) {
+  async searchFoods(searchQuery, limit) {
     try {
       return await this.getAllFoods({
         name: searchQuery,
