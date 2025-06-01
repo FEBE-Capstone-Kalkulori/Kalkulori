@@ -1,20 +1,22 @@
 import ProfileView from './profile-view';
+import ProfileApiService from '../../utils/profile-api-service';
 
 class ProfilePresenter {
   constructor({ container }) {
     this.container = container;
     this.view = ProfileView;
+    this.apiService = new ProfileApiService();
     this.isEditMode = false;
     this.cameraStream = null;
     this.capturedImageData = null;
-    this.userData = this._getStoredUserData() || {
+    this.userData = {
       name: '',
       gender: 'male',
       age: '',
       weight: '',
       height: '',
       targetWeight: '',
-      activityLevel: 'Never',
+      activityLevel: 'never',
       avatar: null
     };
     
@@ -38,6 +40,7 @@ class ProfilePresenter {
   
   async init() {
     this.view.toggleHeaders(true);
+    await this._loadUserProfile();
     this._renderView();
   }
   
@@ -50,27 +53,204 @@ class ProfilePresenter {
     this.view.render(this.container, this.userData, this.isEditMode);
     this.view.attachEventHandlers(this.handlers);
   }
+
+  // Load user profile from API - FIXED WITH COMPREHENSIVE DEBUGGING
+  async _loadUserProfile() {
+    try {
+      this._showLoading('Loading profile...');
+      
+      // Debug: Cek token terlebih dahulu
+      const token = this.apiService.getAuthToken();
+      console.log('🎫 Token check - exists:', !!token);
+      console.log('🎫 Token value:', token ? token.substring(0, 20) + '...' : 'null');
+      
+      if (!token) {
+        console.log('❌ No token found, redirecting to signin');
+        alert('Session expired. Please login again.');
+        window.location.hash = '#/signin';
+        return;
+      }
+      
+      // Test koneksi backend dulu
+      console.log('🔗 Testing backend connection...');
+      const isConnected = await this.apiService.testConnection();
+      console.log('🔗 Backend connection:', isConnected);
+      
+      if (!isConnected) {
+        console.log('❌ Backend not reachable, using local data fallback');
+        const localData = this._getStoredUserData();
+        if (localData) {
+          this.userData = localData;
+          console.log('✅ Using local profile data as fallback');
+          alert('Cannot connect to server. Using offline data.');
+          return;
+        } else {
+          alert('Cannot connect to server and no local data available.');
+          return;
+        }
+      }
+      
+      // Coba ambil data dari API
+      console.log('📡 Attempting to fetch profile from API...');
+      const profileData = await this.apiService.getUserProfile();
+      console.log('📦 RAW profile data from API:', JSON.stringify(profileData, null, 2));
+      
+      // Convert data menggunakan method dari apiService
+      console.log('🔄 Converting profile data to frontend format...');
+      this.userData = this.apiService.convertToFrontendFormat(profileData);
+      console.log('✅ CONVERTED profile data:', JSON.stringify(this.userData, null, 2));
+      
+      // Fallback ke localStorage untuk avatar (karena avatar tidak di-handle di API)
+      const localData = this._getStoredUserData();
+      if (localData && localData.avatar) {
+        this.userData.avatar = localData.avatar;
+        console.log('🖼️ Avatar loaded from localStorage');
+      }
+      
+      console.log('🎯 FINAL userData for rendering:', JSON.stringify(this.userData, null, 2));
+      console.log('✅ Profile loaded from API successfully');
+      
+    } catch (error) {
+      console.error('💥 Error loading profile from API:', error);
+      
+      // Handle specific authentication errors
+      if (error.message.includes('Authentication failed') || error.message.includes('401')) {
+        console.log('🔒 Authentication failed, clearing tokens and redirecting');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
+        alert('Session expired. Please login again.');
+        window.location.hash = '#/signin';
+        return;
+      }
+      
+      // Handle profile not found (new user)
+      if (error.message.includes('Profile not found') || error.message.includes('404')) {
+        console.log('👤 Profile not found - new user, using default data');
+        this.userData = {
+          name: '',
+          gender: 'male',
+          age: '',
+          weight: '',
+          height: '',
+          targetWeight: '',
+          activityLevel: 'never',
+          avatar: null
+        };
+        
+        // Try to get name from stored user data
+        const storedEmail = localStorage.getItem('userEmail');
+        if (storedEmail) {
+          this.userData.name = storedEmail.split('@')[0]; // Use email prefix as default name
+        }
+        
+        console.log('ℹ️ Using default profile for new user');
+        alert('Welcome! Please complete your profile information.');
+        return;
+      }
+      
+      // Fallback ke localStorage jika API gagal
+      console.log('🔄 API failed, trying localStorage fallback...');
+      const localData = this._getStoredUserData();
+      if (localData) {
+        this.userData = localData;
+        console.log('✅ Using local profile data as fallback');
+        alert('Error loading profile from server. Using local data.');
+      } else {
+        console.log('❌ No local data available, using default profile');
+        this.userData = {
+          name: '',
+          gender: 'male',
+          age: '',
+          weight: '',
+          height: '',
+          targetWeight: '',
+          activityLevel: 'never',
+          avatar: null
+        };
+        alert('Error loading profile. Please update your information.');
+      }
+      
+    } finally {
+      this._hideLoading();
+    }
+  }
+
+  // Save user profile to API - ENHANCED ERROR HANDLING
+  async _saveUserProfile(profileData) {
+    try {
+      this._showLoading('Saving profile...');
+      
+      console.log('💾 Saving profile data:', JSON.stringify(profileData, null, 2));
+      
+      const result = await this.apiService.updateUserProfile(profileData);
+      console.log('✅ Profile save result:', result);
+      
+      // Tetap simpan ke localStorage sebagai backup dan untuk avatar
+      this._storeUserData();
+      console.log('💾 Profile also saved to localStorage as backup');
+      
+      return true;
+    } catch (error) {
+      console.error('💥 Error saving profile to API:', error);
+      
+      // Handle different types of errors
+      if (error.message.includes('Authentication failed')) {
+        alert('Session expired. Please login again.');
+        this._handleSignOut();
+        return false;
+      }
+      
+      // Fallback: simpan hanya ke localStorage
+      this._storeUserData();
+      console.log('💾 Fallback: Profile saved to localStorage only');
+      
+      // Show more specific error message
+      const errorMsg = error.message.includes('connect') 
+        ? 'Cannot connect to server. Profile saved locally only.'
+        : `Server error: ${error.message}. Profile saved locally only.`;
+      
+      alert(errorMsg);
+      
+      // Return true because we saved locally
+      return true;
+    } finally {
+      this._hideLoading();
+    }
+  }
   
   _getStoredUserData() {
     const storedData = localStorage.getItem('userData');
     if (storedData) {
-      const parsedData = JSON.parse(storedData);
-      return {
-        name: parsedData.name || '',
-        gender: parsedData.gender || 'male',
-        age: parsedData.age || '',
-        weight: parsedData.weight || '',
-        height: parsedData.height || '',
-        targetWeight: parsedData.targetWeight || '',
-        activityLevel: parsedData.activityLevel || 'sedentary',
-        avatar: parsedData.avatar || null
-      };
+      try {
+        const parsedData = JSON.parse(storedData);
+        return {
+          name: parsedData.name || '',
+          gender: parsedData.gender || 'male',
+          age: parsedData.age || '',
+          weight: parsedData.weight || '',
+          height: parsedData.height || '',
+          targetWeight: parsedData.targetWeight || '',
+          activityLevel: parsedData.activityLevel || 'never',
+          avatar: parsedData.avatar || null
+        };
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        return null;
+      }
     }
     return null;
   }
   
   _storeUserData() {
-    localStorage.setItem('userData', JSON.stringify(this.userData));
+    try {
+      localStorage.setItem('userData', JSON.stringify(this.userData));
+      console.log('💾 User data stored to localStorage');
+    } catch (error) {
+      console.error('Error storing user data:', error);
+    }
   }
   
   _handleEditAvatarClicked() {
@@ -206,6 +386,7 @@ class ProfilePresenter {
       avatarImg.src = imageData;
     }
     
+    // Simpan avatar ke localStorage (karena API belum handle avatar)
     this._storeUserData();
   }
 
@@ -289,27 +470,45 @@ class ProfilePresenter {
     this._renderView();
   }
   
-  _handleSaveDataClicked() {
+  async _handleSaveDataClicked() {
     const newUserData = this.view.getUserData();
     if (newUserData) {
+      // Update userData dengan data baru
       this.userData = {
         ...this.userData,
         ...newUserData
       };
       
-      this._storeUserData();
+      // Simpan ke API dan localStorage
+      const success = await this._saveUserProfile(this.userData);
+      
       this.isEditMode = false;
       this._renderView();
       
-      alert('Profile updated successfully!');
+      if (success) {
+        alert('Profile updated successfully!');
+      } else {
+        alert('Failed to save profile. Please try again.');
+      }
     }
   }
   
   _handleSignOutClicked() {
     if (confirm('Are you sure you want to sign out?')) {
-      localStorage.removeItem('isAuthenticated');
-      window.location.hash = '#/signin';
+      this._handleSignOut();
     }
+  }
+
+  _handleSignOut() {
+    // Clear semua data authentication
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userData');
+    console.log('🚪 User signed out, all data cleared');
+    window.location.hash = '#/signin';
   }
   
   _handleNumberIncrease(inputId) {

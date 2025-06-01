@@ -20,8 +20,23 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!AuthGuard.isAuthenticated() && !window.location.hash.includes('signin') && !window.location.hash.includes('signup')) {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Verify token if user has one
+  if (AuthGuard.isAuthenticated()) {
+    const isValidToken = await AuthGuard.verifyToken();
+    
+    if (!isValidToken) {
+      // Token is invalid, logout user
+      console.log('Token is invalid, logging out...');
+      AuthGuard.logout();
+      return; // Exit early as logout will redirect
+    }
+  }
+  
+  // If not authenticated and not on auth pages, redirect to signin
+  if (!AuthGuard.isAuthenticated() && 
+      !window.location.hash.includes('signin') && 
+      !window.location.hash.includes('signup')) {
     window.location.hash = '#/signin';
   }
 

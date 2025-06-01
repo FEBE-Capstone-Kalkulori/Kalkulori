@@ -63,27 +63,27 @@ const createSignUpView = () => {
               <div class="form-row">
                 <div class="form-group">
                   <label for="weight">Weight (kg)</label>
-                  <input type="number" id="weight" name="weight" placeholder="Enter weight..." min="30" max="300" required>
+                  <input type="number" id="weight" name="weight" placeholder="Enter weight..." min="30" max="300" step="0.1" required>
                 </div>
                 <div class="form-group">
                   <label for="height">Height (cm)</label>
-                  <input type="number" id="height" name="height" placeholder="Enter height..." min="100" max="250" required>
+                  <input type="number" id="height" name="height" placeholder="Enter height..." min="100" max="250" step="0.1" required>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label for="targetWeight">Target Weight (kg) - Optional</label>
-                  <input type="number" id="targetWeight" name="targetWeight" placeholder="Enter target weight..." min="30" max="300">
+                  <input type="number" id="targetWeight" name="targetWeight" placeholder="Enter target weight..." min="30" max="300" step="0.1">
                 </div>
                 <div class="form-group">
                   <label for="activityLevel">Activity Level</label>
                   <select id="activityLevel" name="activityLevel" required>
                     <option value="">How active are you?</option>
-                    <option value="sedentary">Sedentary</option>
-                    <option value="light">Light Activity</option>
-                    <option value="moderate">Moderate Activity</option>
-                    <option value="high">High Activity</option>
-                    <option value="very-high">Very High Activity</option>
+                    <option value="daily">Daily</option>
+                    <option value="regularly">Regularly</option>
+                    <option value="occasionally">Occasionally</option>
+                    <option value="rarely">Rarely</option>
+                    <option value="never">Never</option>
                   </select>
                 </div>
               </div>
