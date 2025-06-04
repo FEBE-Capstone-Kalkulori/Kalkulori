@@ -110,6 +110,42 @@
   padding: 20px;
 }
 
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+  background: #f5f5dc;
+}
+
+.pagination-btn {
+  background: #654321;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #543210;
+}
+
+.pagination-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
 @media (max-width: 768px) {
   .add-meal-header {
     padding: 16px;
@@ -134,5 +170,19 @@
   
   #food-container {
     padding: 0 16px 20px;
+  }
+
+  .pagination-container {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .pagination-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .pagination-info {
+    font-size: 14px;
   }
 }

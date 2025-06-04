@@ -1,7 +1,6 @@
 class FoodApiService {
   constructor() {
-    // Ganti dengan URL API server Anda
-    this.baseUrl = 'https://kalkulori.up.railway.app/api'; // Sesuaikan dengan URL API Anda
+    this.baseUrl = 'https://kalkulori.up.railway.app/api';
   }
 
   async getAllFoods(params = {}) {
@@ -11,7 +10,8 @@ class FoodApiService {
       if (params.name) queryParams.append('name', params.name);
       if (params.verified !== undefined) queryParams.append('verified', params.verified);
       if (params.limit) queryParams.append('limit', params.limit);
-      if (params.offset) queryParams.append('offset', params.offset);
+      if (params.cursor) queryParams.append('cursor', params.cursor);
+      if (params.direction) queryParams.append('direction', params.direction);
 
       const url = `${this.baseUrl}/foods${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       
@@ -29,7 +29,10 @@ class FoodApiService {
       const result = await response.json();
       
       if (result.status === 'success') {
-        return result.data.foods;
+        return {
+          foods: result.data.foods,
+          pagination: result.data.pagination
+        };
       } else {
         throw new Error(result.message || 'Failed to fetch foods');
       }
@@ -77,25 +80,22 @@ class FoodApiService {
     }
   }
 
-  // Method untuk mengubah format data API menjadi format yang sesuai dengan FoodCard
   formatFoodForCard(apiFood) {
     return {
       id: apiFood.id,
       name: apiFood.food_name,
       calories: apiFood.calories_per_serving,
-      image: apiFood.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80', // default image
+      image: apiFood.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
       serving_size: apiFood.serving_size,
       serving_unit: apiFood.serving_unit
     };
   }
 
-  // Method untuk mengubah array foods dari API
   formatFoodsForCards(apiFoods) {
     return apiFoods.map(food => this.formatFoodForCard(food));
   }
 }
 
-// Singleton instance
 const foodApiService = new FoodApiService();
 
 export default foodApiService;

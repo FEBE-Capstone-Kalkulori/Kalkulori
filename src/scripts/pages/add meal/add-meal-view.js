@@ -26,6 +26,8 @@ const createAddMealTemplate = (data) => {
       </div>
       
       ${createContentSection(data)}
+      
+      ${createPaginationSection(data)}
     </div>
   `;
 };
@@ -76,6 +78,38 @@ const createMealsGrid = (meals) => {
   ).join('');
 };
 
+const createPaginationSection = (data) => {
+  if (data.loading || data.meals.length === 0) {
+    return '';
+  }
+
+  const hasPages = data.pagination.has_next_page || data.pagination.has_prev_page;
+  
+  if (!hasPages) {
+    return '';
+  }
+
+  return `
+    <div class="pagination-container">
+      <button 
+        class="pagination-btn" 
+        id="prev-button"
+        ${!data.pagination.has_prev_page ? 'disabled' : ''}
+      >
+        Previous
+      </button>
+      
+      <button 
+        class="pagination-btn" 
+        id="next-button"
+        ${!data.pagination.has_next_page ? 'disabled' : ''}
+      >
+        Next
+      </button>
+    </div>
+  `;
+};
+
 export default {
   render(container, data) {
     container.innerHTML = createAddMealTemplate(data);
@@ -86,6 +120,8 @@ export default {
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
     const foodContainer = document.getElementById('food-container');
+    const prevButton = document.getElementById('prev-button');
+    const nextButton = document.getElementById('next-button');
     
     if (backButton && eventHandlers.onBackClicked) {
       backButton.addEventListener('click', eventHandlers.onBackClicked);
@@ -106,8 +142,15 @@ export default {
         }
       });
     }
+
+    if (prevButton && eventHandlers.onPreviousClicked) {
+      prevButton.addEventListener('click', eventHandlers.onPreviousClicked);
+    }
+
+    if (nextButton && eventHandlers.onNextClicked) {
+      nextButton.addEventListener('click', eventHandlers.onNextClicked);
+    }
     
-    // Bind food card events jika container ada dan tidak dalam loading state
     if (foodContainer) {
       window.FoodCard.bindFoodCardEvents('food-container');
     }
