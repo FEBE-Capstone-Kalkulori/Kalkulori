@@ -1,6 +1,7 @@
 import AddMealView from './add-meal-view';
 import { defaultMealsData } from '../../pages/templates/foodCard';
 import foodApiService from '../../utils/food-api-service';
+import mealApiService from '../../utils/meal-api-service';
 
 class AddMealPresenter {
   constructor({ container }) {
@@ -19,7 +20,7 @@ class AddMealPresenter {
         prev_cursor: null,
         current_cursor: null
       },
-      itemsPerPage: 10,
+      itemsPerPage: 12,
       cursors: []
     };
     
@@ -33,6 +34,8 @@ class AddMealPresenter {
 
   async init() {
     try {
+      window.mealApiService = mealApiService;
+      
       this.data.loading = true;
       this.data.currentPage = 0;
       this.data.cursors = [null];
@@ -58,7 +61,7 @@ class AddMealPresenter {
       let result;
       
       if (searchQuery.trim()) {
-        result = await foodApiService.searchFoods(searchQuery, 50);
+        result = await foodApiService.searchFoods(searchQuery, 60);
         this.data.meals = foodApiService.formatFoodsForCards(result.foods || result);
         this.data.currentPage = 0;
         this.data.cursors = [null];

@@ -6,46 +6,8 @@ const createHomeTemplate = (data) => {
           <div class="left-column">
             <div class="content-box daily-calories-box">
               <h2>Daily Calories</h2>
-              <div class="calorie-counter">
-                <div class="calorie-display">
-                  <div class="calorie-number">${data.currentCalories}</div>
-                  <div class="calorie-remaining">${data.calorieLimit - data.currentCalories} kcal left!</div>
-                </div>
-                <button class="add-meal-btn" id="add-meal-button">Add Meal</button>
-              </div>
-            </div>
-
-            <div class="content-box meal-plan-box">
-              <h2>Meal Plan</h2>
-              <div class="meal-plan-header">
-                <div class="meal-title">Meal 1</div>
-                <div class="meal-calorie-info">1200 kcal/<span class="calorie-limit-text">1500</span></div>
-              </div>
-              <div class="meal-plan-items">
-                <div class="meal-item">
-                  <div class="meal-item-image">
-                    <img src="./public/image/meals/fried-chicken-wings.jpg" alt="Fried Chicken Wings">
-                  </div>
-                  <div class="meal-item-label">Breakfast</div>
-                  <div class="meal-item-name">Fried Chicken Wings</div>
-                </div>
-                
-                <div class="meal-item">
-                  <div class="meal-item-image">
-                    <img src="./public/image/meals/fried-rice-egg.jpg" alt="Fried Rice with Egg">
-                  </div>
-                  <div class="meal-item-label">Lunch</div>
-                  <div class="meal-item-name">Fried Rice with Egg</div>
-                </div>
-                
-                <div class="meal-item">
-                  <div class="meal-item-image">
-                    <img src="./public/image/meals/soto-ayam.jpg" alt="Soto Ayam">
-                  </div>
-                  <div class="meal-item-label">Dinner</div>
-                  <div class="meal-item-name">Soto Ayam</div>
-                </div>
-              </div>
+              ${createCalorieTracker(data)}
+              ${createTodaysMeals(data)}
             </div>
           </div>
 
@@ -60,51 +22,139 @@ const createHomeTemplate = (data) => {
             </div>
 
             <div class="suggestions-grid">
-              <div class="suggestion-meal-item">
-                <div class="suggestion-meal-image">
-                  <img src="./public/image/meals/chicken-soto.jpg" alt="Chicken Soto">
-                </div>
-                <div class="suggestion-meal-details">
-                  <div class="suggestion-meal-name">Chicken Soto</div>
-                  <div class="suggestion-meal-calories">312 kcal</div>
-                </div>
-              </div>
-              
-              <div class="suggestion-meal-item">
-                <div class="suggestion-meal-image">
-                  <img src="./public/image/meals/fried-noodles.jpg" alt="Fried Noodles">
-                </div>
-                <div class="suggestion-meal-details">
-                  <div class="suggestion-meal-name">Fried Noodles</div>
-                  <div class="suggestion-meal-calories">280 kcal</div>
-                </div>
-              </div>
-              
-              <div class="suggestion-meal-item">
-                <div class="suggestion-meal-image">
-                  <img src="./public/image/meals/meatballs-soup.jpg" alt="Meatballs Soup">
-                </div>
-                <div class="suggestion-meal-details">
-                  <div class="suggestion-meal-name">Meatballs Soup</div>
-                  <div class="suggestion-meal-calories">283 kcal</div>
-                </div>
-              </div>
-              
-              <div class="suggestion-meal-item">
-                <div class="suggestion-meal-image">
-                  <img src="./public/image/meals/noodles-soup.jpg" alt="Noodles Soup">
-                </div>
-                <div class="suggestion-meal-details">
-                  <div class="suggestion-meal-name">Noodles Soup</div>
-                  <div class="suggestion-meal-calories">137 kcal</div>
-                </div>
-              </div>
+              ${createSuggestionsGrid(data.suggestedMeals)}
             </div>
           </div>
         </div>
       </div>
     </div>
   `;
+};
+
+const createCalorieTracker = (data) => {
+  if (data.loading) {
+    return `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading calorie data...</p>
+      </div>
+    `;
+  }
+
+  const percentage = Math.min((data.currentCalories / data.calorieLimit) * 100, 100);
+  const remaining = Math.max(data.calorieLimit - data.currentCalories, 0);
+  
+  return `
+    <div class="calorie-counter">
+      <div class="calorie-display">
+        <div class="calorie-number">${data.currentCalories}</div>
+        <div class="calorie-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${percentage}%"></div>
+          </div>
+        </div>
+        <div class="calorie-remaining">${remaining} kcal left!</div>
+      </div>
+      <button class="add-meal-btn" id="add-meal-button">Add Meal</button>
+    </div>
+  `;
+};
+
+const createTodaysMeals = (data) => {
+  if (data.loading) {
+    return `
+      <div class="loading-container">
+        <p>Loading today's meals...</p>
+      </div>
+    `;
+  }
+
+  if (data.mealEntries.length === 0) {
+    return `
+      <div class="todays-meals-section">
+        <h3 class="todays-meals-title">Today's Meals</h3>
+        <div class="no-meals-container">
+          <p class="no-meals-message">No meals added today</p>
+        </div>
+      </div>
+    `;
+  }
+
+  const mealsByType = groupMealsByType(data.mealEntries);
+  
+  return `
+    <div class="todays-meals-section">
+      <h3 class="todays-meals-title">Today's Meals</h3>
+      <div class="todays-meals">
+        ${Object.entries(mealsByType).map(([mealType, meals]) => `
+          <div class="meal-type-section">
+            <h4 class="meal-type-title">${capitalizeFirst(mealType)}</h4>
+            <div class="meal-entries-compact">
+              ${meals.map(meal => createCompactMealCard(meal)).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+const createCompactMealCard = (meal) => {
+  const foodDetails = meal.food_details;
+  const totalCalories = Math.round(meal.calories);
+  
+  return `
+    <div class="compact-meal-card" data-meal-id="${meal.id}">
+      <div class="compact-meal-image">
+        <img src="${foodDetails?.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'}" alt="${foodDetails?.food_name || 'Food'}">
+      </div>
+      <div class="compact-meal-info">
+        <span class="compact-meal-name">${foodDetails?.food_name || 'Unknown Food'}</span>
+        <span class="compact-meal-details">${meal.servings}x • ${totalCalories} kcal</span>
+      </div>
+      <button class="delete-meal-btn" data-meal-id="${meal.id}" title="Remove meal">
+        <span>&times;</span>
+      </button>
+    </div>
+  `;
+};
+
+const createSuggestionsGrid = (suggestedMeals) => {
+  return suggestedMeals.map(meal => `
+    <div class="suggestion-meal-item">
+      <div class="suggestion-meal-image">
+        <img src="${meal.image}" alt="${meal.name}">
+      </div>
+      <div class="suggestion-meal-details">
+        <div class="suggestion-meal-name">${meal.name}</div>
+        <div class="suggestion-meal-calories">${meal.calories} kcal</div>
+      </div>
+    </div>
+  `).join('');
+};
+
+const groupMealsByType = (mealEntries) => {
+  return mealEntries.reduce((groups, meal) => {
+    const type = meal.meal_type;
+    if (!groups[type]) {
+      groups[type] = [];
+    }
+    groups[type].push(meal);
+    return groups;
+  }, {});
+};
+
+const capitalizeFirst = (str) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
 };
 
 export default {
@@ -116,6 +166,7 @@ export default {
     const addMealButton = document.getElementById('add-meal-button');
     const savoryOption = document.getElementById('savory-option');
     const suggestionDone = document.getElementById('suggestion-done');
+    const deleteMealButtons = document.querySelectorAll('.delete-meal-btn');
     
     if (addMealButton && eventHandlers.onAddMealClicked) {
       addMealButton.addEventListener('click', eventHandlers.onAddMealClicked);
@@ -129,6 +180,18 @@ export default {
     
     if (suggestionDone && eventHandlers.onSuggestionDoneClicked) {
       suggestionDone.addEventListener('click', eventHandlers.onSuggestionDoneClicked);
+    }
+    
+    if (deleteMealButtons && eventHandlers.onDeleteMealClicked) {
+      deleteMealButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const mealId = button.dataset.mealId;
+          if (mealId && confirm('Are you sure you want to remove this meal?')) {
+            eventHandlers.onDeleteMealClicked(mealId);
+          }
+        });
+      });
     }
   }
 };

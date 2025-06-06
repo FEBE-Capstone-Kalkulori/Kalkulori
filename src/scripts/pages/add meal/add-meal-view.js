@@ -74,7 +74,14 @@ const createMealsContainer = (meals) => {
 
 const createMealsGrid = (meals) => {
   return meals.map(meal => 
-    window.FoodCard.createFoodCard(meal.image, meal.name, meal.calories)
+    window.FoodCard.createFoodCard(
+      meal.image, 
+      meal.name, 
+      meal.calories,
+      meal.id,
+      meal.serving_size,
+      meal.serving_unit
+    )
   ).join('');
 };
 

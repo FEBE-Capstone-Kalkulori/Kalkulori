@@ -1,4 +1,5 @@
 import HomeView from './home-view';
+import mealApiService from '../../utils/meal-api-service';
 
 class HomePresenter {
   constructor({ container }) {
@@ -7,6 +8,10 @@ class HomePresenter {
       currentCalories: 0,
       calorieLimit: 1500,
       selectedOptions: [],
+      dailyLog: null,
+      mealEntries: [],
+      loading: true,
+      error: null,
       mealPlan: [
         {
           type: 'Breakfast',
@@ -54,19 +59,49 @@ class HomePresenter {
     this.eventHandlers = {
       onAddMealClicked: this._handleAddMeal.bind(this),
       onSuggestionOptionClicked: this._handleSuggestionOption.bind(this),
-      onSuggestionDoneClicked: this._handleSuggestionDone.bind(this)
+      onSuggestionDoneClicked: this._handleSuggestionDone.bind(this),
+      onDeleteMealClicked: this._handleDeleteMeal.bind(this)
     };
   }
 
   async init() {
     try {
+      this.data.loading = true;
       this._renderView();
+      
+      await this._fetchDailyData();
     } catch (error) {
       console.error('Failed to initialize Home page:', error);
+      this.data.error = 'Failed to load daily data';
+      this.data.loading = false;
+      this._renderView();
     }
   }
 
-  async _fetchUserData() {
+  async _fetchDailyData() {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyData = await mealApiService.getDailyLog(today);
+      
+      this.data.dailyLog = dailyData.daily_log;
+      this.data.mealEntries = dailyData.meal_entries || [];
+      this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
+      
+      if (dailyData.daily_log.remaining_calories !== undefined) {
+        this.data.calorieLimit = this.data.currentCalories + dailyData.daily_log.remaining_calories;
+      }
+      
+    } catch (error) {
+      console.error('Error fetching daily data:', error);
+      this.data.error = 'Unable to load today\'s data';
+      this.data.currentCalories = 0;
+      this.data.calorieLimit = 1500;
+      this.data.mealEntries = [];
+      this.data.dailyLog = null;
+    } finally {
+      this.data.loading = false;
+      this._renderView();
+    }
   }
 
   _renderView() {
@@ -88,6 +123,24 @@ class HomePresenter {
     console.log('Suggestion done button clicked');
     this.data.selectedOptions = [];
     this._renderView();
+  }
+
+  async _handleDeleteMeal(mealId) {
+    try {
+      this.data.loading = true;
+      this._renderView();
+      
+      await mealApiService.deleteMealEntry(mealId);
+      
+      await this._fetchDailyData();
+      
+      console.log('Meal deleted successfully');
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      alert('Failed to delete meal. Please try again.');
+      this.data.loading = false;
+      this._renderView();
+    }
   }
 }
 
