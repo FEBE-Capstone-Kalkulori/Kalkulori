@@ -6,6 +6,7 @@ class HistoryPresenter {
     this.currentYear = new Date().getFullYear();
     this.chartData = [];
     this.foodHistory = [];
+    this.selectedDate = new Date();
     
     this.initCurrentDateSettings();
   }
@@ -37,7 +38,6 @@ class HistoryPresenter {
   init() {
     console.log('🚀 Initializing History Presenter...');
     
-    // Check if DOM elements exist
     const container = document.getElementById('history-food-container');
     const monthDropdown = document.getElementById('month-dropdown');
     const chartBars = document.getElementById('chart-bars');
@@ -53,10 +53,9 @@ class HistoryPresenter {
     this.updateActiveWeekButton();
     this.loadChartData();
     
-    // Load food history dengan delay untuk memastikan DOM ready
     setTimeout(() => {
-      console.log('⏰ Starting food history load...');
-      this.loadFoodHistory();
+      console.log('⏰ Starting food history load for today...');
+      this.loadFoodHistory(this.formatDateForAPI(new Date()));
     }, 100);
   }
 
@@ -179,26 +178,27 @@ class HistoryPresenter {
     }
   }
 
-  async loadFoodHistory() {
+  async loadFoodHistory(logDate = null) {
     try {
-      console.log('🔄 Loading food history...');
+      console.log('🔄 Loading food history for date:', logDate);
       this.showFoodLoading();
       
-      const allMealEntries = await mealApiService.getMealEntries({});
-      console.log('📊 Meal entries received:', allMealEntries);
+      const targetDate = logDate || this.formatDateForAPI(new Date());
       
-      if (!allMealEntries || allMealEntries.length === 0) {
-        console.log('❌ No meal entries found');
-        this.showFoodError('No meal history found');
+      const mealEntries = await mealApiService.getMealEntries({ log_date: targetDate });
+      console.log('📊 Meal entries received for', targetDate, ':', mealEntries);
+      
+      if (!mealEntries || mealEntries.length === 0) {
+        console.log('❌ No meal entries found for', targetDate);
+        this.showFoodError(`No meals found for ${this.formatDisplayDate(targetDate)}`);
         return;
       }
       
       const uniqueFoods = new Map();
       
-      allMealEntries.forEach((entry, index) => {
+      mealEntries.forEach((entry, index) => {
         console.log(`📝 Processing entry ${index}:`, entry);
         
-        // Berdasarkan backend structure: food data ada di 'food_details'
         let foodItem = null;
         if (entry.food_details) {
           foodItem = entry.food_details;
@@ -212,64 +212,31 @@ class HistoryPresenter {
         
         if (foodItem && (foodItem.id || foodItem.food_id || entry.food_item_id)) {
           const foodId = foodItem.id || foodItem.food_id || entry.food_item_id;
-          if (!uniqueFoods.has(foodId)) {
+          const entryKey = `${foodId}_${entry.meal_type}_${entry.id}`;
+          
+          if (!uniqueFoods.has(entryKey)) {
             const foodData = {
               id: foodId,
+              entryId: entry.id,
               name: foodItem.name || foodItem.food_name || 'Unknown Food',
-              calories: Math.round(foodItem.calories_per_serving || foodItem.calories || foodItem.total_calories || 0),
+              calories: Math.round((foodItem.calories_per_serving || foodItem.calories || foodItem.total_calories || 0) * (entry.servings || 1)),
               image: foodItem.image_url || foodItem.image || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`,
-              serving_size: foodItem.default_serving_size || foodItem.serving_size || 1,
-              serving_unit: foodItem.serving_unit || foodItem.unit || 'serving'
+              serving_size: entry.servings || foodItem.default_serving_size || foodItem.serving_size || 1,
+              serving_unit: foodItem.serving_unit || foodItem.unit || 'serving',
+              meal_type: entry.meal_type
             };
             
-            console.log(`✅ Added unique food:`, foodData);
-            uniqueFoods.set(foodId, foodData);
+            console.log(`✅ Added food for ${targetDate}:`, foodData);
+            uniqueFoods.set(entryKey, foodData);
           }
-        } else {
-          console.log(`⚠️  Entry ${index} structure:`, {
-            hasFood_details: !!entry.food_details,
-            hasFood_item: !!entry.food_item,
-            food_item_id: entry.food_item_id,
-            entry: entry
-          });
         }
       });
       
       this.foodHistory = Array.from(uniqueFoods.values()).slice(0, 12);
-      console.log('🍽️ Final food history:', this.foodHistory);
+      console.log('🍽️ Final food history for', targetDate, ':', this.foodHistory);
       
       if (this.foodHistory.length === 0) {
-        console.log('📝 No food history found, using sample data...');
-        
-        // Fallback ke sample data jika tidak ada history
-        this.foodHistory = [
-          {
-            id: "sample_1",
-            name: "Fried Chicken Wings",
-            calories: 320,
-            image: "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-            serving_size: 1,
-            serving_unit: "serving"
-          },
-          {
-            id: "sample_2", 
-            name: "Fried Rice with Egg",
-            calories: 270,
-            image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-            serving_size: 1,
-            serving_unit: "serving"
-          },
-          {
-            id: "sample_3",
-            name: "Chicken Soto", 
-            calories: 312,
-            image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-            serving_size: 1,
-            serving_unit: "serving"
-          }
-        ];
-        
-        this.renderFoodHistory();
+        this.showFoodError(`No meals found for ${this.formatDisplayDate(targetDate)}`);
       } else {
         this.renderFoodHistory();
       }
@@ -278,6 +245,57 @@ class HistoryPresenter {
       console.error('💥 Error loading food history:', error);
       this.showFoodError('Failed to load food history');
     }
+  }
+
+  formatDisplayDate(dateStr) {
+    const date = new Date(dateStr);
+    const today = new Date();
+    
+    if (this.isSameDate(date, today)) {
+      return 'Today';
+    }
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    if (this.isSameDate(date, yesterday)) {
+      return 'Yesterday';
+    }
+    
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  isSameDate(date1, date2) {
+    return date1.getDate() === date2.getDate() && 
+           date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
+  }
+
+  onBarClick(dateData) {
+    this.selectedDate = dateData.date;
+    const dateStr = this.formatDateForAPI(dateData.date);
+    this.loadFoodHistory(dateStr);
+    
+    this.updateSelectedBar();
+  }
+
+  updateSelectedBar() {
+    const chartBars = document.getElementById('chart-bars');
+    if (!chartBars) return;
+    
+    const bars = chartBars.querySelectorAll('.chart-bar');
+    bars.forEach((bar, index) => {
+      const barData = this.chartData[index];
+      if (barData && this.isSameDate(barData.date, this.selectedDate)) {
+        bar.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+      } else if (!this.isToday(barData?.date)) {
+        bar.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+      }
+    });
   }
 
   renderFoodHistory() {
@@ -320,7 +338,10 @@ class HistoryPresenter {
       </div>
       <div class="flex-1 min-w-0">
         <h4 class="font-medium text-sm text-gray-900 truncate">${food.name}</h4>
-        <p class="text-xs text-gray-600">${food.calories} kcal</p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs text-gray-600">${food.calories} kcal</p>
+          <span class="text-xs px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full">${food.meal_type}</span>
+        </div>
       </div>
       <button class="w-8 h-8 bg-lime-500 text-white rounded-full flex items-center justify-center hover:bg-lime-600 hover:scale-110 active:scale-95 transition-all duration-200 flex-shrink-0 border-none outline-none">
         <span class="text-sm font-bold">+</span>
@@ -445,9 +466,11 @@ class HistoryPresenter {
         alert('Meal added successfully!');
         closePopup();
         
-        if (logDate === new Date().toISOString().split('T')[0]) {
-          this.loadChartData();
+        if (logDate === this.formatDateForAPI(this.selectedDate)) {
+          this.loadFoodHistory(logDate);
         }
+        
+        this.loadChartData();
         
       } catch (error) {
         console.error('Error adding meal:', error);
@@ -474,8 +497,12 @@ class HistoryPresenter {
       const barHeight = data.calories > 0 ? (data.calories / maxCalories) * chartHeight : 0;
       
       const bar = document.createElement('div');
-      bar.className = 'bg-amber-800 w-8 sm:w-12 mx-1 rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group';
+      bar.className = 'chart-bar bg-amber-800 w-8 sm:w-12 mx-1 rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group';
       bar.style.height = `${barHeight}px`;
+      
+      bar.addEventListener('click', () => {
+        this.onBarClick(data);
+      });
       
       const tooltip = document.createElement('div');
       tooltip.className = 'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10';
@@ -501,6 +528,8 @@ class HistoryPresenter {
       label.textContent = data.dateLabel;
       chartXAxis.appendChild(label);
     });
+
+    this.updateSelectedBar();
   }
 
   isToday(date) {
