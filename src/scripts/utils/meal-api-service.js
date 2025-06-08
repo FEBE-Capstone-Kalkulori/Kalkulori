@@ -1,6 +1,6 @@
 class MealApiService {
   constructor() {
-    //this.baseUrl = 'https://kalkulori.up.railway.app/api'; // Uncommented baseUrl
+    this.baseUrl = 'https://kalkulori.up.railway.app/api';
   }
 
   async createMealEntry(mealData) {
@@ -214,5 +214,9 @@ class MealApiService {
 }
 
 const mealApiService = new MealApiService();
+
+if (typeof window !== 'undefined') {
+  window.mealApiService = mealApiService;
+}
 
 export default mealApiService;

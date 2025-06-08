@@ -1,5 +1,6 @@
 import HistoryView from './history-view';
 import HistoryPresenter from './history-presenter';
+import mealApiService from '../../utils/meal-api-service';
 
 const History = {
   async render() {
@@ -16,22 +17,21 @@ const History = {
 
   async afterRender() {
     try {
-      // Cleanup sebelum inisialisasi untuk menghindari konflik
       this.onLeave();
       
-      // Small delay untuk memastikan DOM ready
       await new Promise(resolve => setTimeout(resolve, 50));
+      
+      if (typeof window !== 'undefined') {
+        window.mealApiService = mealApiService;
+      }
       
       const view = new HistoryView();
       const presenter = new HistoryPresenter(view);
       
-      // Toggle headers - show history header, hide home header
       view.toggleHeaders(true);
       
-      // Initialize presenter
       presenter.init();
       
-      // Simpan reference untuk cleanup
       this.view = view;
       this.presenter = presenter;
       this.isActive = true;
@@ -39,21 +39,17 @@ const History = {
     } catch (error) {
       console.error('Error in History afterRender:', error);
       
-      // Fallback cleanup jika ada error
       if (this.view) {
         this.view.forceCleanupHeaders();
       }
     }
   },
 
-  // Method untuk cleanup ketika leave history page
   onLeave() {
     try {
       if (this.view) {
-        // Kembalikan ke header home, hapus header history
         this.view.toggleHeaders(false);
         
-        // Double check dengan force cleanup
         setTimeout(() => {
           if (this.view && !this.isActive) {
             this.view.forceCleanupHeaders();
@@ -61,7 +57,6 @@ const History = {
         }, 100);
       }
       
-      // Clear references
       this.view = null;
       this.presenter = null;
       this.isActive = false;
@@ -69,7 +64,6 @@ const History = {
     } catch (error) {
       console.error('Error in History onLeave:', error);
       
-      // Emergency cleanup
       const historyHeaders = document.querySelectorAll('.kalkulori-history-header');
       historyHeaders.forEach(header => header.remove());
       
@@ -80,11 +74,9 @@ const History = {
     }
   },
 
-  // Method untuk force reset jika header stuck
   forceReset() {
     this.onLeave();
     
-    // Additional cleanup
     setTimeout(() => {
       const historyHeaders = document.querySelectorAll('.kalkulori-history-header');
       historyHeaders.forEach(header => header.remove());
@@ -97,14 +89,12 @@ const History = {
   }
 };
 
-// Global error handler untuk header cleanup
 window.addEventListener('beforeunload', () => {
   if (History.view) {
     History.onLeave();
   }
 });
 
-// Route change handler (jika menggunakan router)
 window.addEventListener('hashchange', () => {
   const currentHash = window.location.hash;
   if (!currentHash.includes('history') && History.view) {

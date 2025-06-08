@@ -26,23 +26,36 @@ class HistoryView {
           </div>
         </div>
         
-        <div class="bg-white p-8 rounded-3xl shadow-lg mb-8 border-4 border-lime-300">
-          <div class="flex items-end h-80 relative">
-            <div class="flex flex-col justify-between h-72 mr-5 font-medium text-gray-600 text-sm">
-              <span>3000</span>
-              <span>2500</span>
-              <span>2000</span>
-              <span>1500</span>
-              <span>1000</span>
-              <span>500</span>
-              <span>0</span>
-            </div>
-            <div class="flex-1 h-72 flex items-end justify-around px-2" id="chart-bars">
-              <!-- Chart bars akan dirender di sini -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          <div class="lg:col-span-3">
+            <div class="bg-white p-8 rounded-3xl shadow-lg border-4 border-lime-300">
+              <div class="flex items-end h-80 relative">
+                <div class="flex flex-col justify-between h-72 mr-5 font-medium text-gray-600 text-sm">
+                  <span>3000</span>
+                  <span>2500</span>
+                  <span>2000</span>
+                  <span>1500</span>
+                  <span>1000</span>
+                  <span>500</span>
+                  <span>0</span>
+                </div>
+                <div class="flex-1 h-72 flex items-end justify-around px-2" id="chart-bars">
+                </div>
+              </div>
+              <div class="chart-x-axis flex justify-around mt-4 text-gray-600 font-medium ml-10">
+              </div>
             </div>
           </div>
-          <div class="chart-x-axis flex justify-around mt-4 text-gray-600 font-medium ml-10">
-            <!-- X-axis labels akan dirender di sini -->
+          
+          <div class="lg:col-span-1">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border-4 border-lime-300">
+              <h3 class="text-xl font-semibold text-amber-900 mb-4 font-roboto-slab">Quick Add</h3>
+              <div class="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" id="history-food-container">
+                <div class="flex items-center justify-center h-40 text-gray-500">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-800"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -56,7 +69,6 @@ class HistoryView {
     `;
   }
 
-  // Method untuk membuat header khusus history dengan ID unik
   createHistoryHeader() {
     return `
       <div id="${this.historyHeaderId}" class="kalkulori-history-header bg-yellow-200 py-4 shadow-lg sticky top-0 z-30 mb-0">
@@ -82,16 +94,13 @@ class HistoryView {
     `;
   }
 
-  // Method untuk hide/show header dengan better error handling
   toggleHeaders(showHistoryHeader = true) {
     try {
-      // CLEANUP: Hapus history header yang spesifik dengan ID
       const existingHistoryHeader = document.getElementById(this.historyHeaderId);
       if (existingHistoryHeader) {
         existingHistoryHeader.remove();
       }
       
-      // Juga cleanup berdasarkan class (fallback untuk header lama)
       const existingHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
       existingHistoryHeaders.forEach(header => {
         if (header.id !== this.historyHeaderId) {
@@ -102,19 +111,16 @@ class HistoryView {
       const homeHeader = document.querySelector('header');
       
       if (showHistoryHeader) {
-        // Hide home header dengan smooth transition
         if (homeHeader) {
           homeHeader.style.display = 'none';
         }
         
-        // Create history header hanya jika belum ada
         if (!document.getElementById(this.historyHeaderId)) {
           const historyHeaderHTML = this.createHistoryHeader();
           document.body.insertAdjacentHTML('afterbegin', historyHeaderHTML);
         }
         
       } else {
-        // Show home header back
         if (homeHeader) {
           homeHeader.style.display = 'block';
         }
@@ -122,7 +128,6 @@ class HistoryView {
       
     } catch (error) {
       console.error('Error toggling headers:', error);
-      // Fallback: pastikan home header selalu visible jika ada error
       const homeHeader = document.querySelector('header');
       if (homeHeader && !showHistoryHeader) {
         homeHeader.style.display = 'block';
@@ -130,20 +135,16 @@ class HistoryView {
     }
   }
 
-  // Method untuk force cleanup semua history headers
   forceCleanupHeaders() {
     try {
-      // Remove by ID
       const specificHeader = document.getElementById(this.historyHeaderId);
       if (specificHeader) {
         specificHeader.remove();
       }
       
-      // Remove by class (catch-all)
       const allHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
       allHistoryHeaders.forEach(header => header.remove());
       
-      // Ensure home header is visible
       const homeHeader = document.querySelector('header');
       if (homeHeader) {
         homeHeader.style.display = 'block';
@@ -154,7 +155,6 @@ class HistoryView {
     }
   }
 
-  // Method untuk check apakah history header sedang aktif
   isHistoryHeaderActive() {
     return document.getElementById(this.historyHeaderId) !== null;
   }
