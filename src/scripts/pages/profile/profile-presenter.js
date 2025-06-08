@@ -54,7 +54,44 @@ class ProfilePresenter {
     this.view.attachEventHandlers(this.handlers);
   }
 
-  // Load user profile from API - FIXED WITH COMPREHENSIVE DEBUGGING
+  // Generate unique key untuk avatar berdasarkan user
+  _getAvatarKey() {
+    const userEmail = localStorage.getItem('userEmail');
+    const userId = localStorage.getItem('userId');
+    const identifier = userEmail || userId || 'default';
+    return `userAvatar_${identifier}`;
+  }
+
+  // Store avatar terpisah dengan key per user
+  _storeAvatar(avatarData) {
+    try {
+      const avatarKey = this._getAvatarKey();
+      if (avatarData) {
+        localStorage.setItem(avatarKey, avatarData);
+        console.log(`🖼️ Avatar stored with key: ${avatarKey}`);
+      } else {
+        localStorage.removeItem(avatarKey);
+        console.log(`🖼️ Avatar removed for key: ${avatarKey}`);
+      }
+    } catch (error) {
+      console.error('Error storing avatar:', error);
+    }
+  }
+
+  // Get stored avatar berdasarkan current user
+  _getStoredAvatar() {
+    try {
+      const avatarKey = this._getAvatarKey();
+      const avatar = localStorage.getItem(avatarKey);
+      console.log(`🖼️ Loading avatar with key: ${avatarKey}, exists: ${!!avatar}`);
+      return avatar;
+    } catch (error) {
+      console.error('Error getting stored avatar:', error);
+      return null;
+    }
+  }
+
+  // Load user profile from API - FIXED WITH AVATAR PERSISTENCE
   async _loadUserProfile() {
     try {
       this._showLoading('Loading profile...');
@@ -83,11 +120,17 @@ class ProfilePresenter {
           this.userData = localData;
           console.log('✅ Using local profile data as fallback');
           alert('Cannot connect to server. Using offline data.');
-          return;
         } else {
           alert('Cannot connect to server and no local data available.');
-          return;
         }
+        
+        // Load avatar terpisah (tetap load avatar meskipun offline)
+        const storedAvatar = this._getStoredAvatar();
+        if (storedAvatar) {
+          this.userData.avatar = storedAvatar;
+          console.log('🖼️ Avatar loaded from separate storage');
+        }
+        return;
       }
       
       // Coba ambil data dari API
@@ -100,11 +143,11 @@ class ProfilePresenter {
       this.userData = this.apiService.convertToFrontendFormat(profileData);
       console.log('✅ CONVERTED profile data:', JSON.stringify(this.userData, null, 2));
       
-      // Fallback ke localStorage untuk avatar (karena avatar tidak di-handle di API)
-      const localData = this._getStoredUserData();
-      if (localData && localData.avatar) {
-        this.userData.avatar = localData.avatar;
-        console.log('🖼️ Avatar loaded from localStorage');
+      // Load avatar dari storage terpisah (prioritas utama)
+      const storedAvatar = this._getStoredAvatar();
+      if (storedAvatar) {
+        this.userData.avatar = storedAvatar;
+        console.log('🖼️ Avatar loaded from separate storage (overriding API)');
       }
       
       console.log('🎯 FINAL userData for rendering:', JSON.stringify(this.userData, null, 2));
@@ -121,6 +164,8 @@ class ProfilePresenter {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
         localStorage.removeItem('userEmail');
+        localStorage.removeItem('userData');
+        // NOTE: Tidak hapus avatar storage agar tetap tersimpan
         alert('Session expired. Please login again.');
         window.location.hash = '#/signin';
         return;
@@ -144,6 +189,13 @@ class ProfilePresenter {
         const storedEmail = localStorage.getItem('userEmail');
         if (storedEmail) {
           this.userData.name = storedEmail.split('@')[0]; // Use email prefix as default name
+        }
+        
+        // Load avatar untuk user ini jika ada
+        const storedAvatar = this._getStoredAvatar();
+        if (storedAvatar) {
+          this.userData.avatar = storedAvatar;
+          console.log('🖼️ Avatar loaded for new user from separate storage');
         }
         
         console.log('ℹ️ Using default profile for new user');
@@ -173,6 +225,13 @@ class ProfilePresenter {
         alert('Error loading profile. Please update your information.');
       }
       
+      // Load avatar terpisah
+      const storedAvatar = this._getStoredAvatar();
+      if (storedAvatar) {
+        this.userData.avatar = storedAvatar;
+        console.log('🖼️ Avatar loaded from separate storage (fallback)');
+      }
+      
     } finally {
       this._hideLoading();
     }
@@ -188,9 +247,12 @@ class ProfilePresenter {
       const result = await this.apiService.updateUserProfile(profileData);
       console.log('✅ Profile save result:', result);
       
-      // Tetap simpan ke localStorage sebagai backup dan untuk avatar
+      // Tetap simpan ke localStorage sebagai backup (tidak termasuk avatar)
       this._storeUserData();
       console.log('💾 Profile also saved to localStorage as backup');
+      
+      // Simpan avatar terpisah
+      this._storeAvatar(profileData.avatar);
       
       return true;
     } catch (error) {
@@ -205,6 +267,7 @@ class ProfilePresenter {
       
       // Fallback: simpan hanya ke localStorage
       this._storeUserData();
+      this._storeAvatar(profileData.avatar);
       console.log('💾 Fallback: Profile saved to localStorage only');
       
       // Show more specific error message
@@ -234,7 +297,7 @@ class ProfilePresenter {
           height: parsedData.height || '',
           targetWeight: parsedData.targetWeight || '',
           activityLevel: parsedData.activityLevel || 'never',
-          avatar: parsedData.avatar || null
+          avatar: null // Avatar tidak disimpan di userData lagi
         };
       } catch (error) {
         console.error('Error parsing stored user data:', error);
@@ -246,8 +309,20 @@ class ProfilePresenter {
   
   _storeUserData() {
     try {
-      localStorage.setItem('userData', JSON.stringify(this.userData));
-      console.log('💾 User data stored to localStorage');
+      // Simpan data tanpa avatar (avatar disimpan terpisah)
+      const dataToStore = {
+        name: this.userData.name,
+        gender: this.userData.gender,
+        age: this.userData.age,
+        weight: this.userData.weight,
+        height: this.userData.height,
+        targetWeight: this.userData.targetWeight,
+        activityLevel: this.userData.activityLevel
+        // avatar tidak disimpan di sini
+      };
+      
+      localStorage.setItem('userData', JSON.stringify(dataToStore));
+      console.log('💾 User data stored to localStorage (without avatar)');
     } catch (error) {
       console.error('Error storing user data:', error);
     }
@@ -386,8 +461,9 @@ class ProfilePresenter {
       avatarImg.src = imageData;
     }
     
-    // Simpan avatar ke localStorage (karena API belum handle avatar)
-    this._storeUserData();
+    // Simpan avatar ke storage terpisah per user
+    this._storeAvatar(imageData);
+    console.log('🖼️ Avatar updated and stored for current user');
   }
 
   _stopCameraStream() {
@@ -500,14 +576,19 @@ class ProfilePresenter {
   }
 
   _handleSignOut() {
-    // Clear semua data authentication
+    // Clear semua data authentication dan userData
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authToken');
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userData');
-    console.log('🚪 User signed out, all data cleared');
+    
+    // NOTE: Avatar tidak dihapus karena disimpan dengan key per user
+    // Sehingga saat user login kembali, avatar tetap ada
+    
+    console.log('🚪 User signed out, authentication data cleared');
+    console.log('🖼️ Avatar preserved for future login');
     window.location.hash = '#/signin';
   }
   

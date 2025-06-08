@@ -100,7 +100,7 @@ function showAddMealPopup(foodData) {
                     </div>
                     <div class="form-group">
                         <label for="servings">Servings:</label>
-                        <input type="number" id="servings" min="0.1" step="0.1" value="1" required>
+                        <input type="number" id="servings" min="1" step="1" value="1" required>
                     </div>
                     <div class="form-group">
                         <label for="log-date">Date:</label>

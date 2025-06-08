@@ -1,8 +1,6 @@
-import CONFIG from '../../scripts/config';
-
 class MealApiService {
   constructor() {
-    this.baseUrl = CONFIG.API_BASE_URL;
+    this.baseUrl = 'https://kalkulori.up.railway.app/api';
   }
 
   async createMealEntry(mealData) {
@@ -162,6 +160,54 @@ class MealApiService {
       }
     } catch (error) {
       console.error('Error deleting meal entry:', error);
+      throw error;
+    }
+  }
+
+  async generateMealPlan() {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${this.baseUrl}/meals/generate-plan`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      console.log('🔍 Meal Plan API Response:', { status: response.status, data: result });
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to generate meal plan';
+        
+        if (response.status === 404) {
+          errorMessage = 'Profile not found. Please complete your profile first.';
+        } else if (response.status === 400) {
+          errorMessage = 'Daily calorie target not set. Please update your profile.';
+        } else if (response.status === 500) {
+          errorMessage = 'Server error. Please check your profile settings or try again later.';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal plan service temporarily unavailable. Please try again later.';
+        } else if (response.status === 504) {
+          errorMessage = 'Request timeout. The service is taking too long to respond.';
+        }
+        
+        console.error('🚨 Meal Plan API Error:', { status: response.status, message: errorMessage, details: result });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to generate meal plan');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Generate Meal Plan Error:', error);
       throw error;
     }
   }

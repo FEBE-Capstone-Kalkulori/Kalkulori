@@ -5,6 +5,7 @@ import './styles/profile.css';
 import './styles/history.css';
 import './styles/add-meal.css';
 import './styles/meal-popup.css';
+import './styles/meal-plan.css';
 import App from './scripts/app';
 import SliderComponent from './scripts/pages/slider';
 import AuthGuard from './scripts/utils/auth-guard';

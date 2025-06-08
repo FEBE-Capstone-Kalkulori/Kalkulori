@@ -1,3 +1,6 @@
+import { MEAL_CATEGORIES } from './meal-categories.js';
+import { createMealPlanSection, attachMealPlanEventHandlers } from './meal-plan.js';
+
 const createHomeTemplate = (data) => {
   return `
     <div class="page-outer-wrapper">
@@ -9,22 +12,88 @@ const createHomeTemplate = (data) => {
               ${createCalorieTracker(data)}
               ${createTodaysMeals(data)}
             </div>
+            
+            <div class="content-box meal-plan-box">
+              <h2>Meal Plan</h2>
+              ${createMealPlanSection(data.mealPlan)}
+            </div>
           </div>
 
           <div class="right-column">
             <div class="content-box suggestion-box">
-              <h2>Suggestion Meals</h2>
-              <div class="suggestion-input">
-                <div class="suggestion-question">What do you want to eat today?</div>
-                <button class="suggestion-option" id="savory-option">savory</button>
-                <button class="suggestion-done" id="suggestion-done">Done</button>
-              </div>
+              <h2>Meal Preferences</h2>
+              ${createCategoriesGrid(data)}
+              ${createSelectedKeywords(data)}
             </div>
 
             <div class="suggestions-grid">
               ${createSuggestionsGrid(data.suggestedMeals)}
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+    ${createCategoryPopup(data)}
+  `;
+};
+
+const createCategoriesGrid = (data) => {
+  return `
+    <div class="categories-container">
+      <p class="categories-description">Choose your meal preferences:</p>
+      <div class="categories-grid">
+        ${Object.entries(MEAL_CATEGORIES).map(([key, category]) => `
+          <div class="category-card" data-category="${key}">
+            <div class="category-icon">${category.icon}</div>
+            <div class="category-title">${category.title}</div>
+            <div class="category-count">${data.selectedKeywords ? data.selectedKeywords.filter(k => category.keywords.includes(k)).length : 0} selected</div>
+          </div>
+        `).join('')}
+      </div>
+      ${data.selectedKeywords && data.selectedKeywords.length > 0 ? `
+        <div class="action-buttons">
+          <button class="find-meals-btn" id="find-meals-button">Find Meals</button>
+          <button class="clear-all-btn" id="clear-all-button">Clear All</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+};
+
+const createSelectedKeywords = (data) => {
+  if (!data.selectedKeywords || data.selectedKeywords.length === 0) {
+    return '';
+  }
+
+  return `
+    <div class="selected-keywords-container">
+      <h4>Selected Preferences:</h4>
+      <div class="selected-keywords">
+        ${data.selectedKeywords.map(keyword => `
+          <span class="keyword-tag">
+            ${keyword}
+            <button class="remove-keyword" data-keyword="${keyword}">&times;</button>
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+const createCategoryPopup = (data) => {
+  return `
+    <div class="category-popup-overlay" id="category-popup-overlay">
+      <div class="category-popup">
+        <div class="popup-header">
+          <h3 id="popup-title">Category</h3>
+          <button class="popup-close" id="popup-close">&times;</button>
+        </div>
+        <div class="popup-content">
+          <div class="keywords-grid" id="keywords-grid">
+          </div>
+        </div>
+        <div class="popup-footer">
+          <button class="popup-done-btn" id="popup-done">Done</button>
         </div>
       </div>
     </div>
@@ -148,15 +217,6 @@ const capitalizeFirst = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: true 
-  });
-};
-
 export default {
   render(container, data) {
     container.innerHTML = createHomeTemplate(data);
@@ -164,22 +224,18 @@ export default {
   
   afterRender(eventHandlers) {
     const addMealButton = document.getElementById('add-meal-button');
-    const savoryOption = document.getElementById('savory-option');
-    const suggestionDone = document.getElementById('suggestion-done');
     const deleteMealButtons = document.querySelectorAll('.delete-meal-btn');
+    
+    const categoryCards = document.querySelectorAll('.category-card');
+    const popupOverlay = document.getElementById('category-popup-overlay');
+    const popupClose = document.getElementById('popup-close');
+    const popupDone = document.getElementById('popup-done');
+    const findMealsButton = document.getElementById('find-meals-button');
+    const clearAllButton = document.getElementById('clear-all-button');
+    const removeKeywordButtons = document.querySelectorAll('.remove-keyword');
     
     if (addMealButton && eventHandlers.onAddMealClicked) {
       addMealButton.addEventListener('click', eventHandlers.onAddMealClicked);
-    }
-    
-    if (savoryOption && eventHandlers.onSuggestionOptionClicked) {
-      savoryOption.addEventListener('click', () => {
-        eventHandlers.onSuggestionOptionClicked('savory');
-      });
-    }
-    
-    if (suggestionDone && eventHandlers.onSuggestionDoneClicked) {
-      suggestionDone.addEventListener('click', eventHandlers.onSuggestionDoneClicked);
     }
     
     if (deleteMealButtons && eventHandlers.onDeleteMealClicked) {
@@ -192,6 +248,96 @@ export default {
           }
         });
       });
+    }
+
+    if (categoryCards && eventHandlers.onCategoryClicked) {
+      categoryCards.forEach(card => {
+        card.addEventListener('click', () => {
+          const category = card.dataset.category;
+          eventHandlers.onCategoryClicked(category);
+        });
+      });
+    }
+
+    if (popupOverlay && eventHandlers.onPopupClosed) {
+      popupOverlay.addEventListener('click', (e) => {
+        if (e.target === popupOverlay) {
+          eventHandlers.onPopupClosed();
+        }
+      });
+    }
+
+    if (popupClose && eventHandlers.onPopupClosed) {
+      popupClose.addEventListener('click', eventHandlers.onPopupClosed);
+    }
+
+    if (popupDone && eventHandlers.onPopupClosed) {
+      popupDone.addEventListener('click', eventHandlers.onPopupClosed);
+    }
+
+    if (findMealsButton && eventHandlers.onFindMealsClicked) {
+      findMealsButton.addEventListener('click', eventHandlers.onFindMealsClicked);
+    }
+
+    if (clearAllButton && eventHandlers.onClearAllClicked) {
+      clearAllButton.addEventListener('click', eventHandlers.onClearAllClicked);
+    }
+
+    if (removeKeywordButtons && eventHandlers.onKeywordRemoved) {
+      removeKeywordButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const keyword = button.dataset.keyword;
+          eventHandlers.onKeywordRemoved(keyword);
+        });
+      });
+    }
+
+    attachMealPlanEventHandlers(
+      eventHandlers.onGenerateMealPlan,
+      eventHandlers.onMealPlanItemClicked,
+      eventHandlers.onCompleteProfileClicked
+    );
+  },
+
+  showCategoryPopup(category, selectedKeywords = []) {
+    const popup = document.getElementById('category-popup-overlay');
+    const title = document.getElementById('popup-title');
+    const keywordsGrid = document.getElementById('keywords-grid');
+    
+    if (!popup || !title || !keywordsGrid) return;
+
+    const categoryData = MEAL_CATEGORIES[category];
+    if (!categoryData) return;
+
+    title.textContent = categoryData.title;
+    
+    keywordsGrid.innerHTML = categoryData.keywords.map(keyword => `
+      <div class="keyword-item ${selectedKeywords.includes(keyword) ? 'selected' : ''}" data-keyword="${keyword}">
+        <span class="keyword-text">${keyword}</span>
+        <span class="keyword-check">✓</span>
+      </div>
+    `).join('');
+
+    const keywordItems = keywordsGrid.querySelectorAll('.keyword-item');
+    keywordItems.forEach(item => {
+      item.addEventListener('click', () => {
+        item.classList.toggle('selected');
+        const keyword = item.dataset.keyword;
+        
+        const event = new CustomEvent('keywordToggled', {
+          detail: { keyword, selected: item.classList.contains('selected') }
+        });
+        document.dispatchEvent(event);
+      });
+    });
+
+    popup.style.display = 'flex';
+  },
+
+  hideCategoryPopup() {
+    const popup = document.getElementById('category-popup-overlay');
+    if (popup) {
+      popup.style.display = 'none';
     }
   }
 };
