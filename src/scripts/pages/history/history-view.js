@@ -1,4 +1,8 @@
 class HistoryView {
+  constructor() {
+    this.historyHeaderId = 'kalkulori-history-header-unique';
+  }
+
   getTemplate() {
     return `
       <div class="max-w-6xl mx-auto px-5 py-10 bg-yellow-200 bg-opacity-50 min-h-[60vh]">
@@ -24,7 +28,8 @@ class HistoryView {
         
         <div class="bg-white p-8 rounded-3xl shadow-lg mb-8 border-4 border-lime-300">
           <div class="flex items-end h-80 relative">
-            <div class="flex flex-col justify-between h-72 mr-5 font-medium text-gray-600">
+            <div class="flex flex-col justify-between h-72 mr-5 font-medium text-gray-600 text-sm">
+              <span>3000</span>
               <span>2500</span>
               <span>2000</span>
               <span>1500</span>
@@ -32,23 +37,17 @@ class HistoryView {
               <span>500</span>
               <span>0</span>
             </div>
-            <div class="flex-1 h-72 flex items-end justify-around" id="chart-bars">
+            <div class="flex-1 h-72 flex items-end justify-around px-2" id="chart-bars">
               <!-- Chart bars akan dirender di sini -->
             </div>
           </div>
-          <div class="flex justify-around mt-4 text-gray-600 font-medium ml-10">
-            <span>8/5</span>
-            <span>9/5</span>
-            <span>10/5</span>
-            <span>11/5</span>
-            <span>12/5</span>
-            <span>13/5</span>
-            <span>14/5</span>
+          <div class="chart-x-axis flex justify-around mt-4 text-gray-600 font-medium ml-10">
+            <!-- X-axis labels akan dirender di sini -->
           </div>
         </div>
         
         <div class="flex gap-4 justify-center flex-wrap">
-          <button class="week-btn px-6 py-3 bg-lime-300 text-amber-900 border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5 active" data-week="1">Week 1</button>
+          <button class="week-btn px-6 py-3 bg-lime-600 text-white border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-700 hover:-translate-y-0.5" data-week="1">Week 1</button>
           <button class="week-btn px-6 py-3 bg-lime-300 text-amber-900 border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5" data-week="2">Week 2</button>
           <button class="week-btn px-6 py-3 bg-lime-300 text-amber-900 border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5" data-week="3">Week 3</button>
           <button class="week-btn px-6 py-3 bg-lime-300 text-amber-900 border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5" data-week="4">Week 4</button>
@@ -57,10 +56,10 @@ class HistoryView {
     `;
   }
 
-  // Method untuk membuat header khusus history
+  // Method untuk membuat header khusus history dengan ID unik
   createHistoryHeader() {
     return `
-      <div class="kalkulori-history-header bg-yellow-200 py-4 shadow-lg sticky top-0 z-30 mb-0">
+      <div id="${this.historyHeaderId}" class="kalkulori-history-header bg-yellow-200 py-4 shadow-lg sticky top-0 z-30 mb-0">
         <div class="max-w-6xl mx-auto flex justify-between items-center px-5 flex-col md:flex-row gap-4 md:gap-0">
           <div class="text-3xl md:text-4xl font-bold text-amber-900 font-cal-sans">
             <span class="text-lime-600">kalku</span>lori
@@ -83,31 +82,81 @@ class HistoryView {
     `;
   }
 
-  // Method untuk hide/show header
+  // Method untuk hide/show header dengan better error handling
   toggleHeaders(showHistoryHeader = true) {
-    // CLEANUP: Hapus semua history headers yang ada (avoid duplikasi)
-    const existingHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
-    existingHistoryHeaders.forEach(header => header.remove());
-    
-    const homeHeader = document.querySelector('header');
-    
-    if (showHistoryHeader) {
-      // Hide home header
-      if (homeHeader) {
-        homeHeader.style.display = 'none';
+    try {
+      // CLEANUP: Hapus history header yang spesifik dengan ID
+      const existingHistoryHeader = document.getElementById(this.historyHeaderId);
+      if (existingHistoryHeader) {
+        existingHistoryHeader.remove();
       }
       
-      // Create ONE history header
-      const historyHeaderHTML = this.createHistoryHeader();
-      document.body.insertAdjacentHTML('afterbegin', historyHeaderHTML);
+      // Juga cleanup berdasarkan class (fallback untuk header lama)
+      const existingHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
+      existingHistoryHeaders.forEach(header => {
+        if (header.id !== this.historyHeaderId) {
+          header.remove();
+        }
+      });
       
-    } else {
-      // Show home header back
+      const homeHeader = document.querySelector('header');
+      
+      if (showHistoryHeader) {
+        // Hide home header dengan smooth transition
+        if (homeHeader) {
+          homeHeader.style.display = 'none';
+        }
+        
+        // Create history header hanya jika belum ada
+        if (!document.getElementById(this.historyHeaderId)) {
+          const historyHeaderHTML = this.createHistoryHeader();
+          document.body.insertAdjacentHTML('afterbegin', historyHeaderHTML);
+        }
+        
+      } else {
+        // Show home header back
+        if (homeHeader) {
+          homeHeader.style.display = 'block';
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error toggling headers:', error);
+      // Fallback: pastikan home header selalu visible jika ada error
+      const homeHeader = document.querySelector('header');
+      if (homeHeader && !showHistoryHeader) {
+        homeHeader.style.display = 'block';
+      }
+    }
+  }
+
+  // Method untuk force cleanup semua history headers
+  forceCleanupHeaders() {
+    try {
+      // Remove by ID
+      const specificHeader = document.getElementById(this.historyHeaderId);
+      if (specificHeader) {
+        specificHeader.remove();
+      }
+      
+      // Remove by class (catch-all)
+      const allHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
+      allHistoryHeaders.forEach(header => header.remove());
+      
+      // Ensure home header is visible
+      const homeHeader = document.querySelector('header');
       if (homeHeader) {
         homeHeader.style.display = 'block';
       }
-      // History headers sudah di-cleanup di atas
+      
+    } catch (error) {
+      console.error('Error in force cleanup:', error);
     }
+  }
+
+  // Method untuk check apakah history header sedang aktif
+  isHistoryHeaderActive() {
+    return document.getElementById(this.historyHeaderId) !== null;
   }
 }
 
