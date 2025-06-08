@@ -1,4 +1,3 @@
-// src/scripts/pages/slider/slider.js
 const initSlider = () => {
   let slideIndex = 0;
   const slides = document.querySelectorAll('.slide');
@@ -11,36 +10,36 @@ const initSlider = () => {
     }
     document.querySelector('.slider').style.transform = `translateX(-${slideIndex * 100}%)`;
     
-    // Update active dot
     dots.forEach((dot, index) => {
       if (index === slideIndex) {
-        dot.classList.add('active');
+        dot.classList.add('bg-accent-green');
+        dot.classList.remove('bg-primary-text');
       } else {
-        dot.classList.remove('active');
+        dot.classList.remove('bg-accent-green');
+        dot.classList.add('bg-primary-text');
       }
     });
     
-    setTimeout(showSlides, 5000); // Ganti slide setiap 5 detik
+    setTimeout(showSlides, 5000);
   }
 
   function currentSlide(n) {
     slideIndex = n;
     document.querySelector('.slider').style.transform = `translateX(-${slideIndex * 100}%)`;
     
-    // Update active dot
     dots.forEach((dot, index) => {
       if (index === slideIndex) {
-        dot.classList.add('active');
+        dot.classList.add('bg-accent-green');
+        dot.classList.remove('bg-primary-text');
       } else {
-        dot.classList.remove('active');
+        dot.classList.remove('bg-accent-green');
+        dot.classList.add('bg-primary-text');
       }
     });
   }
 
-  // Mulai slider otomatis
   setTimeout(showSlides, 5000);
 
-  // Tambahkan event listener ke dots
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
       currentSlide(index);

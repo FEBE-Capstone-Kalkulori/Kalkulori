@@ -1,5 +1,4 @@
 import 'regenerator-runtime';
-import './styles/style.css';
 import './styles/home.css';
 import './styles/profile.css';
 import './styles/history.css';
