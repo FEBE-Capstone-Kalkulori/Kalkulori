@@ -3,8 +3,15 @@ import HistoryPresenter from './history-presenter';
 
 const History = {
   async render() {
-    const view = new HistoryView();
-    return view.getTemplate();
+    return `
+      <div class="max-w-7xl mx-auto p-8 bg-white">
+        <div class="bg-primary-bg p-8 rounded-2xl min-h-[70vh]">
+          <div id="history-container">
+            ${new HistoryView().getTemplate()}
+          </div>
+        </div>
+      </div>
+    `;
   },
 
   async afterRender() {
@@ -15,13 +22,18 @@ const History = {
     view.toggleHeaders(true);
     
     presenter.init();
+    
+    // Simpan reference untuk cleanup
+    this.view = view;
+    this.presenter = presenter;
   },
 
   // Method untuk cleanup ketika leave history page
   onLeave() {
-    const view = new HistoryView();
-    // Kembalikan ke header home, hapus header history
-    view.toggleHeaders(false);
+    if (this.view) {
+      // Kembalikan ke header home, hapus header history
+      this.view.toggleHeaders(false);
+    }
   }
 };
 

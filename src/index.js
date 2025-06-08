@@ -1,7 +1,5 @@
 import 'regenerator-runtime';
 import './styles/home.css';
-import './styles/profile.css';
-import './styles/history.css';
 import './styles/add-meal.css';
 import './styles/meal-popup.css';
 import './styles/meal-plan.css';

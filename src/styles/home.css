@@ -2,6 +2,7 @@
 
 /* Import meal categories styles */
 @import url('./meal-categories.css');
+@import url('./meal-plan.css');
 
 /* Main page wrappers */
 .page-outer-wrapper {
