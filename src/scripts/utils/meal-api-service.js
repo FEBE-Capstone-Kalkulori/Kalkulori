@@ -1,6 +1,6 @@
 class MealApiService {
   constructor() {
-    //this.baseUrl = 'https://kalkulori.up.railway.app/api';
+    this.baseUrl = 'https://kalkulori.up.railway.app/api';
   }
 
   async createMealEntry(mealData) {
