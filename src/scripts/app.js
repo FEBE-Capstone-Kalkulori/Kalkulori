@@ -22,6 +22,22 @@ class App {
     return authRoutes.includes(url);
   }
 
+  isHomePage(url) {
+    return url === '/home' || url === '/' || url === '';
+  }
+
+  handleSlider(url) {
+    import('./pages/slider').then(SliderComponent => {
+      if (this.isHomePage(url)) {
+        SliderComponent.default.init();
+      } else {
+        SliderComponent.default.cleanup();
+      }
+    }).catch(error => {
+      console.warn('Could not load slider component:', error);
+    });
+  }
+
   async renderPage() {
     let url = window.location.hash.slice(1);
     
@@ -68,6 +84,8 @@ class App {
     const page = routes[url] || routes['/signin'];
     this.content.innerHTML = await page.render();
     await page.afterRender();
+    
+    this.handleSlider(url);
     
     window.scrollTo(0, 0);
   }

@@ -34,20 +34,36 @@ function toggleHeaderFooter() {
   document.body.classList.toggle('main-page', !isAuthRoute);
 }
 
+function handleSliderOnRouteChange() {
+  const currentHash = window.location.hash.slice(1);
+  const isHomePage = currentHash === '/home' || currentHash === '/' || currentHash === '';
+  
+  try {
+    if (isHomePage) {
+      if (SliderComponent && typeof SliderComponent.init === 'function') {
+        SliderComponent.init();
+      }
+    } else {
+      if (SliderComponent && typeof SliderComponent.cleanup === 'function') {
+        SliderComponent.cleanup();
+      }
+    }
+  } catch (error) {
+    console.warn('Error handling slider:', error);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Verify token if user has one
   if (AuthGuard.isAuthenticated()) {
     const isValidToken = await AuthGuard.verifyToken();
     
     if (!isValidToken) {
-      // Token is invalid, logout user
       console.log('Token is invalid, logging out...');
       AuthGuard.logout();
-      return; // Exit early as logout will redirect
+      return;
     }
   }
   
-  // If not authenticated and not on auth pages, redirect to signin
   if (!AuthGuard.isAuthenticated() && 
       !window.location.hash.includes('signin') && 
       !window.location.hash.includes('signup')) {
@@ -55,9 +71,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   toggleHeaderFooter();
-  window.addEventListener('hashchange', toggleHeaderFooter);
+  
+  window.addEventListener('hashchange', () => {
+    toggleHeaderFooter();
+    handleSliderOnRouteChange();
+  });
 
-  SliderComponent.init();
+  handleSliderOnRouteChange();
 
   const app = new App({
     content: document.querySelector('main'),
