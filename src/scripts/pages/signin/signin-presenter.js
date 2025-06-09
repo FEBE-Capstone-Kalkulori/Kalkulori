@@ -10,11 +10,21 @@ const SignInPresenter = {
     const view = createSignInView();
     
     // Setup event listeners after view is created and rendered
-    setTimeout(() => {
-      this._initEventListeners();
-    }, 0);
+    this._waitForDOMAndInitialize();
     
     return view;
+  },
+
+  _waitForDOMAndInitialize() {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this._initEventListeners();
+      });
+    });
+    
+    setTimeout(() => {
+      this._initEventListeners();
+    }, 100);
   },
 
   _initEventListeners() {
