@@ -1,4 +1,11 @@
 const initSlider = () => {
+  const currentHash = window.location.hash.slice(1);
+  const isHomePage = currentHash === '/home' || currentHash === '/' || currentHash === '';
+  
+  if (!isHomePage) {
+    return;
+  }
+
   let slideIndex = 0;
   let autoSlideInterval = null;
 
@@ -86,9 +93,27 @@ const initSlider = () => {
       }
     }
   });
+
+  const cleanup = () => {
+    if (autoSlideInterval) {
+      clearTimeout(autoSlideInterval);
+      autoSlideInterval = null;
+    }
+  };
+
+  window.sliderCleanup = cleanup;
+};
+
+const cleanupSlider = () => {
+  if (window.sliderCleanup) {
+    window.sliderCleanup();
+    window.sliderCleanup = null;
+  }
 };
 
 const safeInitSlider = () => {
+  cleanupSlider();
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSlider);
   } else {
@@ -96,4 +121,9 @@ const safeInitSlider = () => {
   }
 };
 
-export default safeInitSlider;
+const SliderComponent = {
+  init: safeInitSlider,
+  cleanup: cleanupSlider
+};
+
+export default SliderComponent;
