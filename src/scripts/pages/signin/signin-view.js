@@ -45,7 +45,9 @@ const createSignInView = () => {
             class="signin-btn w-full px-6 py-4 bg-amber-900 text-white border-none rounded-full text-sm font-cal-sans cursor-pointer transition-all duration-200 mt-8 hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             Sign In
-            <span class="text-lg">→</span>
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
+            </svg>
           </button>
           
           <div class="text-center mt-8 space-y-2">
