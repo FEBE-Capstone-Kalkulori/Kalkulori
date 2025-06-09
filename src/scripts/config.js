@@ -1,5 +1,4 @@
 const CONFIG = {
-  // FIXED: Hardcode ke production URL untuk konsistensi
   API_BASE_URL: 'https://kalkulori.up.railway.app/api',
     
   ENDPOINTS: {
@@ -14,7 +13,10 @@ const CONFIG = {
     },
     FOODS: '/foods',
     MEALS: '/meals',
-    LOGS: '/logs'
+    LOGS: '/logs',
+    MEAL_PLANS: {
+      GENERATE: '/meal-plans/generate'
+    }
   }
 };
 
