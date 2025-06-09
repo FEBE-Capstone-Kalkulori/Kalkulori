@@ -223,7 +223,15 @@ class HomePresenter {
       const dailyData = await mealApiService.getDailyLog(today);
       
       this.data.dailyLog = dailyData.daily_log;
+      
+      // LOGGING UNTUK DEBUG
+      console.log('📊 Raw meal entries from API:', dailyData.meal_entries);
+      
       this.data.mealEntries = await this._enrichMealEntries(dailyData.meal_entries || []);
+      
+      // LOGGING SETELAH ENRICHMENT
+      console.log('✨ Enriched meal entries:', this.data.mealEntries);
+      
       this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
       
       if (dailyData.daily_log.remaining_calories !== undefined) {
@@ -251,54 +259,69 @@ class HomePresenter {
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
-      if (meal.is_from_recipe && meal.recipe_id) {
+      // PERBAIKAN UTAMA: Gabungkan handling untuk is_from_recipe DAN is_from_search
+      // karena keduanya menggunakan recipe_id dan bisa fetch dari API yang sama
+      if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
         try {
           const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
           if (mealDetails && mealDetails.meal) {
             const recipeData = mealDetails.meal;
             enrichedMeal.food_details = {
-              id: `recipe_${meal.recipe_id}`,
-              food_name: recipeData.food_name || meal.food_name || 'Recipe Meal',
+              id: meal.is_from_search ? meal.food_item_id : `recipe_${meal.recipe_id}`,
+              food_name: recipeData.food_name || meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
               calories_per_serving: recipeData.calories_per_serving,
               protein_per_serving: recipeData.protein_per_serving,
               carbs_per_serving: recipeData.carbs_per_serving,
               fat_per_serving: recipeData.fat_per_serving,
               serving_size: recipeData.serving_size,
               serving_unit: recipeData.serving_unit,
-              image_url: recipeData.image_url,
-              is_recipe: true,
+              image_url: recipeData.image_url, // IMAGE DARI API - INI YANG PENTING!
+              is_recipe: meal.is_from_recipe ? true : false,
+              is_from_search: meal.is_from_search ? true : false,
               recipe_id: meal.recipe_id
             };
+            console.log(`✅ Successfully enriched ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name, 'with image:', enrichedMeal.food_details.image_url);
+          } else {
+            throw new Error('No meal details found');
           }
         } catch (error) {
-          console.warn('Could not fetch recipe details for meal entry:', error);
+          console.warn(`Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
+          
+          // Fallback: gunakan data yang ada di meal entry
           enrichedMeal.food_details = {
             id: meal.food_item_id,
-            food_name: meal.food_name || 'Recipe Meal',
+            food_name: meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
             calories_per_serving: Math.round(meal.calories / meal.servings),
             protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
             carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
             fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
             serving_size: 1,
             serving_unit: "serving",
-            image_url: null,
-            is_recipe: true,
+            image_url: null, // Akan menggunakan fallback image di UI
+            is_recipe: meal.is_from_recipe ? true : false,
+            is_from_search: meal.is_from_search ? true : false,
             recipe_id: meal.recipe_id
           };
+          console.log(`⚠️ Using fallback data for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name);
         }
-      } else if (meal.is_from_search && meal.recipe_id) {
+      }
+      // Handle regular food items yang sudah ada food_details
+      else if (meal.food_details) {
+        // Jika sudah ada food_details dari backend, gunakan itu
+        enrichedMeal.food_details = meal.food_details;
+      }
+      // Handle regular food items yang belum ada food_details
+      else {
         enrichedMeal.food_details = {
           id: meal.food_item_id,
-          food_name: meal.food_name || 'Search Result',
+          food_name: meal.food_name || 'Unknown Food',
           calories_per_serving: Math.round(meal.calories / meal.servings),
           protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
           carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
           fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
           serving_size: 1,
           serving_unit: "serving",
-          image_url: null,
-          is_from_search: true,
-          recipe_id: meal.recipe_id
+          image_url: null
         };
       }
       

@@ -131,7 +131,12 @@ const createMealsGrid = (meals) => {
       meal.calories,
       meal.id,
       meal.serving_size,
-      meal.serving_unit
+      meal.serving_unit,
+      meal.is_from_search,
+      meal.recipe_id,
+      meal.protein,
+      meal.carbs,
+      meal.fat
     )
   ).join('');
 };
@@ -210,7 +215,6 @@ export default {
         }
       });
       
-      // Auto-focus search input
       searchInput.focus();
     }
 

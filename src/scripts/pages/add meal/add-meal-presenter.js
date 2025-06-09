@@ -22,8 +22,8 @@ class AddMealPresenter {
       },
       itemsPerPage: 12,
       cursors: [],
-      isSearchMode: false, // Track if we're in search mode
-      searchResults: [] // Store search results separately
+      isSearchMode: false,
+      searchResults: []
     };
     
     this.eventHandlers = {
@@ -38,6 +38,7 @@ class AddMealPresenter {
   async init() {
     try {
       window.mealApiService = mealApiService;
+      window.foodApiService = foodApiService;
       
       this.data.loading = true;
       this.data.currentPage = 0;
@@ -65,7 +66,6 @@ class AddMealPresenter {
       let result;
       
       if (searchQuery.trim()) {
-        // Use the ML search endpoint for searching
         this.data.isSearchMode = true;
         console.log(`Searching using ML service for: ${searchQuery}`);
         
@@ -91,7 +91,6 @@ class AddMealPresenter {
           this.data.error = `Search service error: ${searchError.message}. Trying alternative search...`;
           this._renderView();
           
-          // Fallback to regular search
           try {
             result = await foodApiService.searchFoodsLegacy(searchQuery, 60);
             this.data.meals = foodApiService.formatFoodsForCards(result.foods || []);
@@ -104,11 +103,10 @@ class AddMealPresenter {
               prev_cursor: null,
               current_cursor: null
             };
-            this.data.error = null; // Clear error if fallback succeeds
+            this.data.error = null;
           } catch (fallbackError) {
             console.error('Fallback search also failed:', fallbackError);
             this.data.error = 'Search failed. Please try again or browse available foods.';
-            // Show filtered default data as last resort
             const filtered = defaultMealsData.filter(meal => 
               meal.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
@@ -116,7 +114,6 @@ class AddMealPresenter {
           }
         }
       } else {
-        // Regular browsing mode - use the /foods endpoint
         this.data.isSearchMode = false;
         
         if (targetPage !== null && targetPage < this.data.currentPage) {
@@ -152,7 +149,6 @@ class AddMealPresenter {
         };
       }
       
-      // Fallback to default data if no results and not searching
       if (this.data.meals.length === 0 && !searchQuery.trim() && this.data.currentPage === 0) {
         this.data.meals = defaultMealsData.slice(0, this.data.itemsPerPage);
         this.data.currentPage = 0;
@@ -260,7 +256,6 @@ class AddMealPresenter {
 
   async _handlePrevious() {
     if (this.data.isSearchMode) {
-      // No pagination in search mode
       return;
     }
     
@@ -271,7 +266,6 @@ class AddMealPresenter {
 
   async _handleNext() {
     if (this.data.isSearchMode) {
-      // No pagination in search mode
       return;
     }
     

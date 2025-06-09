@@ -68,7 +68,6 @@ class FoodApiService {
     }
   }
 
-  // New dedicated search method using the ML search endpoint
   async searchFoods(searchQuery, limit = 12) {
     try {
       if (!searchQuery || searchQuery.trim() === '') {
@@ -99,13 +98,11 @@ class FoodApiService {
       const result = await response.json();
       
       if (result.status === 'success') {
-        // Return foods from the search result data
         return {
           foods: result.data.foods || [],
           search_query: result.data.search_query,
           total_results: result.data.total_results,
           searched_at: result.data.searched_at,
-          // No pagination for search results as they come from ML service
           pagination: {
             has_next_page: false,
             has_prev_page: false,
@@ -123,7 +120,40 @@ class FoodApiService {
     }
   }
 
-  // Legacy method - now uses the new searchFoods for actual searching
+  async addFoodFromSearch(searchFoodData) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      const response = await fetch(`${this.baseUrl}/search/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(searchFoodData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to add food from search');
+      }
+    } catch (error) {
+      console.error('Error adding food from search:', error);
+      throw error;
+    }
+  }
+
   async searchFoodsLegacy(searchQuery, limit) {
     try {
       return await this.getAllFoods({
@@ -139,11 +169,16 @@ class FoodApiService {
   formatFoodForCard(apiFood) {
     return {
       id: apiFood.id || apiFood.recipe_id,
+      recipe_id: apiFood.recipe_id,
       name: apiFood.food_name,
       calories: apiFood.calories_per_serving,
+      protein: apiFood.protein_per_serving,
+      carbs: apiFood.carbs_per_serving,
+      fat: apiFood.fat_per_serving,
       image: apiFood.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
       serving_size: apiFood.serving_size,
-      serving_unit: apiFood.serving_unit
+      serving_unit: apiFood.serving_unit,
+      is_from_search: !!apiFood.recipe_id
     };
   }
 

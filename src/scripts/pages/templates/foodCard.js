@@ -1,6 +1,16 @@
-function createFoodCard(imageUrl, foodName, calories, foodId = null, servingSize = null, servingUnit = null) {
+function createFoodCard(imageUrl, foodName, calories, foodId = null, servingSize = null, servingUnit = null, isFromSearch = false, recipeId = null, protein = null, carbs = null, fat = null) {
     return `
-        <div class="food-card" data-food-id="${foodId || ''}" data-serving-size="${servingSize || 1}" data-serving-unit="${servingUnit || 'serving'}">
+        <div class="food-card" 
+             data-food-id="${foodId || ''}" 
+             data-recipe-id="${recipeId || ''}"
+             data-serving-size="${servingSize || 1}" 
+             data-serving-unit="${servingUnit || 'serving'}"
+             data-is-from-search="${isFromSearch}"
+             data-calories="${calories || 0}"
+             data-protein="${protein || 0}"
+             data-carbs="${carbs || 0}"
+             data-fat="${fat || 0}"
+             data-food-name="${foodName}">
             <div class="food-image">
                 <img src="${imageUrl}" alt="${foodName}">
             </div>
@@ -28,7 +38,12 @@ function renderFoodCards(foodData, containerId) {
             food.calories, 
             food.id,
             food.serving_size,
-            food.serving_unit
+            food.serving_unit,
+            food.is_from_search,
+            food.recipe_id,
+            food.protein,
+            food.carbs,
+            food.fat
         );
         container.innerHTML += cardHTML;
     });
@@ -45,6 +60,13 @@ function bindFoodCardEvents(containerId) {
         button.removeEventListener('click', handleAddButtonClick);
         button.addEventListener('click', handleAddButtonClick);
     });
+    
+    const foodCards = container.querySelectorAll('.food-card');
+    foodCards.forEach(card => {
+        card.removeEventListener('click', handleFoodCardClick);
+        card.addEventListener('click', handleFoodCardClick);
+        card.style.cursor = 'pointer';
+    });
 }
 
 function handleAddButtonClick(event) {
@@ -54,22 +76,142 @@ function handleAddButtonClick(event) {
     const foodCard = event.target.closest('.food-card');
     if (!foodCard) return;
     
-    const foodName = foodCard.querySelector('.food-name')?.textContent || 'Unknown Food';
-    const foodCaloriesText = foodCard.querySelector('.food-calories')?.textContent || '0 kcal';
-    const foodCalories = parseInt(foodCaloriesText.replace(' kcal', '')) || 0;
+    const foodName = foodCard.dataset.foodName || foodCard.querySelector('.food-name')?.textContent || 'Unknown Food';
+    const foodCalories = parseInt(foodCard.dataset.calories) || 0;
+    const foodProtein = parseFloat(foodCard.dataset.protein) || 0;
+    const foodCarbs = parseFloat(foodCard.dataset.carbs) || 0;
+    const foodFat = parseFloat(foodCard.dataset.fat) || 0;
     const foodId = foodCard.dataset.foodId || null;
+    const recipeId = foodCard.dataset.recipeId || null;
     const servingSize = foodCard.dataset.servingSize || 1;
     const servingUnit = foodCard.dataset.servingUnit || 'serving';
+    const isFromSearch = foodCard.dataset.isFromSearch === 'true';
+    const imageUrl = foodCard.querySelector('.food-image img')?.src || null;
     
-    console.log('Add button clicked for:', { foodName, foodCalories, foodId });
+    console.log('Add button clicked for:', { foodName, foodCalories, foodId, recipeId, isFromSearch });
     
     showAddMealPopup({
         id: foodId,
+        recipe_id: recipeId,
         name: foodName,
         calories: foodCalories,
+        protein: foodProtein,
+        carbs: foodCarbs,
+        fat: foodFat,
         serving_size: servingSize,
-        serving_unit: servingUnit
+        serving_unit: servingUnit,
+        is_from_search: isFromSearch,
+        image: imageUrl
     });
+}
+
+function handleFoodCardClick(event) {
+    if (event.target.closest('.add-button')) {
+        return;
+    }
+    
+    const foodCard = event.target.closest('.food-card');
+    if (!foodCard) return;
+    
+    const foodName = foodCard.dataset.foodName || foodCard.querySelector('.food-name')?.textContent || 'Unknown Food';
+    const foodCalories = parseInt(foodCard.dataset.calories) || 0;
+    const foodProtein = parseFloat(foodCard.dataset.protein) || 0;
+    const foodCarbs = parseFloat(foodCard.dataset.carbs) || 0;
+    const foodFat = parseFloat(foodCard.dataset.fat) || 0;
+    const servingSize = foodCard.dataset.servingSize || 1;
+    const servingUnit = foodCard.dataset.servingUnit || 'serving';
+    const imageUrl = foodCard.querySelector('.food-image img')?.src || null;
+    
+    showFoodDetailsPopup({
+        name: foodName,
+        calories: foodCalories,
+        protein: foodProtein,
+        carbs: foodCarbs,
+        fat: foodFat,
+        serving_size: servingSize,
+        serving_unit: servingUnit,
+        image: imageUrl
+    });
+}
+
+function showFoodDetailsPopup(foodData) {
+    console.log('Showing food details for:', foodData);
+    
+    const existingPopup = document.getElementById('food-details-overlay');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const popupHTML = `
+        <div class="food-details-overlay" id="food-details-overlay">
+            <div class="food-details-popup">
+                <div class="food-details-header">
+                    <h3>${foodData.name}</h3>
+                    <button class="popup-close" id="details-close">&times;</button>
+                </div>
+                <div class="food-details-content">
+                    ${foodData.image ? `
+                        <div class="food-details-image">
+                            <img src="${foodData.image}" alt="${foodData.name}">
+                        </div>
+                    ` : ''}
+                    <div class="nutrition-info">
+                        <h4>Nutrition Facts</h4>
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item">
+                                <span class="nutrition-label">Calories</span>
+                                <span class="nutrition-value">${foodData.calories} kcal</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-label">Protein</span>
+                                <span class="nutrition-value">${foodData.protein}g</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-label">Carbs</span>
+                                <span class="nutrition-value">${foodData.carbs}g</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-label">Fat</span>
+                                <span class="nutrition-value">${foodData.fat}g</span>
+                            </div>
+                        </div>
+                        <div class="serving-info">
+                            <p><strong>Serving Size:</strong> ${foodData.serving_size} ${foodData.serving_unit}</p>
+                        </div>
+                    </div>
+                    <div class="details-actions">
+                        <button class="btn-close-details" id="btn-close-details">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+    
+    const overlay = document.getElementById('food-details-overlay');
+    const closeBtn = document.getElementById('details-close');
+    const closeDetailsBtn = document.getElementById('btn-close-details');
+    
+    function closePopup() {
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePopup);
+    }
+    
+    if (closeDetailsBtn) {
+        closeDetailsBtn.addEventListener('click', closePopup);
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closePopup();
+        });
+    }
 }
 
 function showAddMealPopup(foodData) {
@@ -157,7 +299,35 @@ function showAddMealPopup(foodData) {
                 addBtn.disabled = true;
                 addBtn.textContent = 'Adding...';
                 
-                if (window.mealApiService && foodData.id) {
+                if (foodData.is_from_search && foodData.recipe_id) {
+                    if (window.foodApiService) {
+                        await window.foodApiService.addFoodFromSearch({
+                            recipe_id: foodData.recipe_id,
+                            food_name: foodData.name,
+                            calories_per_serving: foodData.calories,
+                            protein_per_serving: foodData.protein,
+                            carbs_per_serving: foodData.carbs,
+                            fat_per_serving: foodData.fat,
+                            serving_size: foodData.serving_size,
+                            serving_unit: foodData.serving_unit,
+                            meal_type: mealType,
+                            servings: servings,
+                            log_date: logDate,
+                            image_url: foodData.image
+                        });
+                        
+                        alert('Meal added successfully!');
+                        closePopup();
+                        
+                        if (window.location.hash === '#/' || window.location.hash === '#/home') {
+                            window.location.reload();
+                        }
+                    } else {
+                        console.log(`Added search result ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
+                        alert('Demo: Search meal would be added to your log!');
+                        closePopup();
+                    }
+                } else if (window.mealApiService && foodData.id) {
                     await window.mealApiService.createMealEntry({
                         food_item_id: foodData.id,
                         meal_type: mealType,
@@ -286,9 +456,9 @@ const defaultMealsData = [
 ];
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, sampleFoodData, defaultMealsData };
+    module.exports = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, showFoodDetailsPopup, sampleFoodData, defaultMealsData };
 }
 
 if (typeof window !== 'undefined') {
-    window.FoodCard = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, sampleFoodData, defaultMealsData };
+    window.FoodCard = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, showFoodDetailsPopup, sampleFoodData, defaultMealsData };
 }
