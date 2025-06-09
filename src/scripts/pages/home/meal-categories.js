@@ -1,5 +1,3 @@
-// meal-categories.js - Meal Categories Configuration (BUAT PAGE ADD MEAL)
-
 export const MEAL_CATEGORIES = {
   'dietary': {
     title: 'Dietary Preferences',

@@ -21,14 +21,17 @@ class AddMealPresenter {
         current_cursor: null
       },
       itemsPerPage: 12,
-      cursors: []
+      cursors: [],
+      isSearchMode: false, // Track if we're in search mode
+      searchResults: [] // Store search results separately
     };
     
     this.eventHandlers = {
       onSearchClicked: this._handleSearch.bind(this),
       onBackClicked: this._handleBack.bind(this),
       onPreviousClicked: this._handlePrevious.bind(this),
-      onNextClicked: this._handleNext.bind(this)
+      onNextClicked: this._handleNext.bind(this),
+      onClearSearchClicked: this._handleClearSearch.bind(this)
     };
   }
 
@@ -39,6 +42,7 @@ class AddMealPresenter {
       this.data.loading = true;
       this.data.currentPage = 0;
       this.data.cursors = [null];
+      this.data.isSearchMode = false;
       this._renderView();
       
       await this._loadFoods();
@@ -61,18 +65,60 @@ class AddMealPresenter {
       let result;
       
       if (searchQuery.trim()) {
-        result = await foodApiService.searchFoods(searchQuery, 60);
-        this.data.meals = foodApiService.formatFoodsForCards(result.foods || result);
-        this.data.currentPage = 0;
-        this.data.cursors = [null];
-        this.data.pagination = {
-          has_next_page: false,
-          has_prev_page: false,
-          next_cursor: null,
-          prev_cursor: null,
-          current_cursor: null
-        };
+        // Use the ML search endpoint for searching
+        this.data.isSearchMode = true;
+        console.log(`Searching using ML service for: ${searchQuery}`);
+        
+        try {
+          result = await foodApiService.searchFoods(searchQuery, 60);
+          this.data.meals = foodApiService.formatFoodsForCards(result.foods || []);
+          this.data.searchResults = result.foods || [];
+          this.data.currentPage = 0;
+          this.data.cursors = [null];
+          this.data.pagination = result.pagination || {
+            has_next_page: false,
+            has_prev_page: false,
+            next_cursor: null,
+            prev_cursor: null,
+            current_cursor: null
+          };
+          
+          if (this.data.meals.length === 0) {
+            this.data.error = `No foods found for "${searchQuery}". Try different keywords.`;
+          }
+        } catch (searchError) {
+          console.error('ML search failed, falling back to regular search:', searchError);
+          this.data.error = `Search service error: ${searchError.message}. Trying alternative search...`;
+          this._renderView();
+          
+          // Fallback to regular search
+          try {
+            result = await foodApiService.searchFoodsLegacy(searchQuery, 60);
+            this.data.meals = foodApiService.formatFoodsForCards(result.foods || []);
+            this.data.currentPage = 0;
+            this.data.cursors = [null];
+            this.data.pagination = result.pagination || {
+              has_next_page: false,
+              has_prev_page: false,
+              next_cursor: null,
+              prev_cursor: null,
+              current_cursor: null
+            };
+            this.data.error = null; // Clear error if fallback succeeds
+          } catch (fallbackError) {
+            console.error('Fallback search also failed:', fallbackError);
+            this.data.error = 'Search failed. Please try again or browse available foods.';
+            // Show filtered default data as last resort
+            const filtered = defaultMealsData.filter(meal => 
+              meal.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            this.data.meals = filtered.slice(0, this.data.itemsPerPage);
+          }
+        }
       } else {
+        // Regular browsing mode - use the /foods endpoint
+        this.data.isSearchMode = false;
+        
         if (targetPage !== null && targetPage < this.data.currentPage) {
           await this._navigateToPageFromStart(targetPage);
           return;
@@ -106,6 +152,7 @@ class AddMealPresenter {
         };
       }
       
+      // Fallback to default data if no results and not searching
       if (this.data.meals.length === 0 && !searchQuery.trim() && this.data.currentPage === 0) {
         this.data.meals = defaultMealsData.slice(0, this.data.itemsPerPage);
         this.data.currentPage = 0;
@@ -135,7 +182,7 @@ class AddMealPresenter {
       this.data.currentPage = 0;
       this.data.cursors = [null];
       this.data.pagination = {
-        has_next_page: true,
+        has_next_page: !searchQuery.trim(),
         has_prev_page: false,
         next_cursor: null,
         prev_cursor: null,
@@ -152,7 +199,6 @@ class AddMealPresenter {
     this.data.cursors = [null];
     
     let currentCursor = null;
-    let currentPageData = null;
     
     for (let page = 0; page <= targetPage; page++) {
       const result = await foodApiService.getAllFoods({ 
@@ -196,18 +242,39 @@ class AddMealPresenter {
       prev_cursor: null,
       current_cursor: null
     };
-    console.log(`Searching for: ${query}`);
     
+    console.log(`Searching for: ${query}`);
     await this._loadFoods(query);
   }
 
+  async _handleClearSearch() {
+    this.data.searchQuery = '';
+    this.data.isSearchMode = false;
+    this.data.searchResults = [];
+    this.data.currentPage = 0;
+    this.data.cursors = [null];
+    
+    console.log('Clearing search, returning to browse mode');
+    await this._loadFoods();
+  }
+
   async _handlePrevious() {
+    if (this.data.isSearchMode) {
+      // No pagination in search mode
+      return;
+    }
+    
     if (this.data.currentPage > 0) {
       await this._loadFoods(this.data.searchQuery, this.data.currentPage - 1, 'prev');
     }
   }
 
   async _handleNext() {
+    if (this.data.isSearchMode) {
+      // No pagination in search mode
+      return;
+    }
+    
     if (this.data.currentPage < this.data.maxPages - 1 && this.data.pagination.has_next_page) {
       await this._loadFoods(this.data.searchQuery, this.data.currentPage + 1, 'next');
     }

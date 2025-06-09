@@ -6,7 +6,7 @@ const createAddMealTemplate = (data) => {
           <span class="back-icon">‹</span>
           <span>Back</span>
         </button>
-        <h1 class="add-meal-title">Search Meal</h1>
+        <h1 class="add-meal-title">${data.isSearchMode ? 'Search Results' : 'Search Meal'}</h1>
       </div>
       
       <div class="search-section">
@@ -20,9 +20,15 @@ const createAddMealTemplate = (data) => {
             ${data.loading ? 'disabled' : ''}
           />
           <button class="search-button" id="search-button" ${data.loading ? 'disabled' : ''}>
-            ${data.loading ? 'Loading...' : 'Search'}
+            ${data.loading ? 'Searching...' : 'Search'}
           </button>
+          ${data.isSearchMode && data.searchQuery ? `
+            <button class="clear-search-button" id="clear-search-button">
+              Clear Search
+            </button>
+          ` : ''}
         </div>
+        ${data.isSearchMode ? createSearchInfo(data) : ''}
       </div>
       
       ${createContentSection(data)}
@@ -32,12 +38,29 @@ const createAddMealTemplate = (data) => {
   `;
 };
 
+const createSearchInfo = (data) => {
+  if (!data.isSearchMode || !data.searchQuery) return '';
+  
+  return `
+    <div class="search-info">
+      <p class="search-query-info">
+        ${data.loading ? 'Searching...' : 
+          data.meals.length > 0 ? 
+            `Found ${data.meals.length} results for "<strong>${data.searchQuery}</strong>"` :
+            `No results found for "<strong>${data.searchQuery}</strong>"`
+        }
+      </p>
+      ${data.meals.length > 0 ? '<p class="search-note">Search results are powered by AI and may include estimated nutritional values.</p>' : ''}
+    </div>
+  `;
+};
+
 const createContentSection = (data) => {
   if (data.loading) {
     return `
       <div class="loading-container">
         <div class="loading-spinner"></div>
-        <p>Loading foods...</p>
+        <p>${data.isSearchMode ? 'Searching foods...' : 'Loading foods...'}</p>
       </div>
     `;
   }
@@ -47,6 +70,17 @@ const createContentSection = (data) => {
       <div class="error-container">
         <p class="error-message">${data.error}</p>
         ${data.meals.length > 0 ? createMealsContainer(data.meals) : ''}
+        ${data.isSearchMode && data.meals.length === 0 ? `
+          <div class="search-suggestions">
+            <h3>Search Tips:</h3>
+            <ul>
+              <li>Try using different keywords</li>
+              <li>Use more general terms (e.g., "chicken" instead of "grilled chicken breast")</li>
+              <li>Check your spelling</li>
+              <li>Try searching in English</li>
+            </ul>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -55,8 +89,25 @@ const createContentSection = (data) => {
     return `
       <div class="no-results-container">
         <p class="no-results-message">
-          ${data.searchQuery ? `No foods found for "${data.searchQuery}"` : 'No foods available'}
+          ${data.searchQuery ? 
+            `No foods found for "${data.searchQuery}"` : 
+            'No foods available'
+          }
         </p>
+        ${data.isSearchMode ? `
+          <div class="search-suggestions">
+            <h3>Try these tips:</h3>
+            <ul>
+              <li>Use different or more general keywords</li>
+              <li>Check your spelling</li>
+              <li>Try common food names in English</li>
+              <li>Use single words instead of full phrases</li>
+            </ul>
+            <button class="browse-all-button" id="browse-all-button">
+              Browse All Foods
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -86,7 +137,7 @@ const createMealsGrid = (meals) => {
 };
 
 const createPaginationSection = (data) => {
-  if (data.loading || data.meals.length === 0) {
+  if (data.loading || data.meals.length === 0 || data.isSearchMode) {
     return '';
   }
 
@@ -105,6 +156,10 @@ const createPaginationSection = (data) => {
       >
         Previous
       </button>
+      
+      <span class="pagination-info">
+        Page ${data.currentPage + 1}
+      </span>
       
       <button 
         class="pagination-btn" 
@@ -126,6 +181,8 @@ export default {
     const backButton = document.getElementById('back-button');
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
+    const clearSearchButton = document.getElementById('clear-search-button');
+    const browseAllButton = document.getElementById('browse-all-button');
     const foodContainer = document.getElementById('food-container');
     const prevButton = document.getElementById('prev-button');
     const nextButton = document.getElementById('next-button');
@@ -136,18 +193,33 @@ export default {
     
     if (searchButton && eventHandlers.onSearchClicked) {
       searchButton.addEventListener('click', () => {
-        const query = searchInput.value;
-        eventHandlers.onSearchClicked(query);
+        const query = searchInput.value.trim();
+        if (query) {
+          eventHandlers.onSearchClicked(query);
+        }
       });
     }
     
     if (searchInput && eventHandlers.onSearchClicked) {
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-          const query = searchInput.value;
-          eventHandlers.onSearchClicked(query);
+          const query = searchInput.value.trim();
+          if (query) {
+            eventHandlers.onSearchClicked(query);
+          }
         }
       });
+      
+      // Auto-focus search input
+      searchInput.focus();
+    }
+
+    if (clearSearchButton && eventHandlers.onClearSearchClicked) {
+      clearSearchButton.addEventListener('click', eventHandlers.onClearSearchClicked);
+    }
+
+    if (browseAllButton && eventHandlers.onClearSearchClicked) {
+      browseAllButton.addEventListener('click', eventHandlers.onClearSearchClicked);
     }
 
     if (prevButton && eventHandlers.onPreviousClicked) {
