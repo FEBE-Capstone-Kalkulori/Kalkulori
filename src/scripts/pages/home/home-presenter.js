@@ -140,41 +140,42 @@ class HomePresenter {
       console.log('  - meal_plans length:', mealPlanData.meal_plans?.length);
       console.log('  - meal_plans content:', mealPlanData.meal_plans);
       
-      if (mealPlanData && mealPlanData.meal_plans && mealPlanData.meal_plans.length > 0) {
-        const selectedPlan = mealPlanData.meal_plans[0];
-        console.log('🔍 Selected plan (first item):', JSON.stringify(selectedPlan, null, 2));
-        
-        const formattedPlans = formatMealPlanData(selectedPlan);
-        console.log('🔍 Formatted plans result:', JSON.stringify(formattedPlans, null, 2));
-        console.log('🔍 Formatted plans length:', formattedPlans.length);
-        
-        this.data.mealPlan.plans = formattedPlans;
-        this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
-        this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
-        
-        console.log('🔍 Final meal plan state:');
-        console.log('  - plans length:', this.data.mealPlan.plans.length);
-        console.log('  - totalCalories:', this.data.mealPlan.totalCalories);
-        console.log('  - targetCalories:', this.data.mealPlan.targetCalories);
-        console.log('  - plans content:', this.data.mealPlan.plans);
-        
-        console.log('✅ Meal plan formatted successfully');
-      } else {
-        console.log('⚠️ No meal plans in response, conditions check:');
-        console.log('  - mealPlanData exists:', !!mealPlanData);
-        console.log('  - meal_plans exists:', !!mealPlanData?.meal_plans);
-        console.log('  - meal_plans is array:', Array.isArray(mealPlanData?.meal_plans));
-        console.log('  - meal_plans length > 0:', (mealPlanData?.meal_plans?.length || 0) > 0);
-        throw new Error('No meal plans available');
+      // ✅ FIXED: Pass the complete API response to formatMealPlanData
+      const formattedPlans = formatMealPlanData(mealPlanData);
+      console.log('🔍 Formatted plans result:', JSON.stringify(formattedPlans, null, 2));
+      console.log('🔍 Formatted plans length:', formattedPlans.length);
+      
+      // Validate formatted plans
+      if (!Array.isArray(formattedPlans) || formattedPlans.length === 0) {
+        console.error('❌ formatMealPlanData returned invalid data:', formattedPlans);
+        throw new Error('Failed to format meal plan data');
       }
+      
+      // Set the meal plan data
+      this.data.mealPlan.plans = formattedPlans;
+      this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
+      this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
+      
+      console.log('🔍 Final meal plan state:');
+      console.log('  - plans length:', this.data.mealPlan.plans.length);
+      console.log('  - totalCalories:', this.data.mealPlan.totalCalories);
+      console.log('  - targetCalories:', this.data.mealPlan.targetCalories);
+      console.log('  - plans content:', this.data.mealPlan.plans);
+      
+      console.log('✅ Meal plan formatted successfully');
       
     } catch (error) {
       console.error('💥 Error fetching meal plan:', error);
       
       let errorMessage = 'Unable to load meal plan';
       
-      // Handle specific error cases
-      if (error.message.includes('Profile not found') || error.message.includes('404')) {
+      // Handle specific error cases with more detail
+      if (error.message.includes('Authentication') || error.message.includes('login')) {
+        errorMessage = 'Authentication required. Please login again.';
+        console.log('🔧 Solution: User needs to login again');
+        // You might want to redirect to login here
+        // window.location.hash = '#/login';
+      } else if (error.message.includes('Profile not found') || error.message.includes('404')) {
         errorMessage = 'Please complete your profile first';
         console.log('🔧 Solution: User needs to complete profile');
       } else if (error.message.includes('Daily calorie target') || error.message.includes('400')) {
@@ -189,20 +190,32 @@ class HomePresenter {
       } else if (error.message.includes('504') || error.message.includes('timeout')) {
         errorMessage = 'Request timeout. Please try again';
         console.log('🔧 Solution: Timeout, user should retry');
-      } else if (error.message.includes('connect') || error.message.includes('network')) {
+      } else if (error.message.includes('connect') || error.message.includes('network') || error.message.includes('Network error')) {
         errorMessage = 'Connection error. Please check your internet';
         console.log('🔧 Solution: Network connectivity issue');
-      } else if (error.message.includes('No meal plans available')) {
+      } else if (error.message.includes('No meal plans available') || error.message.includes('No meal plans generated')) {
         errorMessage = 'No meal plans generated. Please try again.';
         console.log('🔧 Solution: ML service returned empty result');
+      } else if (error.message.includes('Invalid')) {
+        errorMessage = 'Invalid data received. Please try again.';
+        console.log('🔧 Solution: Data format issue');
       }
       
       this.data.mealPlan.error = errorMessage;
-      this.data.mealPlan.plans = getDefaultMealPlan();
-      this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
       
-      console.log('📋 Using default meal plan as fallback');
-      console.log('📋 Default plans:', this.data.mealPlan.plans);
+      // Use default meal plan as fallback only if no critical errors
+      if (!error.message.includes('Authentication') && !error.message.includes('login')) {
+        this.data.mealPlan.plans = getDefaultMealPlan();
+        this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
+        
+        console.log('📋 Using default meal plan as fallback');
+        console.log('📋 Default plans:', this.data.mealPlan.plans);
+      } else {
+        // For authentication errors, don't show default plans
+        this.data.mealPlan.plans = [];
+        this.data.mealPlan.totalCalories = 0;
+      }
+      
     } finally {
       this.data.mealPlan.loading = false;
       this._renderView();
