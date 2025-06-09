@@ -18,22 +18,26 @@ const createProfileTemplate = (userData, isEditMode = false) => {
       
       <div class="flex gap-12 flex-wrap lg:flex-nowrap">
         <div class="flex-shrink-0 w-64 flex flex-col items-center gap-6">
-          <div class="relative w-56 h-56 bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-green transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <img src="${
-              userData.avatar || "./public/image/default-avatar.png"
-            }" alt="User Avatar" id="user-avatar" class="w-full h-full object-cover transition-all duration-300">
+           <div class="relative w-56 h-56">
+            <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-green transition-all duration-300 hover:scale-105 hover:shadow-xl">
+              <img src="${
+                userData.avatar || "./public/image/default-avatar.png"
+              }" alt="User Avatar" id="user-avatar" class="w-full h-full object-cover transition-all duration-300">
+            </div>
             ${
               isEditMode
                 ? `
-              <div class="absolute right-2.5 bottom-2.5 w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-md text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white" id="edit-avatar-btn">
-                <i class="fas fa-pencil-alt"></i>
+              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green" id="edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
+                <i class="fas fa-pencil-alt text-sm"></i>
               </div>
-              <div class="absolute -right-2.5 bottom-16 bg-white rounded-lg shadow-lg z-10 overflow-hidden hidden" id="avatar-options">
-                <div class="px-6 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-2" id="camera-option">
-                  <i class="fas fa-camera w-4 text-amber-900"></i> Take photo
+              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max" id="avatar-options">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100" id="camera-option">
+                  <i class="fas fa-camera w-4 text-amber-900"></i> 
+                  <span class="text-sm text-gray-700">Take photo</span>
                 </div>
-                <div class="px-6 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-2" id="gallery-option">
-                  <i class="fas fa-images w-4 text-amber-900"></i> Choose from gallery
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3" id="gallery-option">
+                  <i class="fas fa-images w-4 text-amber-900"></i> 
+                  <span class="text-sm text-gray-700">Choose from gallery</span>
                 </div>
               </div>
               <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -106,12 +110,12 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                 ${
                   isEditMode
                     ? `<div class="relative flex items-center">
-                    <input type="number" id="age" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+                    <input type="number" id="age" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
                       userData.age || ""
                     }" min="1" max="120">
                     <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="increment"><i class="fas fa-chevron-up"></i></button>
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="decrement"><i class="fas fa-chevron-down"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
                     </div>
                   </div>`
                     : `<div class="bg-white rounded-full px-5 py-3 text-base text-gray-800 shadow-sm">${
@@ -127,13 +131,13 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                 ${
                   isEditMode
                     ? `<div class="relative flex items-center">
-                    <input type="number" id="weight" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+                    <input type="number" id="weight" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
                       userData.weight || ""
                     }" min="1" max="500">
                     <span class="absolute right-14 text-gray-500">kg</span>
                     <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="increment"><i class="fas fa-chevron-up"></i></button>
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
                     </div>
                   </div>`
                     : `<div class="bg-white rounded-full px-5 py-3 text-base text-gray-800 shadow-sm">${
@@ -147,13 +151,13 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                 ${
                   isEditMode
                     ? `<div class="relative flex items-center">
-                    <input type="number" id="height" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+                    <input type="number" id="height" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
                       userData.height || ""
                     }" min="1" max="300">
                     <span class="absolute right-14 text-gray-500">cm</span>
                     <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="increment"><i class="fas fa-chevron-up"></i></button>
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="decrement"><i class="fas fa-chevron-down"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
                     </div>
                   </div>`
                     : `<div class="bg-white rounded-full px-5 py-3 text-base text-gray-800 shadow-sm">${
@@ -169,13 +173,13 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                 ${
                   isEditMode
                     ? `<div class="relative flex items-center">
-                    <input type="number" id="targetWeight" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+                    <input type="number" id="targetWeight" class="bg-white border-none rounded-full px-5 py-3 pr-16 text-base text-gray-800 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
                       userData.targetWeight || ""
                     }" min="1" max="500">
                     <span class="absolute right-14 text-gray-500">kg</span>
                     <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up"></i></button>
-                      <button class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-500 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
                     </div>
                   </div>`
                     : `<div class="bg-white rounded-full px-5 py-3 text-base text-gray-800 shadow-sm">${
