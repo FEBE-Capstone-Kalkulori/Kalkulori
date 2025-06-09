@@ -377,6 +377,14 @@ class HomePresenter {
     document.addEventListener('keywordToggled', (event) => {
       this._handleKeywordToggled(event.detail.keyword, event.detail.selected);
     });
+
+    document.addEventListener('mealPlanMealAdded', () => {
+      console.log('🔄 Meal plan meal added, refreshing data...');
+      setTimeout(async () => {
+        this.lastFetchDate = null;
+        await this._fetchDailyData();
+      }, 500);
+    });
   }
 
   _renderView() {

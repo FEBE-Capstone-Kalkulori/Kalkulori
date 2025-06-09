@@ -531,6 +531,132 @@ class MealApiService {
       throw error;
     }
   }
+
+  async addMealFromPlan(mealData) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!mealData.recipe_id || !mealData.meal_type || !mealData.log_date) {
+        throw new Error('Recipe ID, meal type, and log date are required');
+      }
+      
+      const requestData = {
+        recipe_id: mealData.recipe_id,
+        meal_type: mealData.meal_type,
+        servings: mealData.servings || 1,
+        log_date: mealData.log_date
+      };
+      
+      console.log('🚀 Adding meal from plan - Request data:', requestData);
+      console.log('🚀 Using endpoint:', `${this.baseUrl}/meals/suggestion/add`);
+      
+      const response = await fetch(`${this.baseUrl}/meals/suggestion/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const result = await response.json();
+      console.log('🔍 Add Meal From Plan API Response:', { status: response.status, data: result });
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to add meal from plan';
+        
+        if (response.status === 404) {
+          errorMessage = 'Recipe not found or profile incomplete';
+        } else if (response.status === 400) {
+          errorMessage = result.message || 'Invalid meal data';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal service temporarily unavailable';
+        }
+        
+        console.error('🚨 Add Meal From Plan Error:', { status: response.status, message: errorMessage });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to add meal from plan');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        console.error('🌐 Network error details:', error);
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Add Meal From Plan Error:', error);
+      throw error;
+    }
+  }
+
+  async addFullMealPlan(mealPlanData) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!mealPlanData.meal_plan || !mealPlanData.log_date) {
+        throw new Error('Meal plan and log date are required');
+      }
+      
+      console.log('🚀 Adding full meal plan - Request data:', mealPlanData);
+      console.log('🚀 Using endpoint:', `${this.baseUrl}/meal-plans/add-full`);
+      
+      const response = await fetch(`${this.baseUrl}/meal-plans/add-full`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(mealPlanData)
+      });
+
+      console.log('🔍 Response status:', response.status);
+      console.log('🔍 Response ok:', response.ok);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log('🔍 Add Full Meal Plan API Response:', { status: response.status, data: result });
+      } catch (parseError) {
+        console.error('🚨 Failed to parse response as JSON:', parseError);
+        throw new Error('Invalid response format from server');
+      }
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to add full meal plan';
+        
+        if (response.status === 404) {
+          errorMessage = 'Endpoint not found';
+        } else if (response.status === 400) {
+          errorMessage = result.message || 'Invalid meal plan data';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal service temporarily unavailable';
+        }
+        
+        console.error('🚨 Add Full Meal Plan Error:', { status: response.status, message: errorMessage, response: result });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to add full meal plan');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        console.error('🌐 Network error details:', error);
+        console.error('🌐 Base URL:', this.baseUrl);
+        console.error('🌐 Full URL:', `${this.baseUrl}/meal-plans/add-full`);
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Add Full Meal Plan Error:', error);
+      throw error;
+    }
+  }
 }
 
 const mealApiService = new MealApiService();
