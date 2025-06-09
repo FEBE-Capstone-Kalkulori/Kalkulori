@@ -15,6 +15,7 @@ import {
 class HomePresenter {
   constructor({ container }) {
     this.container = container;
+    this.lastFetchDate = null;
     this.data = {
       currentCalories: 0,
       calorieLimit: 1500,
@@ -77,11 +78,15 @@ class HomePresenter {
     };
 
     this._bindCustomEvents();
+    this._startDayChangeMonitor();
   }
 
   async init() {
     try {
       window.mealApiService = mealApiService;
+      
+      this._checkAndResetForNewDay();
+      this._loadFromSessionStorage();
       
       this.data.loading = true;
       this._renderView();
@@ -96,18 +101,136 @@ class HomePresenter {
     }
   }
 
+  _startDayChangeMonitor() {
+    setInterval(() => {
+      this._checkAndResetForNewDay();
+    }, 60000);
+  }
+
+  _checkAndResetForNewDay() {
+    const today = this._getTodayString();
+    const lastDate = localStorage.getItem('lastAppDate');
+    
+    if (lastDate !== today) {
+      console.log('New day detected, resetting data');
+      
+      localStorage.setItem('lastAppDate', today);
+      sessionStorage.removeItem('mealSuggestions');
+      
+      this.data.selectedKeywords = [];
+      this.data.mealSuggestions = {
+        loading: false,
+        error: null,
+        data: [],
+        isFromAPI: false
+      };
+      this.data.suggestedMeals = [
+        {
+          name: 'Chicken Soto',
+          image: './public/image/meals/chicken-soto.jpg',
+          calories: 312
+        },
+        {
+          name: 'Fried Noodles',
+          image: './public/image/meals/fried-noodles.jpg',
+          calories: 280
+        },
+        {
+          name: 'Meatballs Soup',
+          image: './public/image/meals/meatballs-soup.jpg',
+          calories: 283
+        },
+        {
+          name: 'Noodles Soup',
+          image: './public/image/meals/noodles-soup.jpg',
+          calories: 137
+        }
+      ];
+      
+      this.data.currentCalories = 0;
+      this.data.mealEntries = [];
+      this.data.dailyLog = null;
+      this.lastFetchDate = null;
+      
+      if (this.container && this.container.innerHTML) {
+        this._fetchDailyData();
+      }
+    }
+  }
+
+  _getTodayString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  _saveToSessionStorage() {
+    const today = this._getTodayString();
+    const sessionData = {
+      date: today,
+      selectedKeywords: this.data.selectedKeywords,
+      mealSuggestions: {
+        loading: false,
+        error: this.data.mealSuggestions.error,
+        data: this.data.mealSuggestions.data,
+        isFromAPI: this.data.mealSuggestions.isFromAPI
+      },
+      suggestedMeals: this.data.suggestedMeals
+    };
+    sessionStorage.setItem('mealSuggestions', JSON.stringify(sessionData));
+  }
+
+  _loadFromSessionStorage() {
+    try {
+      const stored = sessionStorage.getItem('mealSuggestions');
+      if (stored) {
+        const sessionData = JSON.parse(stored);
+        const today = this._getTodayString();
+        
+        if (sessionData.date === today) {
+          this.data.selectedKeywords = sessionData.selectedKeywords || [];
+          this.data.mealSuggestions = {
+            loading: false,
+            error: null,
+            data: sessionData.mealSuggestions?.data || [],
+            isFromAPI: sessionData.mealSuggestions?.isFromAPI || false
+          };
+          this.data.suggestedMeals = sessionData.suggestedMeals || this.data.suggestedMeals;
+          
+          console.log('Restored meal suggestions from session storage');
+          this._renderView();
+        } else {
+          sessionStorage.removeItem('mealSuggestions');
+          console.log('Session storage cleared - different day');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading from session storage:', error);
+      sessionStorage.removeItem('mealSuggestions');
+    }
+  }
+
   async _fetchDailyData() {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = this._getTodayString();
+      
+      if (this.lastFetchDate === today) {
+        return;
+      }
+      
       const dailyData = await mealApiService.getDailyLog(today);
       
       this.data.dailyLog = dailyData.daily_log;
-      this.data.mealEntries = dailyData.meal_entries || [];
+      this.data.mealEntries = await this._enrichMealEntries(dailyData.meal_entries || []);
       this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
       
       if (dailyData.daily_log.remaining_calories !== undefined) {
         this.data.calorieLimit = this.data.currentCalories + dailyData.daily_log.remaining_calories;
       }
+      
+      this.lastFetchDate = today;
       
     } catch (error) {
       console.error('Error fetching daily data:', error);
@@ -122,6 +245,69 @@ class HomePresenter {
     }
   }
 
+  async _enrichMealEntries(mealEntries) {
+    const enrichedEntries = [];
+    
+    for (const meal of mealEntries) {
+      let enrichedMeal = { ...meal };
+      
+      if (meal.is_from_recipe && meal.recipe_id) {
+        try {
+          const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
+          if (mealDetails && mealDetails.meal) {
+            const recipeData = mealDetails.meal;
+            enrichedMeal.food_details = {
+              id: `recipe_${meal.recipe_id}`,
+              food_name: recipeData.food_name || meal.food_name || 'Recipe Meal',
+              calories_per_serving: recipeData.calories_per_serving,
+              protein_per_serving: recipeData.protein_per_serving,
+              carbs_per_serving: recipeData.carbs_per_serving,
+              fat_per_serving: recipeData.fat_per_serving,
+              serving_size: recipeData.serving_size,
+              serving_unit: recipeData.serving_unit,
+              image_url: recipeData.image_url,
+              is_recipe: true,
+              recipe_id: meal.recipe_id
+            };
+          }
+        } catch (error) {
+          console.warn('Could not fetch recipe details for meal entry:', error);
+          enrichedMeal.food_details = {
+            id: meal.food_item_id,
+            food_name: meal.food_name || 'Recipe Meal',
+            calories_per_serving: Math.round(meal.calories / meal.servings),
+            protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
+            carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
+            fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+            serving_size: 1,
+            serving_unit: "serving",
+            image_url: null,
+            is_recipe: true,
+            recipe_id: meal.recipe_id
+          };
+        }
+      } else if (meal.is_from_search && meal.recipe_id) {
+        enrichedMeal.food_details = {
+          id: meal.food_item_id,
+          food_name: meal.food_name || 'Search Result',
+          calories_per_serving: Math.round(meal.calories / meal.servings),
+          protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
+          carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
+          fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+          serving_size: 1,
+          serving_unit: "serving",
+          image_url: null,
+          is_from_search: true,
+          recipe_id: meal.recipe_id
+        };
+      }
+      
+      enrichedEntries.push(enrichedMeal);
+    }
+    
+    return enrichedEntries;
+  }
+
   async _fetchMealPlan() {
     try {
       this.data.mealPlan.loading = true;
@@ -132,35 +318,16 @@ class HomePresenter {
       const mealPlanData = await mealApiService.generateMealPlan();
       console.log('✅ Meal plan data received:', mealPlanData);
       
-      // 🔍 DEBUG: Detailed data inspection
-      console.log('🔍 DEBUGGING MEAL PLAN DATA:');
-      console.log('  - Full response:', JSON.stringify(mealPlanData, null, 2));
-      console.log('  - Has meal_plans?', !!mealPlanData.meal_plans);
-      console.log('  - meal_plans type:', typeof mealPlanData.meal_plans);
-      console.log('  - meal_plans length:', mealPlanData.meal_plans?.length);
-      console.log('  - meal_plans content:', mealPlanData.meal_plans);
-      
-      // ✅ FIXED: Pass the complete API response to formatMealPlanData
       const formattedPlans = formatMealPlanData(mealPlanData);
-      console.log('🔍 Formatted plans result:', JSON.stringify(formattedPlans, null, 2));
-      console.log('🔍 Formatted plans length:', formattedPlans.length);
       
-      // Validate formatted plans
       if (!Array.isArray(formattedPlans) || formattedPlans.length === 0) {
         console.error('❌ formatMealPlanData returned invalid data:', formattedPlans);
         throw new Error('Failed to format meal plan data');
       }
       
-      // Set the meal plan data
       this.data.mealPlan.plans = formattedPlans;
       this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
       this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
-      
-      console.log('🔍 Final meal plan state:');
-      console.log('  - plans length:', this.data.mealPlan.plans.length);
-      console.log('  - totalCalories:', this.data.mealPlan.totalCalories);
-      console.log('  - targetCalories:', this.data.mealPlan.targetCalories);
-      console.log('  - plans content:', this.data.mealPlan.plans);
       
       console.log('✅ Meal plan formatted successfully');
       
@@ -169,49 +336,33 @@ class HomePresenter {
       
       let errorMessage = 'Unable to load meal plan';
       
-      // Handle specific error cases with more detail
       if (error.message.includes('Authentication') || error.message.includes('login')) {
         errorMessage = 'Authentication required. Please login again.';
-        console.log('🔧 Solution: User needs to login again');
-        // You might want to redirect to login here
-        // window.location.hash = '#/login';
       } else if (error.message.includes('Profile not found') || error.message.includes('404')) {
         errorMessage = 'Please complete your profile first';
-        console.log('🔧 Solution: User needs to complete profile');
       } else if (error.message.includes('Daily calorie target') || error.message.includes('400')) {
         errorMessage = 'Please set your daily calorie target in profile';
-        console.log('🔧 Solution: User needs to set calorie target');
       } else if (error.message.includes('Server error') || error.message.includes('500')) {
         errorMessage = 'Profile setup required. Please complete your profile.';
-        console.log('🔧 Solution: Likely profile or calorie target issue');
       } else if (error.message.includes('503') || error.message.includes('ML service')) {
         errorMessage = 'Meal plan service temporarily unavailable';
-        console.log('🔧 Solution: ML service is down');
       } else if (error.message.includes('504') || error.message.includes('timeout')) {
         errorMessage = 'Request timeout. Please try again';
-        console.log('🔧 Solution: Timeout, user should retry');
       } else if (error.message.includes('connect') || error.message.includes('network') || error.message.includes('Network error')) {
         errorMessage = 'Connection error. Please check your internet';
-        console.log('🔧 Solution: Network connectivity issue');
       } else if (error.message.includes('No meal plans available') || error.message.includes('No meal plans generated')) {
         errorMessage = 'No meal plans generated. Please try again.';
-        console.log('🔧 Solution: ML service returned empty result');
       } else if (error.message.includes('Invalid')) {
         errorMessage = 'Invalid data received. Please try again.';
-        console.log('🔧 Solution: Data format issue');
       }
       
       this.data.mealPlan.error = errorMessage;
       
-      // Use default meal plan as fallback only if no critical errors
       if (!error.message.includes('Authentication') && !error.message.includes('login')) {
         this.data.mealPlan.plans = getDefaultMealPlan();
         this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
-        
         console.log('📋 Using default meal plan as fallback');
-        console.log('📋 Default plans:', this.data.mealPlan.plans);
       } else {
-        // For authentication errors, don't show default plans
         this.data.mealPlan.plans = [];
         this.data.mealPlan.totalCalories = 0;
       }
@@ -244,7 +395,9 @@ class HomePresenter {
       
       await mealApiService.deleteMealEntry(mealId);
       
-      await this._fetchDailyData();
+      setTimeout(async () => {
+        await this._fetchDailyData();
+      }, 500);
       
       console.log('Meal deleted successfully');
     } catch (error) {
@@ -281,10 +434,8 @@ class HomePresenter {
     }
     
     if (selected) {
-      // Check if we already have 6 keywords selected
       if (this.data.selectedKeywords.length >= 6) {
         alert('Maximum 6 keywords allowed! Please remove some keywords first.');
-        // Deselect the keyword in UI
         setTimeout(() => {
           const keywordElement = document.querySelector(`[data-keyword="${keyword}"]`);
           if (keywordElement) {
@@ -300,6 +451,8 @@ class HomePresenter {
     } else {
       this.data.selectedKeywords = this.data.selectedKeywords.filter(k => k !== keyword);
     }
+    
+    this._saveToSessionStorage();
     
     const categoryCounts = countSelectedKeywordsByCategory(this.data.selectedKeywords);
     console.log('Selected keywords by category:', categoryCounts);
@@ -320,7 +473,6 @@ class HomePresenter {
     }
 
     try {
-      // Set loading state
       this.data.mealSuggestions.loading = true;
       this.data.mealSuggestions.error = null;
       this.data.mealSuggestions.isFromAPI = true;
@@ -329,12 +481,10 @@ class HomePresenter {
       console.log('🔍 Fetching meal suggestions from API...');
       console.log('Keywords:', this.data.selectedKeywords);
 
-      // Call API for meal suggestions
       const suggestionsData = await mealApiService.getMealSuggestions(this.data.selectedKeywords);
       console.log('✅ Meal suggestions received:', suggestionsData);
 
       if (suggestionsData && suggestionsData.suggestions && suggestionsData.suggestions.length > 0) {
-        // Format suggestions to match foodCard format
         const formattedSuggestions = suggestionsData.suggestions.map(suggestion => ({
           id: suggestion.recipe_id,
           name: suggestion.name,
@@ -348,7 +498,12 @@ class HomePresenter {
         }));
 
         this.data.mealSuggestions.data = formattedSuggestions;
-        this.data.suggestedMeals = formattedSuggestions.slice(0, 8); // Show max 8 items
+        this.data.suggestedMeals = formattedSuggestions.slice(0, 8);
+        this.data.mealSuggestions.loading = false;
+        this.data.mealSuggestions.error = null;
+        this.data.mealSuggestions.isFromAPI = true;
+        
+        this._saveToSessionStorage();
         
         console.log('✅ Meal suggestions formatted successfully');
         console.log('Total suggestions:', formattedSuggestions.length);
@@ -383,12 +538,12 @@ class HomePresenter {
       
     } finally {
       this.data.mealSuggestions.loading = false;
+      this._saveToSessionStorage();
       this._renderView();
     }
   }
 
   _useFallbackSuggestions() {
-    // Use default suggestions when API fails
     this.data.mealSuggestions.data = [
       {
         id: "default_1",
@@ -425,25 +580,30 @@ class HomePresenter {
     ];
     
     this.data.suggestedMeals = this.data.mealSuggestions.data;
+    this.data.mealSuggestions.loading = false;
+    this.data.mealSuggestions.error = null;
     this.data.mealSuggestions.isFromAPI = false;
+    this._saveToSessionStorage();
   }
 
   _handleClearAll() {
     console.log('Clearing all selected keywords');
     this.data.selectedKeywords = [];
     
-    // Reset to default suggestions
     this._useFallbackSuggestions();
     this.data.mealSuggestions.loading = false;
     this.data.mealSuggestions.error = null;
     this.data.mealSuggestions.isFromAPI = false;
     
+    this._saveToSessionStorage();
     this._renderView();
   }
 
   _handleKeywordRemoved(keyword) {
     console.log(`Removing keyword: ${keyword}`);
     this.data.selectedKeywords = this.data.selectedKeywords.filter(k => k !== keyword);
+    
+    this._saveToSessionStorage();
     
     const categoryCounts = countSelectedKeywordsByCategory(this.data.selectedKeywords);
     console.log('Updated keywords by category:', categoryCounts);
@@ -477,13 +637,129 @@ class HomePresenter {
   _handleSuggestedMealClicked(mealData) {
     console.log('Suggested meal clicked for adding:', mealData);
     
-    if (window.FoodCard && window.FoodCard.showAddMealPopup) {
-      window.FoodCard.showAddMealPopup({
-        id: mealData.id,
-        name: mealData.name,
-        calories: mealData.calories,
-        serving_size: mealData.serving_size || 1,
-        serving_unit: mealData.serving_unit || 'serving'
+    this._showSuggestionMealPopup({
+      id: mealData.id,
+      name: mealData.name,
+      calories: mealData.calories,
+      serving_size: mealData.serving_size || 1,
+      serving_unit: mealData.serving_unit || 'serving'
+    });
+  }
+
+  _showSuggestionMealPopup(foodData) {
+    console.log('Showing suggestion meal popup for:', foodData);
+    
+    const existingPopup = document.getElementById('suggestion-meal-popup-overlay');
+    if (existingPopup) {
+      existingPopup.remove();
+    }
+    
+    const popupHTML = `
+      <div class="meal-popup-overlay" id="suggestion-meal-popup-overlay">
+        <div class="meal-popup">
+          <div class="meal-popup-header">
+            <h3>Add ${foodData.name}</h3>
+            <button class="popup-close" id="suggestion-popup-close">&times;</button>
+          </div>
+          <div class="meal-popup-content">
+            <div class="form-group">
+              <label for="suggestion-meal-type">Meal Type:</label>
+              <select id="suggestion-meal-type" required>
+                <option value="">Select meal type</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="suggestion-servings">Servings:</label>
+              <input type="number" id="suggestion-servings" min="1" step="1" value="1" required>
+            </div>
+            <div class="form-group">
+              <label for="suggestion-log-date">Date:</label>
+              <input type="date" id="suggestion-log-date" value="${this._getTodayString()}" required>
+            </div>
+            <div class="form-actions">
+              <button class="btn-cancel" id="suggestion-btn-cancel">Cancel</button>
+              <button class="btn-add" id="suggestion-btn-add">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+    
+    const overlay = document.getElementById('suggestion-meal-popup-overlay');
+    const closeBtn = document.getElementById('suggestion-popup-close');
+    const cancelBtn = document.getElementById('suggestion-btn-cancel');
+    const addBtn = document.getElementById('suggestion-btn-add');
+    
+    function closePopup() {
+      if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }
+    
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closePopup);
+    }
+    
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', closePopup);
+    }
+    
+    if (overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closePopup();
+      });
+    }
+    
+    if (addBtn) {
+      addBtn.addEventListener('click', async () => {
+        const mealType = document.getElementById('suggestion-meal-type')?.value;
+        const servings = parseFloat(document.getElementById('suggestion-servings')?.value);
+        const logDate = document.getElementById('suggestion-log-date')?.value;
+        
+        if (!mealType || !servings || !logDate) {
+          alert('Please fill all fields');
+          return;
+        }
+        
+        try {
+          addBtn.disabled = true;
+          addBtn.textContent = 'Adding...';
+          
+          if (foodData.id && !foodData.id.startsWith('default_')) {
+            const mealEntryData = {
+              recipe_id: foodData.id,
+              meal_type: mealType,
+              servings: servings,
+              log_date: logDate
+            };
+            
+            await mealApiService.addMealFromSuggestion(mealEntryData);
+            
+            alert('Meal added successfully!');
+            closePopup();
+            
+            setTimeout(async () => {
+              this.lastFetchDate = null;
+              await this._fetchDailyData();
+            }, 500);
+            
+          } else {
+            console.log(`Demo: Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
+            alert('This is a default meal. Please select suggestions from "Find Meals" for full functionality.');
+            closePopup();
+          }
+        } catch (error) {
+          console.error('Error adding meal from suggestion:', error);
+          alert('Failed to add meal. Please try again.');
+          addBtn.disabled = false;
+          addBtn.textContent = 'Add';
+        }
       });
     }
   }
@@ -492,7 +768,6 @@ class HomePresenter {
     console.log('Suggested meal details clicked:', mealData);
     
     if (!mealData.id || mealData.id.startsWith('default_')) {
-      // For default meals, show basic info
       this._showMealDetailsPopup({
         name: mealData.name,
         calories: mealData.calories,
@@ -510,7 +785,6 @@ class HomePresenter {
     try {
       console.log('🔍 Fetching meal details from API...');
       
-      // Show loading state
       this._showMealDetailsPopup({
         name: mealData.name,
         loading: true
@@ -544,7 +818,6 @@ class HomePresenter {
     } catch (error) {
       console.error('💥 Error fetching meal details:', error);
       
-      // Show error in popup
       this._showMealDetailsPopup({
         name: mealData.name,
         error: 'Failed to load meal details. Please try again.',
@@ -555,7 +828,6 @@ class HomePresenter {
   }
 
   _showMealDetailsPopup(mealDetails) {
-    // Remove existing popup if any
     const existingPopup = document.getElementById('meal-details-popup-overlay');
     if (existingPopup) {
       existingPopup.remove();
@@ -653,7 +925,6 @@ class HomePresenter {
 
     document.body.insertAdjacentHTML('beforeend', popupHTML);
 
-    // Add event listeners
     const overlay = document.getElementById('meal-details-popup-overlay');
     const closeBtn = document.getElementById('meal-details-close');
 
@@ -673,7 +944,6 @@ class HomePresenter {
       });
     }
 
-    // Close on Escape key
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         closePopup();

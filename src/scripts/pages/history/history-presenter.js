@@ -178,62 +178,129 @@ class HistoryPresenter {
     }
   }
 
+  async _enrichMealEntries(mealEntries) {
+    const enrichedEntries = [];
+    
+    for (const meal of mealEntries) {
+      let enrichedMeal = { ...meal };
+      
+      if (meal.is_from_recipe && meal.recipe_id) {
+        try {
+          const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
+          if (mealDetails && mealDetails.meal) {
+            const recipeData = mealDetails.meal;
+            enrichedMeal.food_details = {
+              id: `recipe_${meal.recipe_id}`,
+              food_name: recipeData.food_name || meal.food_name || 'Recipe Meal',
+              calories_per_serving: recipeData.calories_per_serving,
+              protein_per_serving: recipeData.protein_per_serving,
+              carbs_per_serving: recipeData.carbs_per_serving,
+              fat_per_serving: recipeData.fat_per_serving,
+              serving_size: recipeData.serving_size,
+              serving_unit: recipeData.serving_unit,
+              image_url: recipeData.image_url,
+              is_recipe: true,
+              recipe_id: meal.recipe_id
+            };
+          }
+        } catch (error) {
+          console.warn('Could not fetch recipe details for meal entry:', error);
+          enrichedMeal.food_details = {
+            id: meal.food_item_id,
+            food_name: meal.food_name || 'Recipe Meal',
+            calories_per_serving: Math.round(meal.calories / meal.servings),
+            protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
+            carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
+            fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+            serving_size: 1,
+            serving_unit: "serving",
+            image_url: null,
+            is_recipe: true,
+            recipe_id: meal.recipe_id
+          };
+        }
+      } else if (meal.is_from_search && meal.recipe_id) {
+        enrichedMeal.food_details = {
+          id: meal.food_item_id,
+          food_name: meal.food_name || 'Search Result',
+          calories_per_serving: Math.round(meal.calories / meal.servings),
+          protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
+          carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
+          fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+          serving_size: 1,
+          serving_unit: "serving",
+          image_url: null,
+          is_from_search: true,
+          recipe_id: meal.recipe_id
+        };
+      }
+      
+      enrichedEntries.push(enrichedMeal);
+    }
+    
+    return enrichedEntries;
+  }
+
   async loadFoodHistory(logDate = null) {
     try {
-      console.log('🔄 Loading food history for date:', logDate);
       this.showFoodLoading();
       
       const targetDate = logDate || this.formatDateForAPI(new Date());
       
-      const mealEntries = await mealApiService.getMealEntries({ log_date: targetDate });
-      console.log('📊 Meal entries received for', targetDate, ':', mealEntries);
+      const dailyData = await mealApiService.getDailyLog(targetDate);
       
-      if (!mealEntries || mealEntries.length === 0) {
-        console.log('❌ No meal entries found for', targetDate);
+      if (!dailyData || !dailyData.meal_entries || dailyData.meal_entries.length === 0) {
         this.showFoodError(`No meals found for ${this.formatDisplayDate(targetDate)}`);
         return;
       }
       
+      const enrichedMealEntries = await this._enrichMealEntries(dailyData.meal_entries);
       const uniqueFoods = new Map();
       
-      mealEntries.forEach((entry, index) => {
-        console.log(`📝 Processing entry ${index}:`, entry);
-        
+      enrichedMealEntries.forEach((entry, index) => {
         let foodItem = null;
+        let foodName = 'Unknown Food';
+        
         if (entry.food_details) {
           foodItem = entry.food_details;
+          foodName = foodItem.food_name || foodItem.name || entry.food_name || 'Recipe Meal';
         } else if (entry.food_item) {
           foodItem = entry.food_item;
-        } else if (entry.foodItem) {
-          foodItem = entry.foodItem;
-        } else if (entry.food) {
-          foodItem = entry.food;
+          foodName = foodItem.food_name || foodItem.name || entry.food_name || 'Food Item';
+        } else if (entry.food_name) {
+          foodName = entry.food_name;
+        } else if (entry.food_item_id) {
+          foodName = `Food ${entry.food_item_id}`;
         }
         
-        if (foodItem && (foodItem.id || foodItem.food_id || entry.food_item_id)) {
-          const foodId = foodItem.id || foodItem.food_id || entry.food_item_id;
+        if (foodItem || entry.food_item_id) {
+          const foodId = foodItem?.id || entry.food_item_id;
           const entryKey = `${foodId}_${entry.meal_type}_${entry.id}`;
           
           if (!uniqueFoods.has(entryKey)) {
+            const baseCalories = foodItem?.calories_per_serving || 
+                               Math.round(entry.calories / (entry.servings || 1)) || 
+                               entry.calories || 0;
+            const servings = entry.servings || 1;
+            const totalCalories = Math.round(baseCalories);
+            
             const foodData = {
               id: foodId,
               entryId: entry.id,
-              name: foodItem.name || foodItem.food_name || 'Unknown Food',
-              calories: Math.round((foodItem.calories_per_serving || foodItem.calories || foodItem.total_calories || 0) * (entry.servings || 1)),
-              image: foodItem.image_url || foodItem.image || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`,
-              serving_size: entry.servings || foodItem.default_serving_size || foodItem.serving_size || 1,
-              serving_unit: foodItem.serving_unit || foodItem.unit || 'serving',
+              name: foodName,
+              calories: totalCalories,
+              image: foodItem?.image_url || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`,
+              serving_size: servings,
+              serving_unit: foodItem?.serving_unit || 'serving',
               meal_type: entry.meal_type
             };
             
-            console.log(`✅ Added food for ${targetDate}:`, foodData);
             uniqueFoods.set(entryKey, foodData);
           }
         }
       });
       
       this.foodHistory = Array.from(uniqueFoods.values()).slice(0, 12);
-      console.log('🍽️ Final food history for', targetDate, ':', this.foodHistory);
       
       if (this.foodHistory.length === 0) {
         this.showFoodError(`No meals found for ${this.formatDisplayDate(targetDate)}`);
@@ -242,8 +309,13 @@ class HistoryPresenter {
       }
       
     } catch (error) {
-      console.error('💥 Error loading food history:', error);
-      this.showFoodError('Failed to load food history');
+      console.error('Error loading food history:', error);
+      
+      if (error.message && error.message.includes('404')) {
+        this.showFoodError(`No meals found for ${this.formatDisplayDate(logDate || this.formatDateForAPI(new Date()))}`);
+      } else {
+        this.showFoodError('Failed to load food history');
+      }
     }
   }
 
@@ -466,11 +538,12 @@ class HistoryPresenter {
         alert('Meal added successfully!');
         closePopup();
         
-        if (logDate === this.formatDateForAPI(this.selectedDate)) {
-          this.loadFoodHistory(logDate);
-        }
-        
-        this.loadChartData();
+        setTimeout(() => {
+          if (logDate === this.formatDateForAPI(this.selectedDate)) {
+            this.loadFoodHistory(logDate);
+          }
+          this.loadChartData();
+        }, 500);
         
       } catch (error) {
         console.error('Error adding meal:', error);

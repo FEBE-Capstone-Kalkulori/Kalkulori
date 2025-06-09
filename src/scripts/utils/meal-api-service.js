@@ -40,7 +40,7 @@ class MealApiService {
       if (params.log_date) queryParams.append('log_date', params.log_date);
       if (params.meal_type) queryParams.append('meal_type', params.meal_type);
 
-      const url = `${this.baseUrl}/meals${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      const url = `${this.baseUrl}/meals/updated${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -70,6 +70,7 @@ class MealApiService {
   async getDailyLog(logDate) {
     try {
       const token = localStorage.getItem('authToken');
+      
       const response = await fetch(`${this.baseUrl}/logs/${logDate}`, {
         method: 'GET',
         headers: {
@@ -78,19 +79,21 @@ class MealApiService {
         }
       });
 
+      if (response.status === 404) {
+        console.log('No data for date:', logDate, '- returning empty');
+        return {
+          daily_log: {
+            total_calories_consumed: 0,
+            total_protein_consumed: 0,
+            total_carbs_consumed: 0,
+            total_fat_consumed: 0,
+            remaining_calories: 1500
+          },
+          meal_entries: []
+        };
+      }
+
       if (!response.ok) {
-        if (response.status === 404) {
-          return {
-            daily_log: {
-              total_calories_consumed: 0,
-              total_protein_consumed: 0,
-              total_carbs_consumed: 0,
-              total_fat_consumed: 0,
-              remaining_calories: 1500
-            },
-            meal_entries: []
-          };
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -102,6 +105,18 @@ class MealApiService {
         throw new Error(result.message || 'Failed to fetch daily log');
       }
     } catch (error) {
+      if (error.message.includes('404')) {
+        return {
+          daily_log: {
+            total_calories_consumed: 0,
+            total_protein_consumed: 0,
+            total_carbs_consumed: 0,
+            total_fat_consumed: 0,
+            remaining_calories: 1500
+          },
+          meal_entries: []
+        };
+      }
       console.error('Error fetching daily log:', error);
       throw error;
     }
@@ -181,7 +196,6 @@ class MealApiService {
         }
       });
 
-      // Always parse response first
       let result;
       try {
         result = await response.json();
@@ -199,7 +213,6 @@ class MealApiService {
       if (!response.ok) {
         let errorMessage = result.message || 'Failed to generate meal plan';
         
-        // More comprehensive error handling
         if (response.status === 401) {
           errorMessage = 'Authentication failed. Please login again.';
         } else if (response.status === 404) {
@@ -227,11 +240,9 @@ class MealApiService {
         throw new Error(errorMessage);
       }
       
-      // Validate response structure
       if (result.status === 'success') {
         console.log('✅ Meal Plan API Success - validating data structure...');
         
-        // Detailed response validation
         if (!result.data) {
           console.error('❌ Missing data in successful response:', result);
           throw new Error('Invalid response: missing data');
@@ -252,18 +263,16 @@ class MealApiService {
           throw new Error('No meal plans generated. Please try again.');
         }
         
-        // Validate first meal plan structure
         const firstPlan = result.data.meal_plans[0];
         if (!firstPlan || typeof firstPlan !== 'object') {
           console.error('❌ Invalid first meal plan:', firstPlan);
           throw new Error('Invalid meal plan data structure');
         }
         
-        // Check if it has at least one meal type (flexible case matching)
         const possibleMealTypes = [
-          'breakfast', 'lunch', 'dinner',           // lowercase
-          'Breakfast', 'Lunch', 'Dinner',           // capitalized
-          'BREAKFAST', 'LUNCH', 'DINNER'            // uppercase
+          'breakfast', 'lunch', 'dinner',
+          'Breakfast', 'Lunch', 'Dinner',
+          'BREAKFAST', 'LUNCH', 'DINNER'
         ];
         
         console.log('🔍 Checking for meals in plan. Available keys:', Object.keys(firstPlan));
@@ -276,7 +285,6 @@ class MealApiService {
           }
         });
         
-        // Alternative check: look for any object properties that might be meals
         const allKeys = Object.keys(firstPlan);
         const mealLikeKeys = allKeys.filter(key => {
           const keyLower = key.toLowerCase();
@@ -289,7 +297,6 @@ class MealApiService {
         console.log('🔍 Meal-like keys found:', mealLikeKeys);
         console.log('🔍 All plan keys:', allKeys);
         
-        // FIXED: Calculate hasMeals properly
         const hasMeals = foundMeals.length > 0 || mealLikeKeys.length > 0;
         
         if (!hasMeals) {
@@ -310,14 +317,12 @@ class MealApiService {
         console.log('  - First plan structure:', Object.keys(firstPlan));
         console.log('  - Has meals:', hasMeals);
         
-        // Return the full data object
         return result.data;
       } else {
         console.error('❌ API returned non-success status:', result.status, result.message);
         throw new Error(result.message || 'Failed to generate meal plan');
       }
     } catch (error) {
-      // Handle different types of errors
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         console.error('🌐 Network error detected:', error);
         throw new Error('Network error. Please check your internet connection.');
@@ -325,7 +330,6 @@ class MealApiService {
       
       if (error.message.includes('Authentication')) {
         console.error('🔐 Authentication error:', error);
-        // Could redirect to login here
         throw error;
       }
       
@@ -338,10 +342,8 @@ class MealApiService {
     }
   }
 
-  // Helper method to convert meal plan data to meal entry format
   async convertMealToEntry(mealData, mealType, logDate) {
     try {
-      // First, get detailed meal information if we have a recipe_id
       let detailedMeal = mealData;
       
       if (mealData.recipe_id || mealData.id) {
@@ -350,7 +352,6 @@ class MealApiService {
           detailedMeal = await this.getMealDetails(recipeId);
         } catch (error) {
           console.warn('Could not fetch detailed meal info, using basic data:', error);
-          // Continue with basic meal data
         }
       }
       
@@ -368,12 +369,10 @@ class MealApiService {
     }
   }
 
-  // NEW: Get meal suggestions based on keywords
   async getMealSuggestions(keywords) {
     try {
       const token = localStorage.getItem('authToken');
       
-      // Validate keywords
       if (!keywords || keywords.length === 0) {
         throw new Error('At least 1 keyword is required');
       }
@@ -382,7 +381,6 @@ class MealApiService {
         throw new Error('Maximum 6 keywords allowed');
       }
       
-      // Join keywords with comma
       const keywordsParam = keywords.join(',');
       
       const response = await fetch(`${this.baseUrl}/meals/suggestion?keywords=${encodeURIComponent(keywordsParam)}`, {
@@ -428,7 +426,6 @@ class MealApiService {
     }
   }
 
-  // NEW: Get meal details by recipe ID
   async getMealDetails(recipeId) {
     try {
       const token = localStorage.getItem('authToken');
@@ -464,7 +461,7 @@ class MealApiService {
       }
       
       if (result.status === 'success') {
-        return result.data.meal;
+        return result.data;
       } else {
         throw new Error(result.message || 'Failed to get meal details');
       }
@@ -474,6 +471,63 @@ class MealApiService {
       }
       
       console.error('💥 Get Meal Details Error:', error);
+      throw error;
+    }
+  }
+
+  async addMealFromSuggestion(mealData) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!mealData.recipe_id || !mealData.meal_type || !mealData.log_date) {
+        throw new Error('Recipe ID, meal type, and log date are required');
+      }
+      
+      const requestData = {
+        recipe_id: mealData.recipe_id,
+        meal_type: mealData.meal_type,
+        servings: mealData.servings || 1,
+        log_date: mealData.log_date
+      };
+      
+      const response = await fetch(`${this.baseUrl}/meals/suggestion/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const result = await response.json();
+      console.log('🔍 Add Meal From Suggestion API Response:', { status: response.status, data: result });
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to add meal from suggestion';
+        
+        if (response.status === 404) {
+          errorMessage = 'Recipe not found or profile incomplete';
+        } else if (response.status === 400) {
+          errorMessage = result.message || 'Invalid meal data';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal service temporarily unavailable';
+        }
+        
+        console.error('🚨 Add Meal From Suggestion Error:', { status: response.status, message: errorMessage });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to add meal from suggestion');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Add Meal From Suggestion Error:', error);
       throw error;
     }
   }
