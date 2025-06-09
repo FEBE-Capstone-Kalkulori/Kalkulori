@@ -1,6 +1,9 @@
+import Header from "../../components/header.js";
+
 class HistoryView {
   constructor() {
-    this.historyHeaderId = 'kalkulori-history-header-unique';
+    this.historyHeaderId = "kalkulori-history-header-unique";
+    this.header = new Header();
   }
 
   getTemplate() {
@@ -96,41 +99,51 @@ class HistoryView {
 
   toggleHeaders(showHistoryHeader = true) {
     try {
-      const existingHistoryHeader = document.getElementById(this.historyHeaderId);
+      const headerContainer =
+        document.getElementById("header-container") ||
+        document.querySelector("header");
+
+      if (showHistoryHeader && headerContainer) {
+        headerContainer.innerHTML = this.header.render("page", "history");
+      }
+
+      const existingHistoryHeader = document.getElementById(
+        this.historyHeaderId
+      );
       if (existingHistoryHeader) {
         existingHistoryHeader.remove();
       }
-      
-      const existingHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
-      existingHistoryHeaders.forEach(header => {
+
+      const existingHistoryHeaders = document.querySelectorAll(
+        ".kalkulori-history-header"
+      );
+      existingHistoryHeaders.forEach((header) => {
         if (header.id !== this.historyHeaderId) {
           header.remove();
         }
       });
-      
-      const homeHeader = document.querySelector('header');
-      
+
+      const homeHeader = document.querySelector("header");
+
       if (showHistoryHeader) {
         if (homeHeader) {
-          homeHeader.style.display = 'none';
+          homeHeader.style.display = "none";
         }
-        
+
         if (!document.getElementById(this.historyHeaderId)) {
           const historyHeaderHTML = this.createHistoryHeader();
-          document.body.insertAdjacentHTML('afterbegin', historyHeaderHTML);
+          document.body.insertAdjacentHTML("afterbegin", historyHeaderHTML);
         }
-        
       } else {
         if (homeHeader) {
-          homeHeader.style.display = 'block';
+          homeHeader.style.display = "block";
         }
       }
-      
     } catch (error) {
-      console.error('Error toggling headers:', error);
-      const homeHeader = document.querySelector('header');
+      console.error("Error toggling headers:", error);
+      const homeHeader = document.querySelector("header");
       if (homeHeader && !showHistoryHeader) {
-        homeHeader.style.display = 'block';
+        homeHeader.style.display = "block";
       }
     }
   }
@@ -141,17 +154,22 @@ class HistoryView {
       if (specificHeader) {
         specificHeader.remove();
       }
-      
-      const allHistoryHeaders = document.querySelectorAll('.kalkulori-history-header');
-      allHistoryHeaders.forEach(header => header.remove());
-      
-      const homeHeader = document.querySelector('header');
+
+      const allHistoryHeaders = document.querySelectorAll(
+        ".kalkulori-history-header"
+      );
+      allHistoryHeaders.forEach((header) => header.remove());
+
+      const homeHeader = document.querySelector("header");
       if (homeHeader) {
-        homeHeader.style.display = 'block';
+        homeHeader.style.display = "block";
       }
-      
+
+      if (this.header) {
+        this.header.destroy();
+      }
     } catch (error) {
-      console.error('Error in force cleanup:', error);
+      console.error("Error in force cleanup:", error);
     }
   }
 

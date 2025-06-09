@@ -1,3 +1,5 @@
+import Header from '../../components/header.js';
+
 const createSignUpView = () => {
   return `
     <div class="min-h-screen bg-yellow-50 flex items-center justify-center p-4">
@@ -188,3 +190,16 @@ const createSignUpView = () => {
 };
 
 export { createSignUpView };
+
+export default {
+  render(container) {
+    const header = new Header();
+    const headerContainer = document.getElementById('header-container') || document.querySelector('header');
+    
+    if (headerContainer) {
+      headerContainer.innerHTML = header.render('auth');
+    }
+    
+    container.innerHTML = createSignUpView();
+  }
+};

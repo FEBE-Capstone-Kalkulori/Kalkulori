@@ -1,5 +1,6 @@
 import { MEAL_CATEGORIES } from './meal-categories.js';
 import { createMealPlanSection, attachMealPlanEventHandlers } from './meal-plan.js';
+import Header from '../../components/header.js';
 
 const createHomeTemplate = (data) => {
   return `
@@ -288,8 +289,41 @@ const capitalizeFirst = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
+function extractMealDataFromCard(foodCard) {
+  const nameElement = foodCard.querySelector('.suggestion-food-name');
+  const caloriesElement = foodCard.querySelector('.suggestion-food-calories');
+  const imageElement = foodCard.querySelector('.suggestion-food-image img');
+  const nutritionElements = foodCard.querySelectorAll('.suggestion-food-nutrition span');
+  
+  const mealData = {
+    id: foodCard.dataset.mealId || null,
+    name: nameElement?.textContent || 'Unknown Meal',
+    calories: parseInt(caloriesElement?.textContent?.replace(' kcal', '')) || 0,
+    image: imageElement?.src || '',
+    serving_size: parseFloat(foodCard.dataset.servingSize) || 1,
+    serving_unit: foodCard.dataset.servingUnit || 'serving'
+  };
+
+  if (nutritionElements.length >= 3) {
+    mealData.protein = parseFloat(nutritionElements[0]?.textContent?.replace('P: ', '').replace('g', '')) || 0;
+    mealData.carbohydrate = parseFloat(nutritionElements[1]?.textContent?.replace('C: ', '').replace('g', '')) || 0;
+    mealData.fat = parseFloat(nutritionElements[2]?.textContent?.replace('F: ', '').replace('g', '')) || 0;
+  }
+
+  return mealData;
+}
+
 export default {
   render(container, data) {
+    const header = new Header();
+    const headerContainer = document.getElementById('header-container') || document.querySelector('header');
+    
+    if (headerContainer) {
+      headerContainer.innerHTML = header.render('home');
+      header.addSliderStyles();
+      header.initSlider();
+    }
+    
     container.innerHTML = createHomeTemplate(data);
   },
   
@@ -305,7 +339,6 @@ export default {
     const clearAllButton = document.getElementById('clear-all-button');
     const removeKeywordButtons = document.querySelectorAll('.remove-keyword');
     
-    // Meal suggestions event handlers
     const suggestionAddButtons = document.querySelectorAll('[data-add-meal-trigger]');
     const suggestionDetailsTriggers = document.querySelectorAll('[data-meal-details-trigger]');
     
@@ -367,7 +400,6 @@ export default {
       });
     }
 
-    // Handle meal suggestion add buttons
     if (suggestionAddButtons && eventHandlers.onSuggestedMealClicked) {
       suggestionAddButtons.forEach(button => {
         button.addEventListener('click', (e) => {
@@ -383,7 +415,6 @@ export default {
       });
     }
 
-    // Handle meal suggestion details triggers
     if (suggestionDetailsTriggers && eventHandlers.onSuggestedMealDetailsClicked) {
       suggestionDetailsTriggers.forEach(trigger => {
         trigger.addEventListener('click', (e) => {
@@ -431,7 +462,6 @@ export default {
         const currentSelected = document.querySelectorAll('.keyword-item.selected').length;
         const isCurrentlySelected = item.classList.contains('selected');
         
-        // Check if trying to select more than 6 keywords
         if (!isCurrentlySelected && currentSelected >= 6) {
           alert('Maximum 6 keywords allowed! Please unselect some keywords first.');
           return;
@@ -457,29 +487,3 @@ export default {
     }
   }
 };
-
-// Helper function to extract meal data from food card
-function extractMealDataFromCard(foodCard) {
-  const nameElement = foodCard.querySelector('.suggestion-food-name');
-  const caloriesElement = foodCard.querySelector('.suggestion-food-calories');
-  const imageElement = foodCard.querySelector('.suggestion-food-image img');
-  const nutritionElements = foodCard.querySelectorAll('.suggestion-food-nutrition span');
-  
-  const mealData = {
-    id: foodCard.dataset.mealId || null,
-    name: nameElement?.textContent || 'Unknown Meal',
-    calories: parseInt(caloriesElement?.textContent?.replace(' kcal', '')) || 0,
-    image: imageElement?.src || '',
-    serving_size: parseFloat(foodCard.dataset.servingSize) || 1,
-    serving_unit: foodCard.dataset.servingUnit || 'serving'
-  };
-
-  // Extract nutrition if available
-  if (nutritionElements.length >= 3) {
-    mealData.protein = parseFloat(nutritionElements[0]?.textContent?.replace('P: ', '').replace('g', '')) || 0;
-    mealData.carbohydrate = parseFloat(nutritionElements[1]?.textContent?.replace('C: ', '').replace('g', '')) || 0;
-    mealData.fat = parseFloat(nutritionElements[2]?.textContent?.replace('F: ', '').replace('g', '')) || 0;
-  }
-
-  return mealData;
-}
