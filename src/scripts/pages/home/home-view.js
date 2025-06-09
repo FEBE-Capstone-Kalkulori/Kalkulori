@@ -26,8 +26,9 @@ const createHomeTemplate = (data) => {
               ${createSelectedKeywords(data)}
             </div>
 
-            <div class="suggestions-grid">
-              ${createSuggestionsGrid(data.suggestedMeals)}
+            <div class="content-box meal-suggestions-box">
+              <h2>Meal Suggestions</h2>
+              ${createMealSuggestionsSection(data)}
             </div>
           </div>
         </div>
@@ -40,7 +41,7 @@ const createHomeTemplate = (data) => {
 const createCategoriesGrid = (data) => {
   return `
     <div class="categories-container">
-      <p class="categories-description">Choose your meal preferences:</p>
+      <p class="categories-description">Choose your meal preferences (max 6):</p>
       <div class="categories-grid">
         ${Object.entries(MEAL_CATEGORIES).map(([key, category]) => `
           <div class="category-card" data-category="${key}">
@@ -52,9 +53,14 @@ const createCategoriesGrid = (data) => {
       </div>
       ${data.selectedKeywords && data.selectedKeywords.length > 0 ? `
         <div class="action-buttons">
-          <button class="find-meals-btn" id="find-meals-button">Find Meals</button>
+          <button class="find-meals-btn" id="find-meals-button" ${data.selectedKeywords.length > 6 ? 'disabled' : ''}>
+            ${data.mealSuggestions?.loading ? 'Finding Meals...' : 'Find Meals'}
+          </button>
           <button class="clear-all-btn" id="clear-all-button">Clear All</button>
         </div>
+        ${data.selectedKeywords.length > 6 ? `
+          <p class="keyword-limit-warning">⚠️ Maximum 6 keywords allowed. Please remove some keywords.</p>
+        ` : ''}
       ` : ''}
     </div>
   `;
@@ -67,10 +73,10 @@ const createSelectedKeywords = (data) => {
 
   return `
     <div class="selected-keywords-container">
-      <h4>Selected Preferences:</h4>
+      <h4>Selected Preferences (${data.selectedKeywords.length}/6):</h4>
       <div class="selected-keywords">
         ${data.selectedKeywords.map(keyword => `
-          <span class="keyword-tag">
+          <span class="keyword-tag ${data.selectedKeywords.length > 6 ? 'over-limit' : ''}">
             ${keyword}
             <button class="remove-keyword" data-keyword="${keyword}">&times;</button>
           </span>
@@ -78,6 +84,85 @@ const createSelectedKeywords = (data) => {
       </div>
     </div>
   `;
+};
+
+const createMealSuggestionsSection = (data) => {
+  if (data.mealSuggestions?.loading) {
+    return `
+      <div class="meal-suggestions-loading">
+        <div class="loading-spinner"></div>
+        <p>Finding personalized meal suggestions...</p>
+      </div>
+    `;
+  }
+
+  if (data.mealSuggestions?.error) {
+    return `
+      <div class="meal-suggestions-error">
+        <p class="error-message">${data.mealSuggestions.error}</p>
+        <div class="suggestions-grid">
+          ${createSuggestionsFoodCards(data.suggestedMeals || [])}
+        </div>
+      </div>
+    `;
+  }
+
+  const suggestionsToShow = data.mealSuggestions?.data || data.suggestedMeals || [];
+  const hasKeywords = data.selectedKeywords && data.selectedKeywords.length > 0;
+  const isFromAPI = data.mealSuggestions?.isFromAPI;
+
+  return `
+    <div class="meal-suggestions-content">
+      ${hasKeywords && isFromAPI ? `
+        <p class="suggestions-info">✨ Personalized suggestions based on your preferences</p>
+      ` : hasKeywords ? `
+        <p class="suggestions-info">💡 Click "Find Meals" to get personalized suggestions</p>
+      ` : `
+        <p class="suggestions-info">🍽️ Popular meal recommendations</p>
+      `}
+      
+      <div class="suggestions-grid" id="suggestions-food-container">
+        ${createSuggestionsFoodCards(suggestionsToShow)}
+      </div>
+      
+      ${suggestionsToShow.length === 0 ? `
+        <div class="no-suggestions">
+          <p>No meal suggestions available. Try selecting some preferences and click "Find Meals"!</p>
+        </div>
+      ` : ''}
+    </div>
+  `;
+};
+
+const createSuggestionsFoodCards = (suggestions) => {
+  if (!suggestions || suggestions.length === 0) {
+    return '<p class="no-suggestions-text">No suggestions available</p>';
+  }
+
+  return suggestions.map(meal => `
+    <div class="suggestion-food-card" data-meal-id="${meal.id || ''}" data-serving-size="${meal.serving_size || 1}" data-serving-unit="${meal.serving_unit || 'serving'}">
+      <div class="suggestion-food-image" data-meal-details-trigger>
+        <img src="${meal.image || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'}" alt="${meal.name}">
+        <div class="image-overlay">
+          <span class="view-details-text">👁️ View Details</span>
+        </div>
+      </div>
+      <div class="suggestion-food-info">
+        <h3 class="suggestion-food-name">${meal.name}</h3>
+        <p class="suggestion-food-calories">${meal.calories} kcal</p>
+        ${meal.protein !== undefined ? `
+          <div class="suggestion-food-nutrition">
+            <span>P: ${Math.round(meal.protein || 0)}g</span>
+            <span>C: ${Math.round(meal.carbohydrate || 0)}g</span>
+            <span>F: ${Math.round(meal.fat || 0)}g</span>
+          </div>
+        ` : ''}
+      </div>
+      <button class="suggestion-add-button" data-add-meal-trigger>
+        <span class="plus-icon">+</span>
+      </button>
+    </div>
+  `).join('');
 };
 
 const createCategoryPopup = (data) => {
@@ -188,20 +273,6 @@ const createCompactMealCard = (meal) => {
   `;
 };
 
-const createSuggestionsGrid = (suggestedMeals) => {
-  return suggestedMeals.map(meal => `
-    <div class="suggestion-meal-item">
-      <div class="suggestion-meal-image">
-        <img src="${meal.image}" alt="${meal.name}">
-      </div>
-      <div class="suggestion-meal-details">
-        <div class="suggestion-meal-name">${meal.name}</div>
-        <div class="suggestion-meal-calories">${meal.calories} kcal</div>
-      </div>
-    </div>
-  `).join('');
-};
-
 const groupMealsByType = (mealEntries) => {
   return mealEntries.reduce((groups, meal) => {
     const type = meal.meal_type;
@@ -233,6 +304,10 @@ export default {
     const findMealsButton = document.getElementById('find-meals-button');
     const clearAllButton = document.getElementById('clear-all-button');
     const removeKeywordButtons = document.querySelectorAll('.remove-keyword');
+    
+    // Meal suggestions event handlers
+    const suggestionAddButtons = document.querySelectorAll('[data-add-meal-trigger]');
+    const suggestionDetailsTriggers = document.querySelectorAll('[data-meal-details-trigger]');
     
     if (addMealButton && eventHandlers.onAddMealClicked) {
       addMealButton.addEventListener('click', eventHandlers.onAddMealClicked);
@@ -292,6 +367,38 @@ export default {
       });
     }
 
+    // Handle meal suggestion add buttons
+    if (suggestionAddButtons && eventHandlers.onSuggestedMealClicked) {
+      suggestionAddButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const foodCard = button.closest('.suggestion-food-card');
+          if (!foodCard) return;
+          
+          const mealData = extractMealDataFromCard(foodCard);
+          eventHandlers.onSuggestedMealClicked(mealData);
+        });
+      });
+    }
+
+    // Handle meal suggestion details triggers
+    if (suggestionDetailsTriggers && eventHandlers.onSuggestedMealDetailsClicked) {
+      suggestionDetailsTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const foodCard = trigger.closest('.suggestion-food-card');
+          if (!foodCard) return;
+          
+          const mealData = extractMealDataFromCard(foodCard);
+          eventHandlers.onSuggestedMealDetailsClicked(mealData);
+        });
+      });
+    }
+
     attachMealPlanEventHandlers(
       eventHandlers.onGenerateMealPlan,
       eventHandlers.onMealPlanItemClicked,
@@ -321,6 +428,15 @@ export default {
     const keywordItems = keywordsGrid.querySelectorAll('.keyword-item');
     keywordItems.forEach(item => {
       item.addEventListener('click', () => {
+        const currentSelected = document.querySelectorAll('.keyword-item.selected').length;
+        const isCurrentlySelected = item.classList.contains('selected');
+        
+        // Check if trying to select more than 6 keywords
+        if (!isCurrentlySelected && currentSelected >= 6) {
+          alert('Maximum 6 keywords allowed! Please unselect some keywords first.');
+          return;
+        }
+        
         item.classList.toggle('selected');
         const keyword = item.dataset.keyword;
         
@@ -341,3 +457,29 @@ export default {
     }
   }
 };
+
+// Helper function to extract meal data from food card
+function extractMealDataFromCard(foodCard) {
+  const nameElement = foodCard.querySelector('.suggestion-food-name');
+  const caloriesElement = foodCard.querySelector('.suggestion-food-calories');
+  const imageElement = foodCard.querySelector('.suggestion-food-image img');
+  const nutritionElements = foodCard.querySelectorAll('.suggestion-food-nutrition span');
+  
+  const mealData = {
+    id: foodCard.dataset.mealId || null,
+    name: nameElement?.textContent || 'Unknown Meal',
+    calories: parseInt(caloriesElement?.textContent?.replace(' kcal', '')) || 0,
+    image: imageElement?.src || '',
+    serving_size: parseFloat(foodCard.dataset.servingSize) || 1,
+    serving_unit: foodCard.dataset.servingUnit || 'serving'
+  };
+
+  // Extract nutrition if available
+  if (nutritionElements.length >= 3) {
+    mealData.protein = parseFloat(nutritionElements[0]?.textContent?.replace('P: ', '').replace('g', '')) || 0;
+    mealData.carbohydrate = parseFloat(nutritionElements[1]?.textContent?.replace('C: ', '').replace('g', '')) || 0;
+    mealData.fat = parseFloat(nutritionElements[2]?.textContent?.replace('F: ', '').replace('g', '')) || 0;
+  }
+
+  return mealData;
+}

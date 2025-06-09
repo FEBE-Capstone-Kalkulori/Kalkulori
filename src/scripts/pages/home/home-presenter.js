@@ -52,7 +52,13 @@ class HomePresenter {
           image: './public/image/meals/noodles-soup.jpg',
           calories: 137
         }
-      ]
+      ],
+      mealSuggestions: {
+        loading: false,
+        error: null,
+        data: [],
+        isFromAPI: false
+      }
     };
     
     this.eventHandlers = {
@@ -65,7 +71,9 @@ class HomePresenter {
       onKeywordRemoved: this._handleKeywordRemoved.bind(this),
       onGenerateMealPlan: this._handleGenerateMealPlan.bind(this),
       onMealPlanItemClicked: this._handleMealPlanItemClicked.bind(this),
-      onCompleteProfileClicked: this._handleCompleteProfile.bind(this)
+      onCompleteProfileClicked: this._handleCompleteProfile.bind(this),
+      onSuggestedMealClicked: this._handleSuggestedMealClicked.bind(this),
+      onSuggestedMealDetailsClicked: this._handleSuggestedMealDetailsClicked.bind(this)
     };
 
     this._bindCustomEvents();
@@ -260,6 +268,19 @@ class HomePresenter {
     }
     
     if (selected) {
+      // Check if we already have 6 keywords selected
+      if (this.data.selectedKeywords.length >= 6) {
+        alert('Maximum 6 keywords allowed! Please remove some keywords first.');
+        // Deselect the keyword in UI
+        setTimeout(() => {
+          const keywordElement = document.querySelector(`[data-keyword="${keyword}"]`);
+          if (keywordElement) {
+            keywordElement.classList.remove('selected');
+          }
+        }, 100);
+        return;
+      }
+      
       if (!this.data.selectedKeywords.includes(keyword)) {
         this.data.selectedKeywords.push(keyword);
       }
@@ -272,7 +293,7 @@ class HomePresenter {
     console.log('Total selected keywords:', this.data.selectedKeywords);
   }
 
-  _handleFindMeals() {
+  async _handleFindMeals() {
     console.log('Finding meals with keywords:', this.data.selectedKeywords);
     
     if (this.data.selectedKeywords.length === 0) {
@@ -280,157 +301,129 @@ class HomePresenter {
       return;
     }
 
-    const groupedKeywords = groupKeywordsByCategory(this.data.selectedKeywords);
-    console.log('Grouped keywords by category:', groupedKeywords);
+    if (this.data.selectedKeywords.length > 6) {
+      alert('Maximum 6 keywords allowed! Please remove some keywords first.');
+      return;
+    }
 
-    const keywordsQuery = this.data.selectedKeywords.join(',');
-    console.log('Searching for meals with keywords:', keywordsQuery);
-    
-    this._updateSuggestedMeals();
+    try {
+      // Set loading state
+      this.data.mealSuggestions.loading = true;
+      this.data.mealSuggestions.error = null;
+      this.data.mealSuggestions.isFromAPI = true;
+      this._renderView();
+
+      console.log('🔍 Fetching meal suggestions from API...');
+      console.log('Keywords:', this.data.selectedKeywords);
+
+      // Call API for meal suggestions
+      const suggestionsData = await mealApiService.getMealSuggestions(this.data.selectedKeywords);
+      console.log('✅ Meal suggestions received:', suggestionsData);
+
+      if (suggestionsData && suggestionsData.suggestions && suggestionsData.suggestions.length > 0) {
+        // Format suggestions to match foodCard format
+        const formattedSuggestions = suggestionsData.suggestions.map(suggestion => ({
+          id: suggestion.recipe_id,
+          name: suggestion.name,
+          calories: suggestion.calories,
+          image: suggestion.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+          serving_size: suggestion.serving_size || 1,
+          serving_unit: suggestion.serving_unit || 'serving',
+          protein: suggestion.protein,
+          carbohydrate: suggestion.carbohydrate,
+          fat: suggestion.fat
+        }));
+
+        this.data.mealSuggestions.data = formattedSuggestions;
+        this.data.suggestedMeals = formattedSuggestions.slice(0, 8); // Show max 8 items
+        
+        console.log('✅ Meal suggestions formatted successfully');
+        console.log('Total suggestions:', formattedSuggestions.length);
+        
+        alert(`Found ${formattedSuggestions.length} meal suggestions based on your preferences!`);
+      } else {
+        console.log('⚠️ No suggestions found, using fallback');
+        this._useFallbackSuggestions();
+        alert('No specific suggestions found for your keywords. Showing general recommendations.');
+      }
+
+    } catch (error) {
+      console.error('💥 Error fetching meal suggestions:', error);
+      
+      let errorMessage = 'Failed to get meal suggestions';
+      
+      if (error.message.includes('Profile not found') || error.message.includes('404')) {
+        errorMessage = 'Please complete your profile first to get personalized suggestions.';
+      } else if (error.message.includes('Daily calorie target') || error.message.includes('400')) {
+        errorMessage = 'Please set your daily calorie target in profile to get suggestions.';
+      } else if (error.message.includes('503') || error.message.includes('service')) {
+        errorMessage = 'Meal suggestion service is temporarily unavailable. Using default suggestions.';
+      } else if (error.message.includes('504') || error.message.includes('timeout')) {
+        errorMessage = 'Request timeout. Using default suggestions.';
+      } else if (error.message.includes('Network error')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      this.data.mealSuggestions.error = errorMessage;
+      this._useFallbackSuggestions();
+      alert(errorMessage);
+      
+    } finally {
+      this.data.mealSuggestions.loading = false;
+      this._renderView();
+    }
   }
 
-  _updateSuggestedMeals() {
-    const mockMealsByCategory = {
-      'dietary': [
-        {
-          name: 'Healthy Chicken Salad',
-          image: './public/image/meals/chicken-salad.jpg',
-          calories: 250,
-          keywords: ['healthy', 'low calorie', 'high protein', 'chicken']
-        },
-        {
-          name: 'Vegetarian Buddha Bowl',
-          image: './public/image/meals/buddha-bowl.jpg',
-          calories: 320,
-          keywords: ['vegetarian', 'healthy', 'high fiber', 'vegetable']
-        }
-      ],
-      'cooking': [
-        {
-          name: 'No-Cook Tuna Wraps',
-          image: './public/image/meals/tuna-wraps.jpg',
-          calories: 280,
-          keywords: ['no cook', '< 15 mins', 'fish']
-        },
-        {
-          name: 'Microwave Steamed Fish',
-          image: './public/image/meals/steamed-fish.jpg',
-          calories: 200,
-          keywords: ['microwave', 'steam', 'healthy', 'fish']
-        }
-      ],
-      'cuisine': [
-        {
-          name: 'Thai Green Curry',
-          image: './public/image/meals/thai-curry.jpg',
-          calories: 380,
-          keywords: ['thai', 'spicy', 'coconut', 'chicken']
-        },
-        {
-          name: 'Italian Pasta Primavera',
-          image: './public/image/meals/pasta-primavera.jpg',
-          calories: 350,
-          keywords: ['italian', 'pasta', 'vegetable']
-        }
-      ],
-      'mealtime': [
-        {
-          name: 'Quick Breakfast Smoothie',
-          image: './public/image/meals/smoothie.jpg',
-          calories: 180,
-          keywords: ['breakfast', '< 15 mins', 'beverages', 'fruits']
-        },
-        {
-          name: 'Hearty Dinner Stew',
-          image: './public/image/meals/beef-stew.jpg',
-          calories: 420,
-          keywords: ['dinner', 'stew', 'beef', 'one dish meal']
-        }
-      ]
-    };
-
-    const relevantCategories = new Set();
-    this.data.selectedKeywords.forEach(keyword => {
-      const category = findCategoryByKeyword(keyword);
-      if (category) {
-        relevantCategories.add(category.key);
+  _useFallbackSuggestions() {
+    // Use default suggestions when API fails
+    this.data.mealSuggestions.data = [
+      {
+        id: "default_1",
+        name: 'Chicken Soto',
+        image: './public/image/meals/chicken-soto.jpg',
+        calories: 312,
+        serving_size: 1,
+        serving_unit: 'serving'
+      },
+      {
+        id: "default_2",
+        name: 'Fried Noodles',
+        image: './public/image/meals/fried-noodles.jpg',
+        calories: 280,
+        serving_size: 1,
+        serving_unit: 'serving'
+      },
+      {
+        id: "default_3",
+        name: 'Meatballs Soup',
+        image: './public/image/meals/meatballs-soup.jpg',
+        calories: 283,
+        serving_size: 1,
+        serving_unit: 'serving'
+      },
+      {
+        id: "default_4",
+        name: 'Noodles Soup',
+        image: './public/image/meals/noodles-soup.jpg',
+        calories: 137,
+        serving_size: 1,
+        serving_unit: 'serving'
       }
-    });
-
-    let filteredMeals = [];
-
-    relevantCategories.forEach(categoryKey => {
-      if (mockMealsByCategory[categoryKey]) {
-        filteredMeals.push(...mockMealsByCategory[categoryKey]);
-      }
-    });
-
-    if (filteredMeals.length > 0) {
-      filteredMeals = filteredMeals.filter(meal => {
-        return this.data.selectedKeywords.some(keyword => 
-          meal.keywords.includes(keyword)
-        );
-      });
-    }
-
-    if (filteredMeals.length === 0) {
-      filteredMeals = [
-        {
-          name: 'Chicken Soto',
-          image: './public/image/meals/chicken-soto.jpg',
-          calories: 312
-        },
-        {
-          name: 'Fried Noodles',
-          image: './public/image/meals/fried-noodles.jpg',
-          calories: 280
-        },
-        {
-          name: 'Meatballs Soup',
-          image: './public/image/meals/meatballs-soup.jpg',
-          calories: 283
-        },
-        {
-          name: 'Noodles Soup',
-          image: './public/image/meals/noodles-soup.jpg',
-          calories: 137
-        }
-      ];
-    }
-
-    this.data.suggestedMeals = filteredMeals.slice(0, 4);
-    this._renderView();
+    ];
     
-    const categoryNames = Array.from(relevantCategories).join(', ');
-    alert(`Found ${this.data.suggestedMeals.length} meals matching your preferences from categories: ${categoryNames || 'general'}!`);
+    this.data.suggestedMeals = this.data.mealSuggestions.data;
+    this.data.mealSuggestions.isFromAPI = false;
   }
 
   _handleClearAll() {
     console.log('Clearing all selected keywords');
     this.data.selectedKeywords = [];
     
-    this.data.suggestedMeals = [
-      {
-        name: 'Chicken Soto',
-        image: './public/image/meals/chicken-soto.jpg',
-        calories: 312
-      },
-      {
-        name: 'Fried Noodles',
-        image: './public/image/meals/fried-noodles.jpg',
-        calories: 280
-      },
-      {
-        name: 'Meatballs Soup',
-        image: './public/image/meals/meatballs-soup.jpg',
-        calories: 283
-      },
-      {
-        name: 'Noodles Soup',
-        image: './public/image/meals/noodles-soup.jpg',
-        calories: 137
-      }
-    ];
+    // Reset to default suggestions
+    this._useFallbackSuggestions();
+    this.data.mealSuggestions.loading = false;
+    this.data.mealSuggestions.error = null;
+    this.data.mealSuggestions.isFromAPI = false;
     
     this._renderView();
   }
@@ -466,6 +459,215 @@ class HomePresenter {
   _handleCompleteProfile() {
     console.log('Complete profile clicked');
     window.location.hash = '#/profile';
+  }
+
+  _handleSuggestedMealClicked(mealData) {
+    console.log('Suggested meal clicked for adding:', mealData);
+    
+    if (window.FoodCard && window.FoodCard.showAddMealPopup) {
+      window.FoodCard.showAddMealPopup({
+        id: mealData.id,
+        name: mealData.name,
+        calories: mealData.calories,
+        serving_size: mealData.serving_size || 1,
+        serving_unit: mealData.serving_unit || 'serving'
+      });
+    }
+  }
+
+  async _handleSuggestedMealDetailsClicked(mealData) {
+    console.log('Suggested meal details clicked:', mealData);
+    
+    if (!mealData.id || mealData.id.startsWith('default_')) {
+      // For default meals, show basic info
+      this._showMealDetailsPopup({
+        name: mealData.name,
+        calories: mealData.calories,
+        image: mealData.image,
+        serving_size: mealData.serving_size || 1,
+        serving_unit: mealData.serving_unit || 'serving',
+        protein: mealData.protein || 0,
+        carbohydrate: mealData.carbohydrate || 0,
+        fat: mealData.fat || 0,
+        isDefault: true
+      });
+      return;
+    }
+
+    try {
+      console.log('🔍 Fetching meal details from API...');
+      
+      // Show loading state
+      this._showMealDetailsPopup({
+        name: mealData.name,
+        loading: true
+      });
+
+      const mealDetails = await mealApiService.getMealDetails(mealData.id);
+      console.log('✅ Meal details received:', mealDetails);
+
+      if (mealDetails && mealDetails.meal) {
+        const meal = mealDetails.meal;
+        this._showMealDetailsPopup({
+          name: meal.food_name,
+          calories: meal.calories_per_serving,
+          image: meal.image_url,
+          serving_size: meal.serving_size,
+          serving_unit: meal.serving_unit,
+          protein: meal.protein_per_serving,
+          carbohydrate: meal.carbs_per_serving,
+          fat: meal.fat_per_serving,
+          cookTime: meal.recipe_metadata?.cook_time,
+          prepTime: meal.recipe_metadata?.prep_time,
+          totalTime: meal.recipe_metadata?.total_time,
+          ingredients: meal.recipe_metadata?.ingredients,
+          nutrition: meal.recipe_metadata?.total_nutrition,
+          isDefault: false
+        });
+      } else {
+        throw new Error('No meal details found');
+      }
+
+    } catch (error) {
+      console.error('💥 Error fetching meal details:', error);
+      
+      // Show error in popup
+      this._showMealDetailsPopup({
+        name: mealData.name,
+        error: 'Failed to load meal details. Please try again.',
+        calories: mealData.calories,
+        image: mealData.image
+      });
+    }
+  }
+
+  _showMealDetailsPopup(mealDetails) {
+    // Remove existing popup if any
+    const existingPopup = document.getElementById('meal-details-popup-overlay');
+    if (existingPopup) {
+      existingPopup.remove();
+    }
+
+    let popupContent = '';
+    
+    if (mealDetails.loading) {
+      popupContent = `
+        <div class="meal-details-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading meal details...</p>
+        </div>
+      `;
+    } else if (mealDetails.error) {
+      popupContent = `
+        <div class="meal-details-error">
+          <h4>Error</h4>
+          <p>${mealDetails.error}</p>
+          <div class="basic-meal-info">
+            <img src="${mealDetails.image || 'https://images.unsplash.com/photo-1546554137-f86b9593a222'}" alt="${mealDetails.name}">
+            <h3>${mealDetails.name}</h3>
+            <p>${mealDetails.calories || 0} kcal per serving</p>
+          </div>
+        </div>
+      `;
+    } else {
+      popupContent = `
+        <div class="meal-details-content">
+          <div class="meal-details-header">
+            <img src="${mealDetails.image || 'https://images.unsplash.com/photo-1546554137-f86b9593a222'}" alt="${mealDetails.name}">
+            <div class="meal-basic-info">
+              <h3>${mealDetails.name}</h3>
+              <p class="meal-calories">${mealDetails.calories} kcal per ${mealDetails.serving_unit || 'serving'}</p>
+              ${mealDetails.totalTime ? `<p class="meal-time">⏱️ ${mealDetails.totalTime} minutes</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="meal-nutrition">
+            <h4>Nutrition per serving:</h4>
+            <div class="nutrition-grid">
+              <div class="nutrition-item">
+                <span class="nutrition-label">Protein</span>
+                <span class="nutrition-value">${Math.round(mealDetails.protein || 0)}g</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-label">Carbs</span>
+                <span class="nutrition-value">${Math.round(mealDetails.carbohydrate || 0)}g</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-label">Fat</span>
+                <span class="nutrition-value">${Math.round(mealDetails.fat || 0)}g</span>
+              </div>
+            </div>
+          </div>
+
+          ${mealDetails.ingredients && mealDetails.ingredients.length > 0 ? `
+            <div class="meal-ingredients">
+              <h4>Ingredients:</h4>
+              <ul>
+                ${mealDetails.ingredients.slice(0, 10).map(ingredient => `<li>${ingredient}</li>`).join('')}
+                ${mealDetails.ingredients.length > 10 ? `<li><em>... and ${mealDetails.ingredients.length - 10} more ingredients</em></li>` : ''}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${mealDetails.nutrition ? `
+            <div class="detailed-nutrition">
+              <h4>Detailed Nutrition:</h4>
+              <div class="nutrition-details-grid">
+                ${mealDetails.nutrition.fiber ? `<div>Fiber: ${Math.round(mealDetails.nutrition.fiber)}g</div>` : ''}
+                ${mealDetails.nutrition.sugar ? `<div>Sugar: ${Math.round(mealDetails.nutrition.sugar)}g</div>` : ''}
+                ${mealDetails.nutrition.sodium ? `<div>Sodium: ${Math.round(mealDetails.nutrition.sodium)}mg</div>` : ''}
+                ${mealDetails.nutrition.cholesterol ? `<div>Cholesterol: ${Math.round(mealDetails.nutrition.cholesterol)}mg</div>` : ''}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    const popupHTML = `
+      <div class="meal-details-popup-overlay" id="meal-details-popup-overlay">
+        <div class="meal-details-popup">
+          <div class="meal-details-popup-header">
+            <h2>Meal Details</h2>
+            <button class="popup-close" id="meal-details-close">&times;</button>
+          </div>
+          <div class="meal-details-popup-body">
+            ${popupContent}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+
+    // Add event listeners
+    const overlay = document.getElementById('meal-details-popup-overlay');
+    const closeBtn = document.getElementById('meal-details-close');
+
+    const closePopup = () => {
+      if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    };
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closePopup);
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closePopup();
+      });
+    }
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closePopup();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
   }
 }
 

@@ -167,7 +167,7 @@ class MealApiService {
   async generateMealPlan() {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${this.baseUrl}/meals/generate-plan`, {
+      const response = await fetch(`${this.baseUrl}/meal-plans/generate`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -208,6 +208,116 @@ class MealApiService {
       }
       
       console.error('💥 Generate Meal Plan Error:', error);
+      throw error;
+    }
+  }
+
+  // NEW: Get meal suggestions based on keywords
+  async getMealSuggestions(keywords) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      // Validate keywords
+      if (!keywords || keywords.length === 0) {
+        throw new Error('At least 1 keyword is required');
+      }
+      
+      if (keywords.length > 6) {
+        throw new Error('Maximum 6 keywords allowed');
+      }
+      
+      // Join keywords with comma
+      const keywordsParam = keywords.join(',');
+      
+      const response = await fetch(`${this.baseUrl}/meals/suggestion?keywords=${encodeURIComponent(keywordsParam)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      console.log('🔍 Meal Suggestions API Response:', { status: response.status, data: result });
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to get meal suggestions';
+        
+        if (response.status === 404) {
+          errorMessage = 'Profile not found. Please complete your profile first.';
+        } else if (response.status === 400) {
+          errorMessage = result.message || 'Invalid request parameters';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal suggestion service temporarily unavailable';
+        } else if (response.status === 504) {
+          errorMessage = 'Request timeout. Please try again.';
+        }
+        
+        console.error('🚨 Meal Suggestions API Error:', { status: response.status, message: errorMessage });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to get meal suggestions');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Get Meal Suggestions Error:', error);
+      throw error;
+    }
+  }
+
+  // NEW: Get meal details by recipe ID
+  async getMealDetails(recipeId) {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!recipeId) {
+        throw new Error('Recipe ID is required');
+      }
+      
+      const response = await fetch(`${this.baseUrl}/meals/${recipeId}/details`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      console.log('🔍 Meal Details API Response:', { status: response.status, data: result });
+
+      if (!response.ok) {
+        let errorMessage = result.message || 'Failed to get meal details';
+        
+        if (response.status === 404) {
+          errorMessage = 'Recipe not found';
+        } else if (response.status === 503) {
+          errorMessage = 'Meal service temporarily unavailable';
+        } else if (response.status === 504) {
+          errorMessage = 'Request timeout. Please try again.';
+        }
+        
+        console.error('🚨 Meal Details API Error:', { status: response.status, message: errorMessage });
+        throw new Error(errorMessage);
+      }
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to get meal details');
+      }
+    } catch (error) {
+      if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      console.error('💥 Get Meal Details Error:', error);
       throw error;
     }
   }
