@@ -19,6 +19,21 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+function toggleHeaderFooter() {
+  const url = window.location.hash.slice(1);
+  const authRoutes = ['/signin', '/signup', '/forgot-password'];
+  const isAuthRoute = authRoutes.includes(url);
+  
+  const header = document.querySelector('header');
+  
+  if (header) {
+    header.style.display = isAuthRoute ? 'none' : 'block';
+  }
+  
+  document.body.classList.toggle('auth-page', isAuthRoute);
+  document.body.classList.toggle('main-page', !isAuthRoute);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Verify token if user has one
   if (AuthGuard.isAuthenticated()) {
@@ -38,6 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       !window.location.hash.includes('signup')) {
     window.location.hash = '#/signin';
   }
+
+  toggleHeaderFooter();
+  window.addEventListener('hashchange', toggleHeaderFooter);
 
   SliderComponent.init();
 
