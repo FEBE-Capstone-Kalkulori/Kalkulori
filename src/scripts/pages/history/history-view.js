@@ -2,7 +2,6 @@ import Header from "../../components/header.js";
 
 class HistoryView {
   constructor() {
-    this.historyHeaderId = "kalkulori-history-header-unique";
     this.header = new Header();
   }
 
@@ -72,72 +71,32 @@ class HistoryView {
     `;
   }
 
-  createHistoryHeader() {
-    return `
-      <div id="${this.historyHeaderId}" class="kalkulori-history-header bg-yellow-200 py-4 shadow-lg sticky top-0 z-30 mb-0">
-        <div class="max-w-6xl mx-auto flex justify-between items-center px-5 flex-col md:flex-row gap-4 md:gap-0">
-          <div class="text-3xl md:text-4xl font-bold text-amber-900 font-cal-sans">
-            <span class="text-lime-600">kalku</span>lori
-          </div>
-          <nav>
-            <ul class="flex gap-6 md:gap-10 list-none m-0 p-0">
-              <li class="text-lg font-medium">
-                <a href="#/" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-roboto-slab hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">Home</a>
-              </li>
-              <li class="text-lg font-medium">
-                <a href="#/history" class="no-underline text-lime-600 font-semibold bg-lime-600 bg-opacity-20 px-4 py-2 rounded-2xl font-roboto-slab">History</a>
-              </li>
-              <li class="text-lg font-medium">
-                <a href="#/profile" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-roboto-slab hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">Profile</a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </div>
-    `;
+  // HAPUS method createHistoryHeader() dan gunakan Header component
+  
+  render(container) {
+    // Render header menggunakan Header component seperti profile-view
+    const headerContainer = document.getElementById("header-container") || document.querySelector("header");
+    
+    if (headerContainer) {
+      headerContainer.innerHTML = this.header.render("page", "history");
+    }
+    
+    // Render konten history
+    container.innerHTML = this.getTemplate();
   }
 
   toggleHeaders(showHistoryHeader = true) {
     try {
-      const headerContainer =
-        document.getElementById("header-container") ||
-        document.querySelector("header");
+      const headerContainer = document.getElementById("header-container") || document.querySelector("header");
 
       if (showHistoryHeader && headerContainer) {
+        // Gunakan Header component seperti profile-view
         headerContainer.innerHTML = this.header.render("page", "history");
       }
 
-      const existingHistoryHeader = document.getElementById(
-        this.historyHeaderId
-      );
-      if (existingHistoryHeader) {
-        existingHistoryHeader.remove();
-      }
-
-      const existingHistoryHeaders = document.querySelectorAll(
-        ".kalkulori-history-header"
-      );
-      existingHistoryHeaders.forEach((header) => {
-        if (header.id !== this.historyHeaderId) {
-          header.remove();
-        }
-      });
-
       const homeHeader = document.querySelector("header");
-
-      if (showHistoryHeader) {
-        if (homeHeader) {
-          homeHeader.style.display = "none";
-        }
-
-        if (!document.getElementById(this.historyHeaderId)) {
-          const historyHeaderHTML = this.createHistoryHeader();
-          document.body.insertAdjacentHTML("afterbegin", historyHeaderHTML);
-        }
-      } else {
-        if (homeHeader) {
-          homeHeader.style.display = "block";
-        }
+      if (homeHeader && !showHistoryHeader) {
+        homeHeader.style.display = "block";
       }
     } catch (error) {
       console.error("Error toggling headers:", error);
@@ -150,14 +109,8 @@ class HistoryView {
 
   forceCleanupHeaders() {
     try {
-      const specificHeader = document.getElementById(this.historyHeaderId);
-      if (specificHeader) {
-        specificHeader.remove();
-      }
-
-      const allHistoryHeaders = document.querySelectorAll(
-        ".kalkulori-history-header"
-      );
+      // Cleanup semua header custom
+      const allHistoryHeaders = document.querySelectorAll(".kalkulori-history-header");
       allHistoryHeaders.forEach((header) => header.remove());
 
       const homeHeader = document.querySelector("header");
@@ -171,10 +124,6 @@ class HistoryView {
     } catch (error) {
       console.error("Error in force cleanup:", error);
     }
-  }
-
-  isHistoryHeaderActive() {
-    return document.getElementById(this.historyHeaderId) !== null;
   }
 }
 
