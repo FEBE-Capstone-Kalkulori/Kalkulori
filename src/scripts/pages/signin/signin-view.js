@@ -41,7 +41,8 @@ const createSignInView = () => {
           
           <button 
             type="submit" 
-            class="w-full px-6 py-4 bg-amber-900 text-white border-none rounded-full text-sm font-cal-sans cursor-pointer transition-all duration-200 mt-8 hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            id="signin-button"
+            class="signin-btn w-full px-6 py-4 bg-amber-900 text-white border-none rounded-full text-sm font-cal-sans cursor-pointer transition-all duration-200 mt-8 hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             Sign In
             <span class="text-lg">→</span>
