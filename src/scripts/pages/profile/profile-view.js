@@ -12,14 +12,206 @@ const createProfileTemplate = (userData, isEditMode = false) => {
     return mapping[level] || level;
   };
 
+  // Helper function to generate form fields (to avoid code duplication)
+  const generateFormFields = (
+    userData,
+    isEditMode,
+    getActivityLevelDisplay
+  ) => {
+    return `
+      <!-- Name Field -->
+      <div class="flex flex-col">
+        <label for="name" class="text-base text-gray-800 mb-2 font-cal-sans">Name</label>
+        ${
+          isEditMode
+            ? `<input type="text" id="name" class="bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+                userData.name || ""
+              }" placeholder="Enter your name">`
+            : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+                userData.name || ""
+              }</div>`
+        }
+      </div>
+      
+      <!-- Gender and Age Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+        <!-- Gender Field -->
+        <div class="flex flex-col">
+          <label class="font-cal-sans text-base text-gray-800 mb-2">Gender</label>
+          ${
+            isEditMode
+              ? `
+            <div class="flex gap-2 sm:gap-4">
+              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
+                userData.gender === "male"
+                  ? "bg-blue-300 text-white"
+                  : "hover:bg-blue-100 hover:text-blue-600"
+              }" id="male-option">
+                <i class="fas fa-male mr-1 sm:mr-2"></i> <span class="hidden sm:inline">I am </span>Male
+              </button>
+              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
+                userData.gender === "female"
+                  ? "bg-pink-300 text-white"
+                  : "hover:bg-pink-100 hover:text-pink-600"
+              }" id="female-option">
+                <i class="fas fa-female mr-1 sm:mr-2"></i> <span class="hidden sm:inline">I am </span>Female
+              </button>
+            </div>
+          `
+              : `
+            <div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+              userData.gender === "male"
+                ? "Male"
+                : userData.gender === "female"
+                ? "Female"
+                : ""
+            }</div>
+          `
+          }
+        </div>
+        
+        <!-- Age Field -->
+        <div class="flex flex-col">
+          <label for="age" class="text-base text-gray-800 mb-2 font-cal-sans">Age</label>
+          ${
+            isEditMode
+              ? `<div class="relative flex items-center">
+              <input type="number" id="age" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                userData.age || ""
+              }" min="1" max="120">
+              <div class="absolute right-2 flex flex-col gap-0.5">
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+              </div>
+            </div>`
+              : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+                  userData.age || ""
+                }</div>`
+          }
+        </div>
+      </div>
+      
+      <!-- Weight and Height Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+        <!-- Weight Field -->
+        <div class="flex flex-col">
+          <label for="weight" class="text-base text-gray-800 mb-2 font-cal-sans">Weight</label>
+          ${
+            isEditMode
+              ? `<div class="relative flex items-center">
+              <input type="number" id="weight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                userData.weight || ""
+              }" min="1" max="500">
+              <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
+              <div class="absolute right-2 flex flex-col gap-0.5">
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+              </div>
+            </div>`
+              : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+                  userData.weight || ""
+                } kg</div>`
+          }
+        </div>
+        
+        <!-- Height Field -->
+        <div class="flex flex-col">
+          <label for="height" class="text-base text-gray-800 mb-2 font-cal-sans">Height</label>
+          ${
+            isEditMode
+              ? `<div class="relative flex items-center">
+              <input type="number" id="height" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                userData.height || ""
+              }" min="1" max="300">
+              <span class="absolute right-14 font-cal-sans text-gray-400">cm</span>
+              <div class="absolute right-2 flex flex-col gap-0.5">
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+              </div>
+            </div>`
+              : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+                  userData.height || ""
+                } cm</div>`
+          }
+        </div>
+      </div>
+      
+      <!-- Target Weight and Activity Level Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+        <!-- Target Weight Field -->
+        <div class="flex flex-col">
+          <label for="targetWeight" class="text-base text-gray-800 mb-2 font-cal-sans">Target Weight</label>
+          ${
+            isEditMode
+              ? `<div class="relative flex items-center">
+              <input type="number" id="targetWeight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                userData.targetWeight || ""
+              }" min="1" max="500">
+              <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
+              <div class="absolute right-2 flex flex-col gap-0.5">
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+              </div>
+            </div>`
+              : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
+                  userData.targetWeight || ""
+                } ${userData.targetWeight ? "kg" : ""}</div>`
+          }
+        </div>
+        
+        <!-- Activity Level Field -->
+        <div class="flex flex-col">
+          <label for="activityLevel" class="text-base text-gray-800 mb-2 font-cal-sans">Activity Level</label>
+          ${
+            isEditMode
+              ? `
+            <div class="relative">
+              <select id="activityLevel" class="bg-white border-none rounded-full px-5 py-3 pr-10 font-cal-sans text-base text-gray-400 w-full shadow-sm cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-accent-green">
+                <option value="" disabled ${
+                  !userData.activityLevel ? "selected" : ""
+                }>Select level</option>
+                <option value="daily" ${
+                  userData.activityLevel === "daily" ? "selected" : ""
+                }>Daily</option>
+                <option value="regularly" ${
+                  userData.activityLevel === "regularly" ? "selected" : ""
+                }>Regularly</option>
+                <option value="occasionally" ${
+                  userData.activityLevel === "occasionally" ? "selected" : ""
+                }>Occasionally</option>
+                <option value="rarely" ${
+                  userData.activityLevel === "rarely" ? "selected" : ""
+                }>Rarely</option>
+                <option value="never" ${
+                  userData.activityLevel === "never" ? "selected" : ""
+                }>Never</option>
+              </select>
+              <div class="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-300 pointer-events-none"><i class="fas fa-chevron-down"></i></div>
+            </div>
+          `
+              : `
+            <div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${getActivityLevelDisplay(
+              userData.activityLevel
+            )}</div>
+          `
+          }
+        </div>
+      </div>
+    `;
+  };
+
   return `
-    <div class="max-w-4xl mx-auto">
-      <div class="flex gap-12 flex-wrap lg:flex-nowrap">
-        <div class="flex-shrink-0 w-64 flex flex-col items-center justify-center gap-6">
-          <!-- Pindahkan h2 ke sini, di atas avatar -->
-          <h2 class="text-3xl text-gray-800 mb-4 font-cal-sans">User Profile</h2>
-          
-           <div class="relative w-56 h-56">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Mobile Layout: Stack vertically -->
+      <div class="block lg:hidden">
+        <!-- Header with title centered -->
+        <div class="text-center mb-8">
+          <h2 class="text-3xl text-gray-800 font-cal-sans">User Profile</h2>
+        </div>
+        
+        <!-- Avatar centered for mobile -->
+        <div class="flex justify-center mb-8">
+          <div class="relative w-48 h-48 sm:w-56 sm:h-56">
             <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-yellow transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <img src="${
                 userData.avatar || "./public/image/default-avatar.png"
@@ -47,204 +239,98 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                 : ""
             }
           </div>
+        </div>
+        
+        <!-- Sign Out Button for mobile (if not edit mode) -->
+        ${
+          !isEditMode
+            ? `
+          <div class="flex justify-center mb-8">
+            <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white hover:bg-amber-800" id="sign-out-btn">Sign Out</button>
+          </div>
+        `
+            : ""
+        }
+        
+        <!-- Form fields for mobile -->
+        <div class="space-y-6">
+          ${generateFormFields(userData, isEditMode, getActivityLevelDisplay)}
+        </div>
+        
+        <!-- Action button for mobile -->
+        <div class="mt-8 flex justify-center">
+          ${
+            isEditMode
+              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="save-data-btn">Save Data</button>`
+              : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="update-data-btn">Update Data</button>`
+          }
+        </div>
+      </div>
+
+      <!-- Desktop Layout: Side by side -->
+      <div class="hidden lg:flex gap-12">
+        <!-- Left side - Avatar and title -->
+        <div class="flex-shrink-0 w-64 flex flex-col items-center justify-start">
+          <!-- Title centered above avatar -->
+          <h2 class="text-3xl text-gray-800 mb-6 font-cal-sans text-center">User Profile</h2>
+          
+          <!-- Avatar -->
+          <div class="relative w-56 h-56 mb-6">
+            <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-yellow transition-all duration-300 hover:scale-105 hover:shadow-xl">
+              <img src="${
+                userData.avatar || "./public/image/default-avatar.png"
+              }" alt="User Avatar" id="user-avatar" class="w-full h-full object-cover transition-all duration-300">
+            </div>
+            ${
+              isEditMode
+                ? `
+              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green" id="edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
+                <i class="fas fa-pencil-alt text-sm"></i>
+              </div>
+              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max" id="avatar-options">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100" id="camera-option">
+                  <i class="fas fa-camera w-4 text-amber-900"></i> 
+                  <span class="font-cal-sans text-sm text-gray-500">Take photo</span>
+                </div>
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3" id="gallery-option">
+                  <i class="fas fa-images w-4 text-amber-900"></i> 
+                  <span class="font-cal-sans text-sm text-gray-500">Choose from gallery</span>
+                </div>
+              </div>
+              <input type="file" id="file-input" accept="image/*" style="display: none;">
+              <canvas id="camera-canvas" style="display: none;"></canvas>
+            `
+                : ""
+            }
+          </div>
+          
+          <!-- Sign Out Button for desktop -->
           ${
             !isEditMode
-              ? `
-            <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white w-4/5 hover:bg-amber-800" id="sign-out-btn">Sign Out</button>
-          `
+              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white w-4/5 hover:bg-amber-800" id="sign-out-btn">Sign Out</button>`
               : ""
           }
         </div>
         
-        <div class="flex-1 min-w-80">
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col mb-4">
-              <label for="name" class="text-base text-gray-800 mb-2 font-cal-sans">Name</label>
-              ${
-                isEditMode
-                  ? `<input type="text" id="name" class="bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
-                      userData.name || ""
-                    }" placeholder="Enter your name">`
-                  : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                      userData.name || ""
-                    }</div>`
-              }
-            </div>
-            
-            <div class="flex gap-8 flex-wrap">
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label class="font-cal-sans text-base text-gray-800 mb-2 font-cal-sans">Gender</label>
-                ${
-                  isEditMode
-                    ? `
-                  <div class="flex gap-4">
-                    <button class="flex-1 bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
-                      userData.gender === "male"
-                        ? "bg-blue-300 text-white"
-                        : "hover:bg-blue-100 hover:text-blue-600"
-                    }" id="male-option">
-                      <i class="fas fa-male mr-2"></i> I am Male
-                    </button>
-                    <button class="flex-1 bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
-                      userData.gender === "female"
-                        ? "bg-pink-300 text-white"
-                        : "hover:bg-pink-100 hover:text-pink-600"
-                    }" id="female-option">
-                      <i class="fas fa-female mr-2"></i> I am Female
-                    </button>
-                  </div>
-                `
-                    : `
-                  <div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                    userData.gender === "male"
-                      ? "Male"
-                      : userData.gender === "female"
-                      ? "Female"
-                      : ""
-                  }</div>
-                `
-                }
-              </div>
-              
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label for="age" class="text-base text-gray-800 mb-2 font-cal-sans">Age</label>
-                ${
-                  isEditMode
-                    ? `<div class="relative flex items-center">
-                    <input type="number" id="age" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                      userData.age || ""
-                    }" min="1" max="120">
-                    <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
-                    </div>
-                  </div>`
-                    : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                        userData.age || ""
-                      }</div>`
-                }
-              </div>
-            </div>
-            
-            <div class="flex gap-8 flex-wrap">
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label for="weight" class="text-base text-gray-800 mb-2 font-cal-sans">Weight</label>
-                ${
-                  isEditMode
-                    ? `<div class="relative flex items-center">
-                    <input type="number" id="weight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                      userData.weight || ""
-                    }" min="1" max="500">
-                    <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
-                    <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
-                    </div>
-                  </div>`
-                    : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                        userData.weight || ""
-                      } kg</div>`
-                }
-              </div>
-              
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label for="height" class="text-base text-gray-800 mb-2 font-cal-sans">Height</label>
-                ${
-                  isEditMode
-                    ? `<div class="relative flex items-center">
-                    <input type="number" id="height" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                      userData.height || ""
-                    }" min="1" max="300">
-                    <span class="absolute right-14 font-cal-sans text-gray-400">cm</span>
-                    <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
-                    </div>
-                  </div>`
-                    : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                        userData.height || ""
-                      } cm</div>`
-                }
-              </div>
-            </div>
-            
-            <div class="flex gap-8 flex-wrap">
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label for="targetWeight" class="text-base text-gray-800 mb-2 font-cal-sans">Target Weight</label>
-                ${
-                  isEditMode
-                    ? `<div class="relative flex items-center">
-                    <input type="number" id="targetWeight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                      userData.targetWeight || ""
-                    }" min="1" max="500">
-                    <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
-                    <div class="absolute right-2 flex flex-col gap-0.5">
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                      <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
-                    </div>
-                  </div>`
-                    : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
-                        userData.targetWeight || ""
-                      } ${userData.targetWeight ? "kg" : ""}</div>`
-                }
-              </div>
-              
-              <div class="flex flex-col flex-1 min-w-52 mb-4">
-                <label for="activityLevel" class="text-base text-gray-800 mb-2 font-cal-sans">Activity Level</label>
-                ${
-                  isEditMode
-                    ? `
-                  <div class="relative">
-                    <select id="activityLevel" class="bg-white border-none rounded-full px-5 py-3 pr-10 font-cal-sans text-base text-gray-400 w-full shadow-sm cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-accent-green">
-                      <option value="" disabled ${
-                        !userData.activityLevel ? "selected" : ""
-                      }>Select level</option>
-                      <option value="daily" ${
-                        userData.activityLevel === "daily" ? "selected" : ""
-                      }>Daily</option>
-                      <option value="regularly" ${
-                        userData.activityLevel === "regularly" ? "selected" : ""
-                      }>Regularly</option>
-                      <option value="occasionally" ${
-                        userData.activityLevel === "occasionally"
-                          ? "selected"
-                          : ""
-                      }>Occasionally</option>
-                      <option value="rarely" ${
-                        userData.activityLevel === "rarely" ? "selected" : ""
-                      }>Rarely</option>
-                      <option value="never" ${
-                        userData.activityLevel === "never" ? "selected" : ""
-                      }>Never</option>
-                    </select>
-                    <div class="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-300 pointer-events-none"><i class="fas fa-chevron-down"></i></div>
-                  </div>
-                `
-                    : `
-                  <div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${getActivityLevelDisplay(
-                    userData.activityLevel
-                  )}</div>
-                `
-                }
-              </div>
-            </div>
+        <!-- Right side - Form fields -->
+        <div class="flex-1 min-w-0">
+          <div class="space-y-6">
+            ${generateFormFields(userData, isEditMode, getActivityLevelDisplay)}
           </div>
           
+          <!-- Action button for desktop -->
           <div class="mt-8 flex justify-center">
             ${
               isEditMode
-                ? `
-              <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="save-data-btn">Save Data</button>
-            `
-                : `
-              <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="update-data-btn">Update Data</button>
-            `
+                ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="save-data-btn">Save Data</button>`
+                : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="update-data-btn">Update Data</button>`
             }
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Camera Modal (same for both layouts) -->
     <div id="camera-modal" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 justify-center items-center z-50 hidden">
       <div class="bg-white rounded-2xl max-w-[90%] max-h-[90%] w-[600px] shadow-2xl overflow-hidden">
         <div class="bg-accent-green text-white px-5 py-5 flex justify-between items-center">
@@ -289,19 +375,19 @@ export default {
     return `
       <div class="kalkulori-profile-header bg-yellow-200 py-4 shadow-lg sticky top-0 z-30 mb-0">
         <div class="max-w-6xl mx-auto flex justify-between items-center px-5 flex-col md:flex-row gap-4 md:gap-0">
-          <div class="text-3xl md:text-4xl font-cal-sans text-amber-900 font-cal-sans">
+          <div class="text-3xl md:text-4xl font-bold text-amber-900 font-cal-sans">
             <span class="text-lime-600">kalku</span>lori
           </div>
           <nav>
             <ul class="flex gap-6 md:gap-10 list-none m-0 p-0">
-              <li class="text-lg font-cal-sans">
-                <a href="#/" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-cal-sans hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">Home</a>
+              <li class="text-lg font-medium">
+                <a href="#/" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-roboto-slab hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">Home</a>
               </li>
-              <li class="text-lg font-cal-sans">
-                <a href="#/history" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-cal-sans hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">History</a>
+              <li class="text-lg font-medium">
+                <a href="#/history" class="no-underline text-amber-900 transition-all duration-300 px-4 py-2 rounded-2xl font-roboto-slab hover:text-lime-600 hover:bg-lime-600 hover:bg-opacity-10">History</a>
               </li>
-              <li class="text-lg font-cal-sans">
-                <a href="#/profile" class="no-underline text-lime-600 font-cal-sans bg-lime-600 bg-opacity-20 px-4 py-2 rounded-2xl font-cal-sans">Profile</a>
+              <li class="text-lg font-medium">
+                <a href="#/profile" class="no-underline text-lime-600 font-semibold bg-lime-600 bg-opacity-20 px-4 py-2 rounded-2xl font-roboto-slab">Profile</a>
               </li>
             </ul>
           </nav>
@@ -445,14 +531,14 @@ export default {
 
     if (gender === "male") {
       maleOption.className =
-        "flex-1 bg-blue-300 text-white border-none rounded-full px-5 py-3 font-cal-sans text-base cursor-pointer transition-all duration-200 shadow-sm";
+        "flex-1 bg-accent-green text-white border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm";
       femaleOption.className =
-        "flex-1 bg-white text-pink-800 border-none rounded-full px-5 py-3 font-cal-sans text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
+        "flex-1 bg-white text-gray-800 border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
     } else if (gender === "female") {
       femaleOption.className =
-        "flex-1 bg-pink-300 text-white border-none rounded-full px-5 py-3 font-cal-sans text-base cursor-pointer transition-all duration-200 shadow-sm";
+        "flex-1 bg-accent-green text-white border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm";
       maleOption.className =
-        "flex-1 bg-white text-blue-800 border-none rounded-full px-5 py-3 font-cal-sans text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
+        "flex-1 bg-white text-gray-800 border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
     }
   },
 
@@ -461,7 +547,7 @@ export default {
 
     let gender = "male";
     const femaleOption = document.getElementById("female-option");
-    if (femaleOption && femaleOption.classList.contains("bg-pink-500")) {
+    if (femaleOption && femaleOption.classList.contains("bg-accent-green")) {
       gender = "female";
     }
 
