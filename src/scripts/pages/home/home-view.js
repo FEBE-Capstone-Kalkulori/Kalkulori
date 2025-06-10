@@ -145,19 +145,12 @@ const createSuggestionsFoodCards = (suggestions) => {
       <div class="suggestion-food-image" data-meal-details-trigger>
         <img src="${meal.image || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'}" alt="${meal.name}">
         <div class="image-overlay">
-          <span class="view-details-text">👁️ View Details</span>
+          <span class="view-details-text"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg> View Details</span>
         </div>
       </div>
       <div class="suggestion-food-info">
         <h3 class="suggestion-food-name">${meal.name}</h3>
         <p class="suggestion-food-calories">${meal.calories} kcal</p>
-        ${meal.protein !== undefined ? `
-          <div class="suggestion-food-nutrition">
-            <span>P: ${Math.round(meal.protein || 0)}g</span>
-            <span>C: ${Math.round(meal.carbohydrate || 0)}g</span>
-            <span>F: ${Math.round(meal.fat || 0)}g</span>
-          </div>
-        ` : ''}
       </div>
       <button class="suggestion-add-button" data-add-meal-trigger>
         <span class="plus-icon">+</span>

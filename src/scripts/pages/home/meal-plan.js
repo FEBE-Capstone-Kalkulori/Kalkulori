@@ -278,12 +278,12 @@ export const createMealPlanSection = (data) => {
         </div>
         <div class="meal-plan-buttons">
           <button class="generate-plan-btn add-plan-btn" id="add-full-meal-plan-btn">
-            <span class="btn-icon">📋</span>
+            <span class="btn-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg></span>
             Add Plan
           </button>
           <button class="generate-plan-btn" id="generate-meal-plan-btn">
-            <span class="btn-icon">🔄</span>
-            Generate New Plan
+            <span class="btn-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M204-318q-22-38-33-78t-11-82q0-134 93-228t227-94h7l-64-64 56-56 160 160-160 160-56-56 64-64h-7q-100 0-170 70.5T240-478q0 26 6 51t18 49l-60 60ZM481-40 321-200l160-160 56 56-64 64h7q100 0 170-70.5T720-482q0-26-6-51t-18-49l60-60q22 38 33 78t11 82q0 134-93 228t-227 94h-7l64 64-56 56Z"/></svg></span>
+            New Plan
           </button>
         </div>
       </div>
@@ -320,7 +320,7 @@ export const createMealPlanCard = (meal) => {
       <div class="meal-plan-image" data-meal-details-trigger>
         <img src="${mealImage}" alt="${mealName}" onerror="this.src='./public/image/meals/default-meal.jpg'; this.onerror=null;">
         <div class="image-overlay">
-          <span class="view-details-text">👁️ View Details</span>
+          <span class="view-details-text"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg> View Details</span>
         </div>
       </div>
       <div class="meal-plan-info">
