@@ -50,7 +50,7 @@ const SignUpPresenter = {
       activityLevel: formData.get('activityLevel')
     };
 
-    console.log('Step 2 data:', step2Data); // Debug log
+    console.log('Step 2 data:', step2Data);
 
     if (!this._validateStep2(step2Data)) {
       return;
@@ -90,9 +90,8 @@ const SignUpPresenter = {
   },
 
   _validateStep2(data) {
-    console.log('Validating Step 2 data:', data); // Debug log
+    console.log('Validating Step 2 data:', data);
     
-    // Check required fields
     if (!data.name || data.name.trim() === '') {
       this._showError('Please enter your name', '#step-2');
       return false;
@@ -123,7 +122,6 @@ const SignUpPresenter = {
       return false;
     }
 
-    // Validate ranges
     if (data.age < 13 || data.age > 120) {
       this._showError('Please enter a valid age between 13 and 120', '#step-2');
       return false;
@@ -163,13 +161,11 @@ const SignUpPresenter = {
     const button = document.querySelector('.create-account-btn');
     const originalText = button.textContent;
     
-    // Show loading state
     button.textContent = 'Creating Account...';
     button.disabled = true;
     this._clearError('#step-2');
 
     try {
-      // Prepare data for API (sesuai dengan format yang dibutuhkan backend)
       const userData = {
         email: this.step1Data.email,
         password: this.step1Data.password,
@@ -178,17 +174,20 @@ const SignUpPresenter = {
         age: step2Data.age,
         weight: step2Data.weight,
         height: step2Data.height,
-        target_weight: step2Data.targetWeight, // FIXED: Menambahkan target_weight
+        target_weight: step2Data.targetWeight,
         fitness_level: step2Data.activityLevel
       };
 
       console.log('Registering user with data:', userData);
 
-      // Call API register
+      this._clearExistingUserData();
+
       const result = await AuthGuard.register(userData);
       
       if (result.success) {
         this._showSuccess('Account created successfully! Redirecting to sign in...', '#step-2');
+        
+        console.log('✅ Registration successful for user:', result.data.userId);
         
         setTimeout(() => {
           window.location.hash = '#/signin';
@@ -206,11 +205,42 @@ const SignUpPresenter = {
     }
   },
 
+  _clearExistingUserData() {
+    try {
+      const keysToRemove = [];
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.includes('userData_') || 
+          key.includes('lastAppDate_') ||
+          key.includes('userAvatar_') ||
+          key === 'authToken' ||
+          key === 'userId' ||
+          key === 'userEmail' ||
+          key === 'isAuthenticated' ||
+          key === 'userData' ||
+          key === 'dailyCalorieTarget'
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      sessionStorage.clear();
+      
+      console.log('🧹 Cleared existing user data before registration');
+    } catch (error) {
+      console.error('Error clearing existing user data:', error);
+    }
+  },
+
   _showError(message, step = '#step-1') {
-    // Remove existing error message
     this._clearError(step);
     
-    // Create error element
     const errorDiv = document.createElement('div');
     errorDiv.classList.add('error-message');
     errorDiv.textContent = message;
@@ -224,17 +254,14 @@ const SignUpPresenter = {
       border: 1px solid #e74c3c;
     `;
     
-    // Insert before form
     const stepElement = document.querySelector(step);
     const form = stepElement.querySelector('form');
     form.parentNode.insertBefore(errorDiv, form);
   },
 
   _showSuccess(message, step = '#step-1') {
-    // Remove existing messages
     this._clearError(step);
     
-    // Create success element
     const successDiv = document.createElement('div');
     successDiv.classList.add('success-message');
     successDiv.textContent = message;
@@ -248,7 +275,6 @@ const SignUpPresenter = {
       border: 1px solid #27ae60;
     `;
     
-    // Insert before form
     const stepElement = document.querySelector(step);
     const form = stepElement.querySelector('form');
     form.parentNode.insertBefore(successDiv, form);

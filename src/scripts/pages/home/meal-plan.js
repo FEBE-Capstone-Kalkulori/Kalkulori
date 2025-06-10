@@ -43,7 +43,8 @@ const _debugFormatInput = (input, label = 'FormatInput') => {
 };
 
 export const formatMealPlanData = (input) => {
-  console.log('🔄 formatMealPlanData input:', JSON.stringify(input, null, 2));
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🔄 formatMealPlanData input for user', userId, ':', JSON.stringify(input, null, 2));
   
   _debugFormatInput(input, 'formatMealPlanData Input');
   
@@ -51,15 +52,15 @@ export const formatMealPlanData = (input) => {
   
   if (input && input.meal_plans && Array.isArray(input.meal_plans) && input.meal_plans.length > 0) {
     planData = input.meal_plans[0];
-    console.log('📦 Using meal plan from API response (Case 1):', planData);
+    console.log('📦 Using meal plan from API response (Case 1) for user', userId, ':', planData);
   }
   else if (input && (input.breakfast || input.lunch || input.dinner || 
                     input.Breakfast || input.Lunch || input.Dinner)) {
     planData = input;
-    console.log('📦 Using direct meal plan object (Case 2):', planData);
+    console.log('📦 Using direct meal plan object (Case 2) for user', userId, ':', planData);
   }
   else {
-    console.log('❌ No valid meal plans found in input');
+    console.log('❌ No valid meal plans found in input for user', userId);
     return [];
   }
   
@@ -70,12 +71,12 @@ export const formatMealPlanData = (input) => {
   ];
   
   const availableMealKeys = Object.keys(planData);
-  console.log('🔍 Available meal keys in plan data:', availableMealKeys);
+  console.log('🔍 Available meal keys in plan data for user', userId, ':', availableMealKeys);
   
   const formattedPlans = [];
 
   possibleMealTypes.forEach(({ key, display }) => {
-    console.log(`🔍 Looking for ${key} variations...`);
+    console.log(`🔍 Looking for ${key} variations for user ${userId}...`);
     
     const variations = [
       key,
@@ -90,7 +91,7 @@ export const formatMealPlanData = (input) => {
       if (planData[variation]) {
         mealData = planData[variation];
         foundKey = variation;
-        console.log(`✅ Found ${key} as "${foundKey}":`, mealData);
+        console.log(`✅ Found ${key} as "${foundKey}" for user ${userId}:`, mealData);
         break;
       }
     }
@@ -101,41 +102,43 @@ export const formatMealPlanData = (input) => {
         name: mealData.Name || mealData.food_name || mealData.name || `Unknown ${display}`,
         image: getFirstImageUrl(mealData.Image) || mealData.image_url || `./public/image/meals/${key}-default.jpg`,
         calories: Math.round(mealData.Calories || mealData.calories_per_serving || mealData.calories || 0),
-        id: mealData.RecipeId || mealData.id || mealData.recipe_id || `${key}_${Date.now()}`,
+        id: mealData.RecipeId || mealData.id || mealData.recipe_id || `${key}_${userId}_${Date.now()}`,
         serving_size: mealData.serving_size || mealData.ServingSize || 1,
         serving_unit: mealData.serving_unit || mealData.ServingUnit || 'serving',
         recipe_id: mealData.RecipeId || mealData.recipe_id || mealData.id || null,
         protein: mealData.protein || mealData.ProteinContent || 0,
         carbs: mealData.carbs || mealData.CarbohydrateContent || 0,
-        fat: mealData.fat || mealData.FatContent || 0
+        fat: mealData.fat || mealData.FatContent || 0,
+        user_id: userId
       };
       
-      console.log(`✅ Formatted ${key}:`, formattedMeal);
+      console.log(`✅ Formatted ${key} for user ${userId}:`, formattedMeal);
       formattedPlans.push(formattedMeal);
     } else {
-      console.log(`❌ Missing ${key} in plan data`);
+      console.log(`❌ Missing ${key} in plan data for user ${userId}`);
       
       const defaultMeal = {
         type: display,
         name: `Default ${display}`,
         image: `./public/image/meals/${key}-default.jpg`,
         calories: 300,
-        id: `default_${key}_${Date.now()}`,
+        id: `default_${key}_${userId}_${Date.now()}`,
         serving_size: 1,
         serving_unit: 'serving',
         recipe_id: null,
         protein: 15,
         carbs: 40,
-        fat: 10
+        fat: 10,
+        user_id: userId
       };
       
-      console.log(`🔧 Using default ${key}:`, defaultMeal);
+      console.log(`🔧 Using default ${key} for user ${userId}:`, defaultMeal);
       formattedPlans.push(defaultMeal);
     }
   });
 
-  console.log('🔄 formatMealPlanData output:', formattedPlans);
-  console.log('🔄 Total formatted meals:', formattedPlans.length);
+  console.log('🔄 formatMealPlanData output for user', userId, ':', formattedPlans);
+  console.log('🔄 Total formatted meals for user', userId, ':', formattedPlans.length);
   
   return formattedPlans;
 };
@@ -157,45 +160,53 @@ const getFirstImageUrl = (inputString) => {
 };
 
 export const calculateTotalCalories = (plans) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
   const total = plans.reduce((total, plan) => total + (plan.calories || 0), 0);
-  console.log('🧮 Total calories calculated:', total);
+  console.log('🧮 Total calories calculated for user', userId, ':', total);
   return total;
 };
 
 export const getDefaultMealPlan = () => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('📋 Generating default meal plan for user:', userId);
+  
   return [
     {
       type: 'Breakfast',
       name: 'Fried Chicken Wings',
       image: './public/image/meals/fried-chicken-wings.jpg',
       calories: 400,
-      id: 'default_breakfast',
+      id: `default_breakfast_${userId}`,
       serving_size: 1,
-      serving_unit: 'serving'
+      serving_unit: 'serving',
+      user_id: userId
     },
     {
       type: 'Lunch',
       name: 'Fried Rice with Egg',
       image: './public/image/meals/fried-rice-egg.jpg',
       calories: 450,
-      id: 'default_lunch',
+      id: `default_lunch_${userId}`,
       serving_size: 1,
-      serving_unit: 'serving'
+      serving_unit: 'serving',
+      user_id: userId
     },
     {
       type: 'Dinner',
       name: 'Soto Ayam',
       image: './public/image/meals/soto-ayam.jpg',
       calories: 350,
-      id: 'default_dinner',
+      id: `default_dinner_${userId}`,
       serving_size: 1,
-      serving_unit: 'serving'
+      serving_unit: 'serving',
+      user_id: userId
     }
   ];
 };
 
 export const createMealPlanSection = (data) => {
-  console.log('🎨 createMealPlanSection called with data:', {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🎨 createMealPlanSection called with data for user', userId, ':', {
     loading: data.loading,
     error: data.error,
     plansExists: !!data.plans,
@@ -206,7 +217,7 @@ export const createMealPlanSection = (data) => {
   });
 
   if (!data) {
-    console.log('🎨 No data provided, rendering error state');
+    console.log('🎨 No data provided, rendering error state for user:', userId);
     return `
       <div class="error-container">
         <div class="error-icon">⚠️</div>
@@ -217,7 +228,7 @@ export const createMealPlanSection = (data) => {
   }
 
   if (data.loading) {
-    console.log('🎨 Rendering loading state');
+    console.log('🎨 Rendering loading state for user:', userId);
     return `
       <div class="loading-container">
         <div class="loading-spinner"></div>
@@ -227,7 +238,7 @@ export const createMealPlanSection = (data) => {
   }
 
   if (data.error) {
-    console.log('🎨 Rendering error state:', data.error);
+    console.log('🎨 Rendering error state for user', userId, ':', data.error);
     const isProfileError = data.error.includes('profile') || 
                           data.error.includes('calorie target') || 
                           data.error.includes('Profil') ||
@@ -246,7 +257,7 @@ export const createMealPlanSection = (data) => {
   }
 
   if (!data.plans || !Array.isArray(data.plans) || data.plans.length === 0) {
-    console.log('🎨 Rendering no plans state - plans validation:', {
+    console.log('🎨 Rendering no plans state for user', userId, '- plans validation:', {
       plansExists: !!data.plans,
       plansIsArray: Array.isArray(data.plans),
       plansLength: data.plans?.length || 0,
@@ -265,8 +276,8 @@ export const createMealPlanSection = (data) => {
   const totalCalories = data.totalCalories || calculateTotalCalories(data.plans) || 0;
   const targetCalories = data.targetCalories || 1500;
 
-  console.log('🎨 Rendering meal plan content with', data.plans.length, 'plans');
-  console.log('🎨 Calorie info:', { totalCalories, targetCalories });
+  console.log('🎨 Rendering meal plan content with', data.plans.length, 'plans for user:', userId);
+  console.log('🎨 Calorie info for user', userId, ':', { totalCalories, targetCalories });
   
   return `
     <div class="meal-plan-content">
@@ -302,8 +313,10 @@ export const createMealPlanSection = (data) => {
 };
 
 export const createMealPlanCard = (meal) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  
   if (!meal) {
-    console.warn('⚠️ No meal data provided to createMealPlanCard');
+    console.warn('⚠️ No meal data provided to createMealPlanCard for user:', userId);
     return '';
   }
 
@@ -311,12 +324,12 @@ export const createMealPlanCard = (meal) => {
   const mealName = meal.name || 'Unknown Meal';
   const mealCalories = meal.calories || 0;
   const mealImage = meal.image || './public/image/meals/default-meal.jpg';
-  const mealId = meal.id || meal.recipe_id || `meal_${Date.now()}`;
+  const mealId = meal.id || meal.recipe_id || `meal_${userId}_${Date.now()}`;
   
-  console.log('🃏 Creating meal card for:', { mealType, mealName, mealCalories, mealId });
+  console.log('🃏 Creating meal card for user', userId, ':', { mealType, mealName, mealCalories, mealId });
   
   return `
-    <div class="meal-plan-card" data-meal-type="${mealType.toLowerCase()}" data-meal-id="${mealId}">
+    <div class="meal-plan-card" data-meal-type="${mealType.toLowerCase()}" data-meal-id="${mealId}" data-user-id="${userId}">
       <div class="meal-plan-image" data-meal-details-trigger>
         <img src="${mealImage}" alt="${mealName}" onerror="this.src='./public/image/meals/default-meal.jpg'; this.onerror=null;">
         <div class="image-overlay">
@@ -343,7 +356,8 @@ export const createMealPlanCard = (meal) => {
         serving_unit: meal.serving_unit || 'serving',
         type: mealType,
         image: mealImage,
-        recipe_id: meal.recipe_id || meal.id
+        recipe_id: meal.recipe_id || meal.id,
+        user_id: userId
       })}' title="Add to diary">
         <span class="plus-icon">+</span>
       </button>
@@ -360,6 +374,9 @@ const getTodayString = () => {
 };
 
 const showMealPlanPopup = (mealData) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🍽️ Showing meal plan popup for user', userId, ':', mealData);
+  
   const existingPopup = document.getElementById('meal-plan-popup-overlay');
   if (existingPopup) {
     existingPopup.remove();
@@ -436,14 +453,14 @@ const showMealPlanPopup = (mealData) => {
         addBtn.disabled = true;
         addBtn.textContent = 'Adding...';
         
+        console.log('🍽️ Adding meal for user', userId, ':', {
+          recipe_id: mealData.recipe_id,
+          meal_type: mealType,
+          servings: servings,
+          log_date: logDate
+        });
+        
         if (mealData.recipe_id && !mealData.id?.toString().startsWith('default_')) {
-          console.log('🍽️ Adding meal from plan:', {
-            recipe_id: mealData.recipe_id,
-            meal_type: mealType,
-            servings: servings,
-            log_date: logDate
-          });
-          
           await mealApiService.addMealFromPlan({
             recipe_id: mealData.recipe_id,
             meal_type: mealType,
@@ -451,13 +468,6 @@ const showMealPlanPopup = (mealData) => {
             log_date: logDate
           });
         } else {
-          console.log('🍽️ Adding default meal:', {
-            food_item_id: mealData.id,
-            meal_type: mealType,
-            servings: servings,
-            log_date: logDate
-          });
-          
           await mealApiService.createMealEntry({
             food_item_id: mealData.id,
             meal_type: mealType,
@@ -473,7 +483,7 @@ const showMealPlanPopup = (mealData) => {
         document.dispatchEvent(refreshEvent);
         
       } catch (error) {
-        console.error('Error adding meal from plan:', error);
+        console.error('Error adding meal from plan for user', userId, ':', error);
         alert(`Failed to add meal: ${error.message}`);
         addBtn.disabled = false;
         addBtn.textContent = 'Add';
@@ -483,6 +493,9 @@ const showMealPlanPopup = (mealData) => {
 };
 
 const addFullMealPlan = async (plans) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🍽️ Adding full meal plan for user', userId, ':', plans);
+  
   try {
     const today = getTodayString();
     
@@ -492,6 +505,11 @@ const addFullMealPlan = async (plans) => {
     };
     
     plans.forEach(plan => {
+      if (plan.user_id && plan.user_id !== userId) {
+        console.warn('⚠️ Skipping meal from different user:', plan.user_id, 'current:', userId);
+        return;
+      }
+      
       const mealType = plan.type.toLowerCase();
       if (['breakfast', 'lunch', 'dinner'].includes(mealType)) {
         mealPlanData.meal_plan[mealType] = {
@@ -504,25 +522,30 @@ const addFullMealPlan = async (plans) => {
     });
     
     if (Object.keys(mealPlanData.meal_plan).length === 0) {
-      throw new Error('No valid meals to add');
+      throw new Error('No valid meals to add for current user');
     }
     
-    console.log('🍽️ Adding full meal plan:', mealPlanData);
+    console.log('🍽️ Adding full meal plan for user', userId, ':', mealPlanData);
     
     try {
       await mealApiService.addFullMealPlan(mealPlanData);
       alert('Full meal plan added successfully!');
     } catch (error) {
-      console.warn('🔄 Full meal plan endpoint failed, trying individual meals:', error.message);
+      console.warn('🔄 Full meal plan endpoint failed for user', userId, ', trying individual meals:', error.message);
       
       if (error.message.includes('Endpoint not found') || error.message.includes('404') || error.message.includes('Network error')) {
-        console.log('🔄 Falling back to individual meal additions...');
+        console.log('🔄 Falling back to individual meal additions for user:', userId);
         
         let successCount = 0;
         let failCount = 0;
         
         for (let i = 0; i < plans.length; i++) {
           const plan = plans[i];
+          
+          if (plan.user_id && plan.user_id !== userId) {
+            console.warn('⚠️ Skipping meal from different user during individual add:', plan.user_id);
+            continue;
+          }
           
           if (plan.recipe_id && !plan.id?.toString().startsWith('default_')) {
             try {
@@ -533,10 +556,10 @@ const addFullMealPlan = async (plans) => {
                 log_date: today
               });
               successCount++;
-              console.log(`✅ Added ${plan.name} successfully`);
+              console.log(`✅ Added ${plan.name} successfully for user ${userId}`);
             } catch (individualError) {
               failCount++;
-              console.error(`❌ Failed to add ${plan.name}:`, individualError);
+              console.error(`❌ Failed to add ${plan.name} for user ${userId}:`, individualError);
             }
           } else {
             try {
@@ -547,10 +570,10 @@ const addFullMealPlan = async (plans) => {
                 log_date: today
               });
               successCount++;
-              console.log(`✅ Added ${plan.name} (default) successfully`);
+              console.log(`✅ Added ${plan.name} (default) successfully for user ${userId}`);
             } catch (individualError) {
               failCount++;
-              console.error(`❌ Failed to add ${plan.name} (default):`, individualError);
+              console.error(`❌ Failed to add ${plan.name} (default) for user ${userId}:`, individualError);
             }
           }
           
@@ -573,12 +596,15 @@ const addFullMealPlan = async (plans) => {
     document.dispatchEvent(refreshEvent);
     
   } catch (error) {
-    console.error('Error adding full meal plan:', error);
+    console.error('Error adding full meal plan for user', userId, ':', error);
     alert(`Failed to add meal plan: ${error.message}`);
   }
 };
 
 const showMealDetailsPopup = async (mealData) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🔍 Showing meal details popup for user', userId, ':', mealData);
+  
   const existingPopup = document.getElementById('meal-details-popup-overlay');
   if (existingPopup) {
     existingPopup.remove();
@@ -663,6 +689,7 @@ const showMealDetailsPopup = async (mealData) => {
 
   if (mealData.recipe_id && !mealData.id?.toString().startsWith('default_')) {
     try {
+      console.log('🔍 Fetching meal details from API for user', userId, ':', mealData.recipe_id);
       const mealDetails = await mealApiService.getMealDetails(mealData.recipe_id);
       
       if (mealDetails && mealDetails.meal) {
@@ -726,7 +753,7 @@ const showMealDetailsPopup = async (mealData) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching meal details:', error);
+      console.error('Error fetching meal details for user', userId, ':', error);
       const bodyElement = document.querySelector('.meal-details-popup-body');
       if (bodyElement) {
         bodyElement.innerHTML = `
@@ -746,6 +773,9 @@ const showMealDetailsPopup = async (mealData) => {
 };
 
 export const attachMealPlanEventHandlers = (onGenerateClicked, onMealItemClicked, onCompleteProfileClicked) => {
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  console.log('🔗 Attaching meal plan event handlers for user:', userId);
+  
   const generateMealPlanButton = document.getElementById('generate-meal-plan-btn');
   const completeProfileButton = document.getElementById('complete-profile-btn');
   const addFullPlanButton = document.getElementById('add-full-meal-plan-btn');
@@ -766,13 +796,23 @@ export const attachMealPlanEventHandlers = (onGenerateClicked, onMealItemClicked
       const plans = [];
       
       mealPlanCards.forEach(card => {
+        const cardUserId = card.dataset.userId;
+        if (cardUserId && cardUserId !== userId) {
+          console.warn('⚠️ Skipping meal card from different user:', cardUserId);
+          return;
+        }
+        
         const addButton = card.querySelector('.meal-plan-add-btn');
         if (addButton && addButton.dataset.meal) {
           try {
             const mealData = JSON.parse(addButton.dataset.meal);
-            plans.push(mealData);
+            if (!mealData.user_id || mealData.user_id === userId) {
+              plans.push(mealData);
+            } else {
+              console.warn('⚠️ Skipping meal from different user in meal data:', mealData.user_id);
+            }
           } catch (error) {
-            console.error('Error parsing meal data:', error);
+            console.error('Error parsing meal data for user', userId, ':', error);
           }
         }
       });
@@ -784,7 +824,7 @@ export const attachMealPlanEventHandlers = (onGenerateClicked, onMealItemClicked
         try {
           await addFullMealPlan(plans);
         } catch (error) {
-          console.error('Error adding full meal plan:', error);
+          console.error('Error adding full meal plan for user', userId, ':', error);
         } finally {
           addFullPlanButton.disabled = false;
           addFullPlanButton.innerHTML = '<span class="btn-icon">📋</span> Add Plan';
@@ -802,9 +842,14 @@ export const attachMealPlanEventHandlers = (onGenerateClicked, onMealItemClicked
         e.stopPropagation();
         try {
           const mealData = JSON.parse(button.dataset.meal);
-          showMealPlanPopup(mealData);
+          if (!mealData.user_id || mealData.user_id === userId) {
+            showMealPlanPopup(mealData);
+          } else {
+            console.warn('⚠️ Attempted to add meal from different user:', mealData.user_id);
+            alert('Cannot add meal from different user');
+          }
         } catch (error) {
-          console.error('Error parsing meal data:', error);
+          console.error('Error parsing meal data for user', userId, ':', error);
         }
       });
     });
@@ -818,13 +863,23 @@ export const attachMealPlanEventHandlers = (onGenerateClicked, onMealItemClicked
         
         const mealCard = trigger.closest('.meal-plan-card');
         if (mealCard) {
+          const cardUserId = mealCard.dataset.userId;
+          if (cardUserId && cardUserId !== userId) {
+            console.warn('⚠️ Attempted to view details of meal from different user:', cardUserId);
+            return;
+          }
+          
           const addButton = mealCard.querySelector('.meal-plan-add-btn');
           if (addButton && addButton.dataset.meal) {
             try {
               const mealData = JSON.parse(addButton.dataset.meal);
-              showMealDetailsPopup(mealData);
+              if (!mealData.user_id || mealData.user_id === userId) {
+                showMealDetailsPopup(mealData);
+              } else {
+                console.warn('⚠️ Attempted to view details of meal from different user in meal data:', mealData.user_id);
+              }
             } catch (error) {
-              console.error('Error parsing meal data:', error);
+              console.error('Error parsing meal data for user', userId, ':', error);
             }
           }
         }

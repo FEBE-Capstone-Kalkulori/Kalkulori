@@ -9,7 +9,6 @@ const SignInPresenter = {
     
     const view = createSignInView();
     
-    // Setup event listeners after view is created and rendered
     this._waitForDOMAndInitialize();
     
     return view;
@@ -103,7 +102,6 @@ const SignInPresenter = {
   },
 
   async _performSignIn(email, password) {
-    // Fixed selector - menggunakan selector yang sesuai dengan HTML
     const button = document.querySelector('#signin-form button[type="submit"]');
     
     if (!button) {
@@ -113,20 +111,23 @@ const SignInPresenter = {
     
     const originalText = button.textContent;
    
-    // Show loading state
     button.textContent = 'Signing In...';
     button.disabled = true;
     this._clearError();
 
     try {
-      // Call API login
       const result = await AuthGuard.login(email, password);
       
       if (result.success) {
         this._showSuccess('Sign in successful! Redirecting to home...');
         
+        console.log('✅ Login successful for user:', result.data.userId);
+        
+        this._clearUserSpecificStorage();
+        
         setTimeout(() => {
           window.location.hash = '#/home';
+          window.location.reload();
         }, 1000);
       } else {
         this._showError(result.message || 'Login failed. Please try again.');
@@ -141,11 +142,52 @@ const SignInPresenter = {
     }
   },
 
+  _clearUserSpecificStorage() {
+    const currentUserId = localStorage.getItem('userId');
+    if (!currentUserId) return;
+    
+    try {
+      const keysToCheck = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.includes('userData_') || 
+          key.includes('lastAppDate_') ||
+          key.includes('userAvatar_')
+        ) && !key.includes(currentUserId)) {
+          keysToCheck.push(key);
+        }
+      }
+      
+      keysToCheck.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      const sessionKeysToCheck = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (
+          key.includes('mealSuggestions_') ||
+          key.includes('dailyLogs_') ||
+          key.includes('mealPlan_')
+        ) && !key.includes(currentUserId)) {
+          sessionKeysToCheck.push(key);
+        }
+      }
+      
+      sessionKeysToCheck.forEach(key => {
+        sessionStorage.removeItem(key);
+      });
+      
+      console.log('🧹 Cleared data from other users during signin');
+    } catch (error) {
+      console.error('Error clearing other user data:', error);
+    }
+  },
+
   _showError(message) {
-    // Remove existing error message
     this._clearError();
     
-    // Create error element
     const errorDiv = document.createElement('div');
     errorDiv.classList.add('error-message');
     errorDiv.textContent = message;
@@ -159,7 +201,6 @@ const SignInPresenter = {
       border: 1px solid #e74c3c;
     `;
     
-    // Insert before form
     const form = document.querySelector('#signin-form');
     if (form && form.parentNode) {
       form.parentNode.insertBefore(errorDiv, form);
@@ -167,10 +208,8 @@ const SignInPresenter = {
   },
 
   _showSuccess(message) {
-    // Remove existing messages
     this._clearError();
     
-    // Create success element
     const successDiv = document.createElement('div');
     successDiv.classList.add('success-message');
     successDiv.textContent = message;
@@ -184,7 +223,6 @@ const SignInPresenter = {
       border: 1px solid #27ae60;
     `;
     
-    // Insert before form
     const form = document.querySelector('#signin-form');
     if (form && form.parentNode) {
       form.parentNode.insertBefore(successDiv, form);

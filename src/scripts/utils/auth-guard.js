@@ -1,5 +1,4 @@
 class AuthGuard {
-  // FIXED: Hardcode ke production URL untuk konsistensi
   static API_BASE_URL = 'https://kalkulori.up.railway.app/api';
   
   static isAuthenticated() {
@@ -50,10 +49,18 @@ class AuthGuard {
       if (data.status === 'success') {
         console.log('✅ Login successful, saving token...');
         
-        // Simpan token dan user data
+        this.clearAuthData();
+        
         localStorage.setItem('authToken', data.data.accessToken);
         localStorage.setItem('userId', data.data.userId);
         localStorage.setItem('userEmail', data.data.email);
+        
+        if (data.data.profile?.daily_calorie_target) {
+          localStorage.setItem('dailyCalorieTarget', data.data.profile.daily_calorie_target);
+        }
+        
+        const today = this._getTodayString();
+        localStorage.setItem(`lastAppDate_${data.data.userId}`, today);
         
         console.log('💾 Token saved:', !!localStorage.getItem('authToken'));
         console.log('💾 User data saved - userId:', localStorage.getItem('userId'));
@@ -67,7 +74,6 @@ class AuthGuard {
     } catch (error) {
       console.error('💥 Login error:', error);
       
-      // Check for network errors
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return { 
           success: false, 
@@ -130,7 +136,6 @@ class AuthGuard {
     } catch (error) {
       console.error('💥 Registration error:', error);
       
-      // Check for network errors
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return { 
           success: false, 
@@ -170,7 +175,6 @@ class AuthGuard {
         const errorText = await response.text();
         console.log('❌ Token verification failed:', errorText);
         
-        // Clear invalid token
         this.clearAuthData();
         return false;
       }
@@ -195,11 +199,12 @@ class AuthGuard {
   
   static async logout() {
     const token = this.getToken();
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
     
     try {
-      console.log('🚪 Logging out...');
+      console.log('🚪 Logging out user:', userId);
       
-      // Call API logout jika token ada
       if (token) {
         console.log('📡 Calling logout API');
         await fetch(`${this.API_BASE_URL}/auth/logout`, {
@@ -213,22 +218,65 @@ class AuthGuard {
     } catch (error) {
       console.error('💥 Logout API error:', error);
     } finally {
-      // Hapus data lokal
-      this.clearAuthData();
+      this.clearAuthData(userId, userEmail);
       
       console.log('🚪 User logged out, redirecting to signin');
-      // Redirect ke signin
       window.location.hash = '#/signin';
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   }
   
-  static clearAuthData() {
+  static clearAuthData(userId = null, userEmail = null) {
     console.log('🧹 Clearing all auth data');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userData');
+    
+    const currentUserId = userId || localStorage.getItem('userId');
+    const currentUserEmail = userEmail || localStorage.getItem('userEmail');
+    
+    const baseKeysToRemove = [
+      'authToken',
+      'userId',
+      'userEmail',
+      'isAuthenticated',
+      'userData',
+      'dailyCalorieTarget'
+    ];
+    
+    baseKeysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    if (currentUserId) {
+      const userSpecificKeys = [
+        `userData_${currentUserId}`,
+        `lastAppDate_${currentUserId}`,
+        `mealSuggestions_${currentUserId}`,
+        `dailyLogs_${currentUserId}`,
+        `mealPlan_${currentUserId}`
+      ];
+      
+      userSpecificKeys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+      
+      console.log('🧹 Cleared user-specific data for userId:', currentUserId);
+    }
+    
+    if (currentUserEmail) {
+      localStorage.removeItem(`userAvatar_${currentUserEmail}`);
+      console.log('🧹 Cleared avatar for userEmail:', currentUserEmail);
+    }
+    
+    if (currentUserId) {
+      localStorage.removeItem(`userAvatar_${currentUserId}`);
+      console.log('🧹 Cleared avatar for userId:', currentUserId);
+    }
+    
+    sessionStorage.clear();
+    
+    console.log('🧹 All authentication and user data cleared');
   }
 
   static requireAuth() {
@@ -249,7 +297,6 @@ class AuthGuard {
     return false;
   }
   
-  // Helper method untuk API calls yang membutuhkan authentication
   static getAuthHeaders() {
     const token = this.getToken();
     return {
@@ -258,7 +305,14 @@ class AuthGuard {
     };
   }
   
-  // Debug method untuk cek status authentication
+  static _getTodayString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
   static debugAuth() {
     console.log('🐛 Auth Debug Info:');
     console.log('  - API URL:', this.API_BASE_URL);

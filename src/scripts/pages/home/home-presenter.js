@@ -101,6 +101,10 @@ class HomePresenter {
     }
   }
 
+  _getCurrentUserId() {
+    return localStorage.getItem('userId') || 'anonymous';
+  }
+
   _startDayChangeMonitor() {
     setInterval(() => {
       this._checkAndResetForNewDay();
@@ -109,15 +113,24 @@ class HomePresenter {
 
   _checkAndResetForNewDay() {
     const today = this._getTodayString();
-    const lastDate = localStorage.getItem('lastAppDate');
+    const userId = this._getCurrentUserId();
+    const lastDateKey = `lastAppDate_${userId}`;
+    const lastDate = localStorage.getItem(lastDateKey);
     
     if (lastDate !== today) {
-      console.log('New day detected, resetting data');
+      console.log('New day detected, resetting data for user:', userId);
       
-      localStorage.setItem('lastAppDate', today);
-      sessionStorage.removeItem('mealSuggestions');
-      sessionStorage.removeItem('dailyLogs');
-      sessionStorage.removeItem('mealPlan');
+      localStorage.setItem(lastDateKey, today);
+      
+      const keysToRemove = [
+        `mealSuggestions_${userId}`,
+        `dailyLogs_${userId}`,
+        `mealPlan_${userId}`
+      ];
+      
+      keysToRemove.forEach(key => {
+        sessionStorage.removeItem(key);
+      });
       
       this.data.selectedKeywords = [];
       this.data.mealSuggestions = {
@@ -178,9 +191,11 @@ class HomePresenter {
 
   _saveToSessionStorage() {
     const today = this._getTodayString();
+    const userId = this._getCurrentUserId();
     
     const mealSuggestionsData = {
       date: today,
+      userId: userId,
       selectedKeywords: this.data.selectedKeywords,
       mealSuggestions: {
         loading: false,
@@ -190,33 +205,36 @@ class HomePresenter {
       },
       suggestedMeals: this.data.suggestedMeals
     };
-    sessionStorage.setItem('mealSuggestions', JSON.stringify(mealSuggestionsData));
+    sessionStorage.setItem(`mealSuggestions_${userId}`, JSON.stringify(mealSuggestionsData));
 
     const dailyLogsData = {
       date: today,
+      userId: userId,
       currentCalories: this.data.currentCalories,
       calorieLimit: this.data.calorieLimit,
       dailyLog: this.data.dailyLog,
       mealEntries: this.data.mealEntries,
       lastFetchDate: this.lastFetchDate
     };
-    sessionStorage.setItem('dailyLogs', JSON.stringify(dailyLogsData));
+    sessionStorage.setItem(`dailyLogs_${userId}`, JSON.stringify(dailyLogsData));
 
     const mealPlanData = {
       date: today,
+      userId: userId,
       mealPlan: this.data.mealPlan
     };
-    sessionStorage.setItem('mealPlan', JSON.stringify(mealPlanData));
+    sessionStorage.setItem(`mealPlan_${userId}`, JSON.stringify(mealPlanData));
   }
 
   _loadFromSessionStorage() {
     const today = this._getTodayString();
+    const userId = this._getCurrentUserId();
     
     try {
-      const mealSuggestionsStored = sessionStorage.getItem('mealSuggestions');
+      const mealSuggestionsStored = sessionStorage.getItem(`mealSuggestions_${userId}`);
       if (mealSuggestionsStored) {
         const sessionData = JSON.parse(mealSuggestionsStored);
-        if (sessionData.date === today) {
+        if (sessionData.date === today && sessionData.userId === userId) {
           this.data.selectedKeywords = sessionData.selectedKeywords || [];
           this.data.mealSuggestions = {
             loading: false,
@@ -225,48 +243,49 @@ class HomePresenter {
             isFromAPI: sessionData.mealSuggestions?.isFromAPI || false
           };
           this.data.suggestedMeals = sessionData.suggestedMeals || this.data.suggestedMeals;
-          console.log('Restored meal suggestions from session storage');
+          console.log('Restored meal suggestions from session storage for user:', userId);
         } else {
-          sessionStorage.removeItem('mealSuggestions');
+          sessionStorage.removeItem(`mealSuggestions_${userId}`);
         }
       }
 
-      const dailyLogsStored = sessionStorage.getItem('dailyLogs');
+      const dailyLogsStored = sessionStorage.getItem(`dailyLogs_${userId}`);
       if (dailyLogsStored) {
         const dailyData = JSON.parse(dailyLogsStored);
-        if (dailyData.date === today) {
+        if (dailyData.date === today && dailyData.userId === userId) {
           this.data.currentCalories = dailyData.currentCalories || 0;
           this.data.calorieLimit = dailyData.calorieLimit || 1500;
           this.data.dailyLog = dailyData.dailyLog;
           this.data.mealEntries = dailyData.mealEntries || [];
           this.lastFetchDate = dailyData.lastFetchDate;
-          console.log('Restored daily logs from session storage');
+          console.log('Restored daily logs from session storage for user:', userId);
         } else {
-          sessionStorage.removeItem('dailyLogs');
+          sessionStorage.removeItem(`dailyLogs_${userId}`);
         }
       }
 
-      const mealPlanStored = sessionStorage.getItem('mealPlan');
+      const mealPlanStored = sessionStorage.getItem(`mealPlan_${userId}`);
       if (mealPlanStored) {
         const planData = JSON.parse(mealPlanStored);
-        if (planData.date === today && planData.mealPlan) {
+        if (planData.date === today && planData.userId === userId && planData.mealPlan) {
           this.data.mealPlan = planData.mealPlan;
-          console.log('Restored meal plan from session storage');
+          console.log('Restored meal plan from session storage for user:', userId);
         } else {
-          sessionStorage.removeItem('mealPlan');
+          sessionStorage.removeItem(`mealPlan_${userId}`);
         }
       }
     } catch (error) {
       console.error('Error loading from session storage:', error);
-      sessionStorage.removeItem('mealSuggestions');
-      sessionStorage.removeItem('dailyLogs');
-      sessionStorage.removeItem('mealPlan');
+      sessionStorage.removeItem(`mealSuggestions_${userId}`);
+      sessionStorage.removeItem(`dailyLogs_${userId}`);
+      sessionStorage.removeItem(`mealPlan_${userId}`);
     }
   }
 
   async _fetchDailyData(forceRefresh = false) {
     try {
       const today = this._getTodayString();
+      const userId = this._getCurrentUserId();
       
       if (!forceRefresh && this.lastFetchDate === today && this.data.mealEntries.length > 0) {
         this.data.loading = false;
@@ -278,11 +297,11 @@ class HomePresenter {
       
       this.data.dailyLog = dailyData.daily_log;
       
-      console.log('📊 Raw meal entries from API:', dailyData.meal_entries);
+      console.log('📊 Raw meal entries from API for user', userId, ':', dailyData.meal_entries);
       
       this.data.mealEntries = await this._enrichMealEntries(dailyData.meal_entries || []);
       
-      console.log('✨ Enriched meal entries:', this.data.mealEntries);
+      console.log('✨ Enriched meal entries for user', userId, ':', this.data.mealEntries);
       
       this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
       
@@ -294,7 +313,7 @@ class HomePresenter {
       this._saveToSessionStorage();
       
     } catch (error) {
-      console.error('Error fetching daily data:', error);
+      console.error('Error fetching daily data for user', this._getCurrentUserId(), ':', error);
       this.data.error = 'Unable to load today\'s data';
       this.data.currentCalories = 0;
       this.data.calorieLimit = 1500;
@@ -417,10 +436,11 @@ class HomePresenter {
   async _fetchMealPlan(forceRefresh = false) {
     try {
       const today = this._getTodayString();
+      const userId = this._getCurrentUserId();
       const hasCachedPlan = this.data.mealPlan.plans && this.data.mealPlan.plans.length > 0;
       
       if (!forceRefresh && hasCachedPlan) {
-        console.log('🍽️ Using cached meal plan');
+        console.log('🍽️ Using cached meal plan for user:', userId);
         return;
       }
 
@@ -428,9 +448,9 @@ class HomePresenter {
       this.data.mealPlan.error = null;
       this._renderView();
 
-      console.log('🍽️ Fetching meal plan...');
+      console.log('🍽️ Fetching meal plan for user:', userId);
       const mealPlanData = await mealApiService.generateMealPlan();
-      console.log('✅ Meal plan data received:', mealPlanData);
+      console.log('✅ Meal plan data received for user', userId, ':', mealPlanData);
       
       const formattedPlans = formatMealPlanData(mealPlanData);
       
@@ -444,10 +464,10 @@ class HomePresenter {
       this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
       
       this._saveToSessionStorage();
-      console.log('✅ Meal plan formatted successfully');
+      console.log('✅ Meal plan formatted successfully for user:', userId);
       
     } catch (error) {
-      console.error('💥 Error fetching meal plan:', error);
+      console.error('💥 Error fetching meal plan for user', this._getCurrentUserId(), ':', error);
       
       let errorMessage = 'Unable to load meal plan';
       
@@ -476,7 +496,7 @@ class HomePresenter {
       if (!error.message.includes('Authentication') && !error.message.includes('login')) {
         this.data.mealPlan.plans = getDefaultMealPlan();
         this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
-        console.log('📋 Using default meal plan as fallback');
+        console.log('📋 Using default meal plan as fallback for user:', this._getCurrentUserId());
       } else {
         this.data.mealPlan.plans = [];
         this.data.mealPlan.totalCalories = 0;
@@ -494,7 +514,7 @@ class HomePresenter {
     });
 
     document.addEventListener('mealPlanMealAdded', () => {
-      console.log('🔄 Meal plan meal added, refreshing data...');
+      console.log('🔄 Meal plan meal added, refreshing data for user:', this._getCurrentUserId());
       this._refreshDailyData();
     });
   }
@@ -503,7 +523,7 @@ class HomePresenter {
     try {
       await this._fetchDailyData(true);
     } catch (error) {
-      console.error('Error refreshing daily data:', error);
+      console.error('Error refreshing daily data for user', this._getCurrentUserId(), ':', error);
     }
   }
 
@@ -526,7 +546,7 @@ class HomePresenter {
       await this._refreshDailyData();
       
     } catch (error) {
-      console.error('Delete failed:', error);
+      console.error('Delete failed for user', this._getCurrentUserId(), ':', error);
       alert('Failed to delete meal. Please try again.');
     } finally {
       this.data.loading = false;
@@ -535,7 +555,7 @@ class HomePresenter {
   }
 
   _handleCategoryClicked(category) {
-    console.log(`Category clicked: ${category}`);
+    console.log(`Category clicked by user ${this._getCurrentUserId()}: ${category}`);
     this.data.currentCategory = category;
     
     setTimeout(() => {
@@ -544,14 +564,14 @@ class HomePresenter {
   }
 
   _handlePopupClosed() {
-    console.log('Popup closed');
+    console.log('Popup closed for user:', this._getCurrentUserId());
     this.data.currentCategory = null;
     HomeView.hideCategoryPopup();
     this._renderView();
   }
 
   _handleKeywordToggled(keyword, selected) {
-    console.log(`Keyword ${keyword} ${selected ? 'selected' : 'deselected'}`);
+    console.log(`User ${this._getCurrentUserId()} keyword ${keyword} ${selected ? 'selected' : 'deselected'}`);
     
     const validKeywords = validateKeywords([keyword]);
     if (validKeywords.length === 0) {
@@ -581,12 +601,12 @@ class HomePresenter {
     this._saveToSessionStorage();
     
     const categoryCounts = countSelectedKeywordsByCategory(this.data.selectedKeywords);
-    console.log('Selected keywords by category:', categoryCounts);
-    console.log('Total selected keywords:', this.data.selectedKeywords);
+    console.log('Selected keywords by category for user', this._getCurrentUserId(), ':', categoryCounts);
+    console.log('Total selected keywords for user', this._getCurrentUserId(), ':', this.data.selectedKeywords);
   }
 
   async _handleFindMeals() {
-    console.log('Finding meals with keywords:', this.data.selectedKeywords);
+    console.log('Finding meals with keywords for user', this._getCurrentUserId(), ':', this.data.selectedKeywords);
     
     if (this.data.selectedKeywords.length === 0) {
       alert('Please select some preferences first!');
@@ -604,11 +624,11 @@ class HomePresenter {
       this.data.mealSuggestions.isFromAPI = true;
       this._renderView();
 
-      console.log('🔍 Fetching meal suggestions from API...');
+      console.log('🔍 Fetching meal suggestions from API for user:', this._getCurrentUserId());
       console.log('Keywords:', this.data.selectedKeywords);
 
       const suggestionsData = await mealApiService.getMealSuggestions(this.data.selectedKeywords);
-      console.log('✅ Meal suggestions received:', suggestionsData);
+      console.log('✅ Meal suggestions received for user', this._getCurrentUserId(), ':', suggestionsData);
 
       if (suggestionsData && suggestionsData.suggestions && suggestionsData.suggestions.length > 0) {
         const formattedSuggestions = suggestionsData.suggestions.map(suggestion => ({
@@ -631,18 +651,18 @@ class HomePresenter {
         
         this._saveToSessionStorage();
         
-        console.log('✅ Meal suggestions formatted successfully');
+        console.log('✅ Meal suggestions formatted successfully for user:', this._getCurrentUserId());
         console.log('Total suggestions:', formattedSuggestions.length);
         
         alert(`Found ${formattedSuggestions.length} meal suggestions based on your preferences!`);
       } else {
-        console.log('⚠️ No suggestions found, using fallback');
+        console.log('⚠️ No suggestions found for user', this._getCurrentUserId(), ', using fallback');
         this._useFallbackSuggestions();
         alert('No specific suggestions found for your keywords. Showing general recommendations.');
       }
 
     } catch (error) {
-      console.error('💥 Error fetching meal suggestions:', error);
+      console.error('💥 Error fetching meal suggestions for user', this._getCurrentUserId(), ':', error);
       
       let errorMessage = 'Failed to get meal suggestions';
       
@@ -713,7 +733,7 @@ class HomePresenter {
   }
 
   _handleClearAll() {
-    console.log('Clearing all selected keywords');
+    console.log('Clearing all selected keywords for user:', this._getCurrentUserId());
     this.data.selectedKeywords = [];
     
     this._useFallbackSuggestions();
@@ -726,13 +746,13 @@ class HomePresenter {
   }
 
   _handleKeywordRemoved(keyword) {
-    console.log(`Removing keyword: ${keyword}`);
+    console.log(`User ${this._getCurrentUserId()} removing keyword: ${keyword}`);
     this.data.selectedKeywords = this.data.selectedKeywords.filter(k => k !== keyword);
     
     this._saveToSessionStorage();
     
     const categoryCounts = countSelectedKeywordsByCategory(this.data.selectedKeywords);
-    console.log('Updated keywords by category:', categoryCounts);
+    console.log('Updated keywords by category for user', this._getCurrentUserId(), ':', categoryCounts);
     
     this._renderView();
   }
@@ -742,7 +762,7 @@ class HomePresenter {
   }
 
   _handleMealPlanItemClicked(mealData) {
-    console.log('Meal plan item clicked:', mealData);
+    console.log('Meal plan item clicked by user', this._getCurrentUserId(), ':', mealData);
     
     if (window.FoodCard && window.FoodCard.showAddMealPopup) {
       window.FoodCard.showAddMealPopup({
@@ -756,12 +776,12 @@ class HomePresenter {
   }
 
   _handleCompleteProfile() {
-    console.log('Complete profile clicked');
+    console.log('Complete profile clicked by user:', this._getCurrentUserId());
     window.location.hash = '#/profile';
   }
 
   _handleSuggestedMealClicked(mealData) {
-    console.log('Suggested meal clicked for adding:', mealData);
+    console.log('Suggested meal clicked for adding by user', this._getCurrentUserId(), ':', mealData);
     
     this._showSuggestionMealPopup({
       id: mealData.id,
@@ -773,7 +793,7 @@ class HomePresenter {
   }
 
   _showSuggestionMealPopup(foodData) {
-    console.log('Showing suggestion meal popup for:', foodData);
+    console.log('Showing suggestion meal popup for user', this._getCurrentUserId(), ':', foodData);
     
     const existingPopup = document.getElementById('suggestion-meal-popup-overlay');
     if (existingPopup) {
@@ -873,12 +893,12 @@ class HomePresenter {
             await this._refreshDailyData();
             
           } else {
-            console.log(`Demo: Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
+            console.log(`Demo: Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate} for user ${this._getCurrentUserId()}`);
             alert('This is a default meal. Please select suggestions from "Find Meals" for full functionality.');
             closePopup();
           }
         } catch (error) {
-          console.error('Error adding meal from suggestion:', error);
+          console.error('Error adding meal from suggestion for user', this._getCurrentUserId(), ':', error);
           alert('Failed to add meal. Please try again.');
           addBtn.disabled = false;
           addBtn.textContent = 'Add';
@@ -888,7 +908,7 @@ class HomePresenter {
   }
 
   async _handleSuggestedMealDetailsClicked(mealData) {
-    console.log('Suggested meal details clicked:', mealData);
+    console.log('Suggested meal details clicked by user', this._getCurrentUserId(), ':', mealData);
     
     if (!mealData.id || mealData.id.startsWith('default_')) {
       this._showMealDetailsPopup({
@@ -906,7 +926,7 @@ class HomePresenter {
     }
 
     try {
-      console.log('🔍 Fetching meal details from API...');
+      console.log('🔍 Fetching meal details from API for user:', this._getCurrentUserId());
       
       this._showMealDetailsPopup({
         name: mealData.name,
@@ -914,7 +934,7 @@ class HomePresenter {
       });
 
       const mealDetails = await mealApiService.getMealDetails(mealData.id);
-      console.log('✅ Meal details received:', mealDetails);
+      console.log('✅ Meal details received for user', this._getCurrentUserId(), ':', mealDetails);
 
       if (mealDetails && mealDetails.meal) {
         const meal = mealDetails.meal;
@@ -939,7 +959,7 @@ class HomePresenter {
       }
 
     } catch (error) {
-      console.error('💥 Error fetching meal details:', error);
+      console.error('💥 Error fetching meal details for user', this._getCurrentUserId(), ':', error);
       
       this._showMealDetailsPopup({
         name: mealData.name,
