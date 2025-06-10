@@ -17,7 +17,7 @@
 /* Content layout */
 .content-layout {
   display: flex;
-  gap: 2rem;
+  gap: 1.8rem;
   background-color: #feffd8;
   border-radius: 35px;
 }
