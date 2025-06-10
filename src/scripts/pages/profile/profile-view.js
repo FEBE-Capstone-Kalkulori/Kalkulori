@@ -12,12 +12,13 @@ const createProfileTemplate = (userData, isEditMode = false) => {
     return mapping[level] || level;
   };
 
-return `
+  return `
     <div class="max-w-4xl mx-auto">
-      <h2 class="text-3xl text-gray-800 mb-8 font-cal-sans">User Profile</h2>
-      
       <div class="flex gap-12 flex-wrap lg:flex-nowrap">
         <div class="flex-shrink-0 w-64 flex flex-col items-center justify-center gap-6">
+          <!-- Pindahkan h2 ke sini, di atas avatar -->
+          <h2 class="text-3xl text-gray-800 mb-4 font-cal-sans">User Profile</h2>
+          
            <div class="relative w-56 h-56">
             <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-yellow transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <img src="${
