@@ -257,6 +257,9 @@ class HomePresenter {
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
+      // PENTING: Pastikan ID asli meal entry tidak berubah
+      const originalMealId = meal.id; // Simpan ID asli dari database
+      
       // FIX: Ensure calories field is properly mapped from both possible field names
       if (!enrichedMeal.calories && enrichedMeal.calories_consumed) {
         enrichedMeal.calories = enrichedMeal.calories_consumed;
@@ -345,11 +348,25 @@ class HomePresenter {
         };
       }
       
+      // CRITICAL FIX: Pastikan ID asli meal entry tidak berubah
+      enrichedMeal.id = originalMealId;
+      
+      // TAMBAHAN: Simpan juga metadata penting untuk debugging
+      enrichedMeal._debug_info = {
+        original_id: originalMealId,
+        user_id: meal.user_id,
+        is_from_recipe: meal.is_from_recipe,
+        is_from_search: meal.is_from_search,
+        recipe_id: meal.recipe_id,
+        food_item_id: meal.food_item_id
+      };
+      
       enrichedEntries.push(enrichedMeal);
     }
     
     return enrichedEntries;
   }
+
 
   async _fetchMealPlan() {
     try {
@@ -441,26 +458,70 @@ class HomePresenter {
 
   async _handleDeleteMeal(mealId) {
     try {
+      console.log('🗑️ Attempting to delete meal with ID:', mealId);
+      
+      // DEBUGGING: Cari meal entry yang akan dihapus untuk debugging
+      const mealToDelete = this.data.mealEntries.find(meal => meal.id === mealId);
+      if (mealToDelete) {
+        console.log('🔍 Meal to delete details:', {
+          id: mealToDelete.id,
+          user_id: mealToDelete.user_id,
+          food_name: mealToDelete.food_details?.food_name,
+          is_from_recipe: mealToDelete.is_from_recipe,
+          is_from_search: mealToDelete.is_from_search,
+          debug_info: mealToDelete._debug_info
+        });
+      } else {
+        console.error('❌ Meal not found in current data with ID:', mealId);
+        throw new Error('Meal not found in current data');
+      }
+      
+      // TAMBAHAN: Validasi auth token sebelum delete
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('❌ No auth token found');
+        throw new Error('Authentication token not found. Please login again.');
+      }
+      console.log('✅ Auth token exists:', token.substring(0, 20) + '...');
+      
       this.data.loading = true;
       this._renderView();
       
-      console.log('🗑️ Attempting to delete meal:', mealId);
+      console.log('🚀 Calling delete API for meal ID:', mealId);
       
-      // FIX: Direct delete with immediate refresh regardless of result
+      // CRITICAL: Pastikan menggunakan ID asli meal entry dari database
       try {
-        await mealApiService.deleteMealEntry(mealId);
-        console.log('✅ Delete API call completed');
+        const deleteResponse = await mealApiService.deleteMealEntry(mealId);
+        console.log('✅ Delete API response:', deleteResponse);
         
-        // Force immediate refresh
+        // Force immediate refresh untuk memastikan data terbaru
         this.lastFetchDate = null;
         await this._fetchDailyData();
         
-        console.log('✅ Meal deleted and data refreshed');
+        console.log('✅ Meal deleted and data refreshed successfully');
         
       } catch (deleteError) {
-        console.warn('⚠️ Delete API failed, but refreshing data anyway:', deleteError);
+        console.error('❌ Delete API failed:', deleteError);
         
-        // Even if delete fails, refresh data to check actual state
+        // TAMBAHAN: Parsing error yang lebih detail
+        let detailedError = deleteError.message;
+        if (deleteError.message.includes('403')) {
+          // Coba ambil detail user dari token untuk debugging
+          try {
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('🔍 Current token user ID:', payload.uid || payload.user_id || payload.sub);
+              console.log('🔍 Meal user ID:', mealToDelete.user_id);
+            }
+          } catch (tokenError) {
+            console.warn('Could not parse token for debugging:', tokenError);
+          }
+          
+          detailedError = `Permission denied. User ID mismatch detected. This meal may belong to another user session.`;
+        }
+        
+        // Tetap refresh data untuk melihat status terkini
         this.lastFetchDate = null;
         await this._fetchDailyData();
         
@@ -471,7 +532,7 @@ class HomePresenter {
           console.log('✅ Meal was actually deleted despite API error');
         } else {
           console.error('❌ Meal still exists after delete attempt');
-          throw deleteError;
+          throw new Error(detailedError);
         }
       }
       
@@ -480,10 +541,12 @@ class HomePresenter {
       
       let errorMessage = 'Failed to delete meal. Please try again.';
       
-      if (error.message.includes('403') || error.message.includes('Forbidden')) {
-        errorMessage = 'Permission denied. This meal may belong to another session.';
+      if (error.message.includes('403') || error.message.includes('Permission denied')) {
+        errorMessage = 'Permission denied. This meal may belong to another session. Please refresh the page and try again.';
       } else if (error.message.includes('404') || error.message.includes('not found')) {
         errorMessage = 'Meal not found or already deleted.';
+      } else if (error.message.includes('Authentication')) {
+        errorMessage = 'Authentication expired. Please login again.';
       } else if (error.message.includes('Network') || error.message.includes('network')) {
         errorMessage = 'Network error. Please check your connection.';
       }
