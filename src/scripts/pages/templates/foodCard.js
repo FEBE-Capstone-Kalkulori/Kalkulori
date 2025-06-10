@@ -214,8 +214,9 @@ function showFoodDetailsPopup(foodData) {
     }
 }
 
+// FIX: Enhanced showAddMealPopup function for better search meal handling
 function showAddMealPopup(foodData) {
-    console.log('Showing popup for:', foodData);
+    console.log('🍽️ Showing popup for:', foodData);
     
     const existingPopup = document.getElementById('meal-popup-overlay');
     if (existingPopup) {
@@ -299,35 +300,49 @@ function showAddMealPopup(foodData) {
                 addBtn.disabled = true;
                 addBtn.textContent = 'Adding...';
                 
+                // FIX: Enhanced handling for search meals with proper data validation
                 if (foodData.is_from_search && foodData.recipe_id) {
+                    console.log('🔍 Adding search meal:', foodData);
+                    
                     if (window.foodApiService) {
-                        await window.foodApiService.addFoodFromSearch({
-                            recipe_id: foodData.recipe_id,
+                        // FIX: Prepare proper search food data with validation
+                        const searchMealData = {
+                            recipe_id: parseInt(foodData.recipe_id),
                             food_name: foodData.name,
-                            calories_per_serving: foodData.calories,
-                            protein_per_serving: foodData.protein,
-                            carbs_per_serving: foodData.carbs,
-                            fat_per_serving: foodData.fat,
-                            serving_size: foodData.serving_size,
-                            serving_unit: foodData.serving_unit,
+                            calories_per_serving: parseInt(foodData.calories) || 0,
+                            protein_per_serving: parseFloat(foodData.protein) || 0,
+                            carbs_per_serving: parseFloat(foodData.carbs) || 0,
+                            fat_per_serving: parseFloat(foodData.fat) || 0,
+                            serving_size: parseFloat(foodData.serving_size) || 1,
+                            serving_unit: foodData.serving_unit || 'serving',
                             meal_type: mealType,
                             servings: servings,
                             log_date: logDate,
                             image_url: foodData.image
-                        });
+                        };
                         
-                        alert('Meal added successfully!');
+                        console.log('📤 Sending search meal data:', searchMealData);
+                        
+                        await window.foodApiService.addFoodFromSearch(searchMealData);
+                        
+                        alert('Search meal added successfully!');
                         closePopup();
                         
-                        if (window.location.hash === '#/' || window.location.hash === '#/home') {
+                        // Redirect to home and refresh
+                        if (window.location.hash !== '#/' && window.location.hash !== '#/home') {
+                            window.location.hash = '#/';
+                        } else {
                             window.location.reload();
                         }
                     } else {
-                        console.log(`Added search result ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
-                        alert('Demo: Search meal would be added to your log!');
-                        closePopup();
+                        console.warn('⚠️ foodApiService not available');
+                        alert('Search meal service not available. Please try again.');
+                        addBtn.disabled = false;
+                        addBtn.textContent = 'Add';
                     }
                 } else if (window.mealApiService && foodData.id) {
+                    console.log('🍽️ Adding regular meal:', foodData);
+                    
                     await window.mealApiService.createMealEntry({
                         food_item_id: foodData.id,
                         meal_type: mealType,
@@ -338,24 +353,40 @@ function showAddMealPopup(foodData) {
                     alert('Meal added successfully!');
                     closePopup();
                     
-                    if (window.location.hash === '#/' || window.location.hash === '#/home') {
+                    // Redirect to home and refresh
+                    if (window.location.hash !== '#/' && window.location.hash !== '#/home') {
+                        window.location.hash = '#/';
+                    } else {
                         window.location.reload();
                     }
                 } else {
-                    console.log(`Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
+                    console.log(`📝 Demo: Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);
                     alert('Demo: Meal would be added to your log!');
                     closePopup();
                 }
             } catch (error) {
-                console.error('Error adding meal:', error);
-                alert('Failed to add meal. Please try again.');
+                console.error('💥 Error adding meal:', error);
+                
+                // FIX: Better error handling with specific messages
+                let errorMessage = 'Failed to add meal. Please try again.';
+                
+                if (error.message.includes('Authentication') || error.message.includes('401')) {
+                    errorMessage = 'Please login again to add meals.';
+                } else if (error.message.includes('400')) {
+                    errorMessage = 'Invalid meal data. Please check your input.';
+                } else if (error.message.includes('Network')) {
+                    errorMessage = 'Network error. Please check your connection.';
+                } else if (error.message.includes('Missing required fields')) {
+                    errorMessage = 'Missing required meal information. Please try searching again.';
+                }
+                
+                alert(errorMessage);
                 addBtn.disabled = false;
                 addBtn.textContent = 'Add';
             }
         });
     }
 }
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, binding food card events');
     bindFoodCardEvents('food-container');

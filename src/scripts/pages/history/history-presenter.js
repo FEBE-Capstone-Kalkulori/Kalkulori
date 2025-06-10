@@ -178,60 +178,98 @@ class HistoryPresenter {
     }
   }
 
+  // FIX: Enhanced _enrichMealEntries for better image and calories handling
   async _enrichMealEntries(mealEntries) {
     const enrichedEntries = [];
     
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
-      if (meal.is_from_recipe && meal.recipe_id) {
+      // FIX: Ensure proper field mapping like in home-presenter
+      if (!enrichedMeal.calories && enrichedMeal.calories_consumed) {
+        enrichedMeal.calories = enrichedMeal.calories_consumed;
+      }
+      if (!enrichedMeal.protein && enrichedMeal.protein_consumed) {
+        enrichedMeal.protein = enrichedMeal.protein_consumed;
+      }
+      if (!enrichedMeal.carbs && enrichedMeal.carbs_consumed) {
+        enrichedMeal.carbs = enrichedMeal.carbs_consumed;
+      }
+      if (!enrichedMeal.fat && enrichedMeal.fat_consumed) {
+        enrichedMeal.fat = enrichedMeal.fat_consumed;
+      }
+      
+      // FIX: Enhanced handling for recipe and search meals with proper image fetching
+      if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
         try {
+          console.log(`🔍 Fetching details for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, meal.recipe_id);
+          
           const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
           if (mealDetails && mealDetails.meal) {
             const recipeData = mealDetails.meal;
             enrichedMeal.food_details = {
-              id: `recipe_${meal.recipe_id}`,
-              food_name: recipeData.food_name || meal.food_name || 'Recipe Meal',
+              id: meal.is_from_search ? meal.food_item_id : `recipe_${meal.recipe_id}`,
+              food_name: recipeData.food_name || meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
               calories_per_serving: recipeData.calories_per_serving,
               protein_per_serving: recipeData.protein_per_serving,
               carbs_per_serving: recipeData.carbs_per_serving,
               fat_per_serving: recipeData.fat_per_serving,
               serving_size: recipeData.serving_size,
               serving_unit: recipeData.serving_unit,
-              image_url: recipeData.image_url,
-              is_recipe: true,
+              image_url: recipeData.image_url, // FIX: Keep the actual image from API
+              is_recipe: meal.is_from_recipe ? true : false,
+              is_from_search: meal.is_from_search ? true : false,
               recipe_id: meal.recipe_id
             };
+            console.log(`✅ Successfully enriched ${meal.is_from_search ? 'search' : 'recipe'} meal with image:`, enrichedMeal.food_details.image_url);
+          } else {
+            throw new Error('No meal details found');
           }
         } catch (error) {
-          console.warn('Could not fetch recipe details for meal entry:', error);
+          console.warn(`⚠️ Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
+          
+          // FIX: Better fallback with proper calorie calculation
+          const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
+          const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const fatPerServing = parseFloat(((meal.fat || meal.fat_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          
           enrichedMeal.food_details = {
             id: meal.food_item_id,
-            food_name: meal.food_name || 'Recipe Meal',
-            calories_per_serving: Math.round(meal.calories / meal.servings),
-            protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
-            carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
-            fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+            food_name: meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
+            calories_per_serving: caloriesPerServing,
+            protein_per_serving: proteinPerServing,
+            carbs_per_serving: carbsPerServing,
+            fat_per_serving: fatPerServing,
             serving_size: 1,
             serving_unit: "serving",
-            image_url: null,
-            is_recipe: true,
+            image_url: null, // Will use fallback in UI
+            is_recipe: meal.is_from_recipe ? true : false,
+            is_from_search: meal.is_from_search ? true : false,
             recipe_id: meal.recipe_id
           };
+          console.log(`⚠️ Using fallback data for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name);
         }
-      } else if (meal.is_from_search && meal.recipe_id) {
+      } else if (meal.food_details) {
+        // Regular food items with existing food_details
+        enrichedMeal.food_details = meal.food_details;
+      } else {
+        // FIX: Better fallback for regular foods without food_details
+        const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
+        const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        const fatPerServing = parseFloat(((meal.fat || meal.fat_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        
         enrichedMeal.food_details = {
           id: meal.food_item_id,
-          food_name: meal.food_name || 'Search Result',
-          calories_per_serving: Math.round(meal.calories / meal.servings),
-          protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
-          carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
-          fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+          food_name: meal.food_name || 'Unknown Food',
+          calories_per_serving: caloriesPerServing,
+          protein_per_serving: proteinPerServing,
+          carbs_per_serving: carbsPerServing,
+          fat_per_serving: fatPerServing,
           serving_size: 1,
           serving_unit: "serving",
-          image_url: null,
-          is_from_search: true,
-          recipe_id: meal.recipe_id
+          image_url: null
         };
       }
       
@@ -246,6 +284,7 @@ class HistoryPresenter {
       this.showFoodLoading();
       
       const targetDate = logDate || this.formatDateForAPI(new Date());
+      console.log('📅 Loading food history for date:', targetDate);
       
       const dailyData = await mealApiService.getDailyLog(targetDate);
       
@@ -254,7 +293,11 @@ class HistoryPresenter {
         return;
       }
       
+      console.log('📊 Raw meal entries from API:', dailyData.meal_entries);
+      
       const enrichedMealEntries = await this._enrichMealEntries(dailyData.meal_entries);
+      console.log('✨ Enriched meal entries:', enrichedMealEntries);
+      
       const uniqueFoods = new Map();
       
       enrichedMealEntries.forEach((entry, index) => {
@@ -278,22 +321,50 @@ class HistoryPresenter {
           const entryKey = `${foodId}_${entry.meal_type}_${entry.id}`;
           
           if (!uniqueFoods.has(entryKey)) {
-            const baseCalories = foodItem?.calories_per_serving || 
-                               Math.round(entry.calories / (entry.servings || 1)) || 
-                               entry.calories || 0;
-            const servings = entry.servings || 1;
-            const totalCalories = Math.round(baseCalories);
+            // FIX: Better calorie calculation with multiple fallbacks
+            let totalCalories = 0;
+            
+            // Try different methods to get calories
+            if (entry.calories) {
+              totalCalories = Math.round(entry.calories);
+            } else if (entry.calories_consumed) {
+              totalCalories = Math.round(entry.calories_consumed);
+            } else if (foodItem && foodItem.calories_per_serving && entry.servings) {
+              totalCalories = Math.round(foodItem.calories_per_serving * entry.servings);
+            } else if (foodItem && foodItem.calories_per_serving) {
+              totalCalories = Math.round(foodItem.calories_per_serving);
+            } else {
+              totalCalories = 0;
+            }
+            
+            // FIX: Better image handling with proper fallback
+            let imageUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+            
+            if (foodItem && foodItem.image_url) {
+              imageUrl = foodItem.image_url;
+            } else {
+              // Use more specific fallback images based on meal type
+              const fallbackImages = {
+                breakfast: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                dinner: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                snack: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+              };
+              imageUrl = fallbackImages[entry.meal_type] || imageUrl;
+            }
             
             const foodData = {
               id: foodId,
               entryId: entry.id,
               name: foodName,
               calories: totalCalories,
-              image: foodItem?.image_url || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`,
-              serving_size: servings,
+              image: imageUrl,
+              serving_size: entry.servings || 1,
               serving_unit: foodItem?.serving_unit || 'serving',
               meal_type: entry.meal_type
             };
+            
+            console.log(`🍽️ Created food card data:`, foodData);
             
             uniqueFoods.set(entryKey, foodData);
           }
@@ -302,6 +373,8 @@ class HistoryPresenter {
       
       this.foodHistory = Array.from(uniqueFoods.values()).slice(0, 12);
       
+      console.log('📋 Final food history:', this.foodHistory);
+      
       if (this.foodHistory.length === 0) {
         this.showFoodError(`No meals found for ${this.formatDisplayDate(targetDate)}`);
       } else {
@@ -309,7 +382,7 @@ class HistoryPresenter {
       }
       
     } catch (error) {
-      console.error('Error loading food history:', error);
+      console.error('💥 Error loading food history:', error);
       
       if (error.message && error.message.includes('404')) {
         this.showFoodError(`No meals found for ${this.formatDisplayDate(logDate || this.formatDateForAPI(new Date()))}`);
@@ -350,6 +423,7 @@ class HistoryPresenter {
   onBarClick(dateData) {
     this.selectedDate = dateData.date;
     const dateStr = this.formatDateForAPI(dateData.date);
+    console.log('📅 Bar clicked for date:', dateStr);
     this.loadFoodHistory(dateStr);
     
     this.updateSelectedBar();
@@ -406,7 +480,7 @@ class HistoryPresenter {
     
     cardElement.innerHTML = `
       <div class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-        <img src="${food.image}" alt="${food.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200">
+        <img src="${food.image}" alt="${food.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'">
       </div>
       <div class="flex-1 min-w-0">
         <h4 class="font-medium text-sm text-gray-900 truncate">${food.name}</h4>
@@ -538,6 +612,7 @@ class HistoryPresenter {
         alert('Meal added successfully!');
         closePopup();
         
+        // FIX: Force refresh both history and chart data
         setTimeout(() => {
           if (logDate === this.formatDateForAPI(this.selectedDate)) {
             this.loadFoodHistory(logDate);

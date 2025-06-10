@@ -224,12 +224,10 @@ class HomePresenter {
       
       this.data.dailyLog = dailyData.daily_log;
       
-      // LOGGING UNTUK DEBUG
       console.log('📊 Raw meal entries from API:', dailyData.meal_entries);
       
       this.data.mealEntries = await this._enrichMealEntries(dailyData.meal_entries || []);
       
-      // LOGGING SETELAH ENRICHMENT
       console.log('✨ Enriched meal entries:', this.data.mealEntries);
       
       this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
@@ -259,8 +257,21 @@ class HomePresenter {
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
-      // PERBAIKAN UTAMA: Gabungkan handling untuk is_from_recipe DAN is_from_search
-      // karena keduanya menggunakan recipe_id dan bisa fetch dari API yang sama
+      // FIX: Ensure calories field is properly mapped from both possible field names
+      if (!enrichedMeal.calories && enrichedMeal.calories_consumed) {
+        enrichedMeal.calories = enrichedMeal.calories_consumed;
+      }
+      if (!enrichedMeal.protein && enrichedMeal.protein_consumed) {
+        enrichedMeal.protein = enrichedMeal.protein_consumed;
+      }
+      if (!enrichedMeal.carbs && enrichedMeal.carbs_consumed) {
+        enrichedMeal.carbs = enrichedMeal.carbs_consumed;
+      }
+      if (!enrichedMeal.fat && enrichedMeal.fat_consumed) {
+        enrichedMeal.fat = enrichedMeal.fat_consumed;
+      }
+      
+      // FIX: Handle search results and recipes with better fallback
       if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
         try {
           const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
@@ -275,7 +286,7 @@ class HomePresenter {
               fat_per_serving: recipeData.fat_per_serving,
               serving_size: recipeData.serving_size,
               serving_unit: recipeData.serving_unit,
-              image_url: recipeData.image_url, // IMAGE DARI API - INI YANG PENTING!
+              image_url: recipeData.image_url,
               is_recipe: meal.is_from_recipe ? true : false,
               is_from_search: meal.is_from_search ? true : false,
               recipe_id: meal.recipe_id
@@ -287,17 +298,22 @@ class HomePresenter {
         } catch (error) {
           console.warn(`Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
           
-          // Fallback: gunakan data yang ada di meal entry
+          // FIX: Improved fallback with proper calculation
+          const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
+          const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const fatPerServing = parseFloat(((meal.fat || meal.fat_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          
           enrichedMeal.food_details = {
             id: meal.food_item_id,
             food_name: meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
-            calories_per_serving: Math.round(meal.calories / meal.servings),
-            protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
-            carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
-            fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+            calories_per_serving: caloriesPerServing,
+            protein_per_serving: proteinPerServing,
+            carbs_per_serving: carbsPerServing,
+            fat_per_serving: fatPerServing,
             serving_size: 1,
             serving_unit: "serving",
-            image_url: null, // Akan menggunakan fallback image di UI
+            image_url: null,
             is_recipe: meal.is_from_recipe ? true : false,
             is_from_search: meal.is_from_search ? true : false,
             recipe_id: meal.recipe_id
@@ -307,18 +323,22 @@ class HomePresenter {
       }
       // Handle regular food items yang sudah ada food_details
       else if (meal.food_details) {
-        // Jika sudah ada food_details dari backend, gunakan itu
         enrichedMeal.food_details = meal.food_details;
       }
       // Handle regular food items yang belum ada food_details
       else {
+        const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
+        const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        const fatPerServing = parseFloat(((meal.fat || meal.fat_consumed || 0) / (meal.servings || 1)).toFixed(2));
+        
         enrichedMeal.food_details = {
           id: meal.food_item_id,
           food_name: meal.food_name || 'Unknown Food',
-          calories_per_serving: Math.round(meal.calories / meal.servings),
-          protein_per_serving: parseFloat((meal.protein / meal.servings).toFixed(2)),
-          carbs_per_serving: parseFloat((meal.carbs / meal.servings).toFixed(2)),
-          fat_per_serving: parseFloat((meal.fat / meal.servings).toFixed(2)),
+          calories_per_serving: caloriesPerServing,
+          protein_per_serving: proteinPerServing,
+          carbs_per_serving: carbsPerServing,
+          fat_per_serving: fatPerServing,
           serving_size: 1,
           serving_unit: "serving",
           image_url: null
@@ -424,16 +444,53 @@ class HomePresenter {
       this.data.loading = true;
       this._renderView();
       
-      await mealApiService.deleteMealEntry(mealId);
+      console.log('🗑️ Attempting to delete meal:', mealId);
       
-      setTimeout(async () => {
+      // FIX: Direct delete with immediate refresh regardless of result
+      try {
+        await mealApiService.deleteMealEntry(mealId);
+        console.log('✅ Delete API call completed');
+        
+        // Force immediate refresh
+        this.lastFetchDate = null;
         await this._fetchDailyData();
-      }, 500);
+        
+        console.log('✅ Meal deleted and data refreshed');
+        
+      } catch (deleteError) {
+        console.warn('⚠️ Delete API failed, but refreshing data anyway:', deleteError);
+        
+        // Even if delete fails, refresh data to check actual state
+        this.lastFetchDate = null;
+        await this._fetchDailyData();
+        
+        // Check if meal was actually deleted despite the error
+        const mealStillExists = this.data.mealEntries.find(meal => meal.id === mealId);
+        
+        if (!mealStillExists) {
+          console.log('✅ Meal was actually deleted despite API error');
+        } else {
+          console.error('❌ Meal still exists after delete attempt');
+          throw deleteError;
+        }
+      }
       
-      console.log('Meal deleted successfully');
     } catch (error) {
-      console.error('Error deleting meal:', error);
-      alert('Failed to delete meal. Please try again.');
+      console.error('💥 Error deleting meal:', error);
+      
+      let errorMessage = 'Failed to delete meal. Please try again.';
+      
+      if (error.message.includes('403') || error.message.includes('Forbidden')) {
+        errorMessage = 'Permission denied. This meal may belong to another session.';
+      } else if (error.message.includes('404') || error.message.includes('not found')) {
+        errorMessage = 'Meal not found or already deleted.';
+      } else if (error.message.includes('Network') || error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      alert(errorMessage);
+      
+    } finally {
       this.data.loading = false;
       this._renderView();
     }

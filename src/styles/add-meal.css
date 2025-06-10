@@ -186,3 +186,147 @@
     font-size: 14px;
   }
 }
+
+/* Basic Functional Styles - No Complex Badges */
+.compact-meal-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.compact-meal-card:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.compact-meal-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.compact-meal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.compact-meal-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-meal-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 2px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.compact-meal-details {
+    font-size: 11px;
+    color: #666;
+    display: block;
+}
+
+.delete-meal-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.delete-meal-btn:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+}
+
+.delete-meal-btn:active {
+    transform: scale(0.95);
+}
+
+/* Loading and error states */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4CAF50;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-container {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.error-container {
+    text-align: center;
+    padding: 20px;
+    color: #f44336;
+}
+
+.error-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border-left: 4px solid #f44336;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .compact-meal-card {
+        gap: 8px;
+        padding: 6px;
+    }
+    
+    .compact-meal-image {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .compact-meal-name {
+        font-size: 12px;
+    }
+    
+    .compact-meal-details {
+        font-size: 10px;
+    }
+    
+    .delete-meal-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+}
