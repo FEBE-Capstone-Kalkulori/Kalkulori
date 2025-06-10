@@ -4,7 +4,6 @@ import './styles/add-meal.css';
 import './styles/meal-popup.css';
 import './styles/meal-plan.css';
 import App from './scripts/app';
-import SliderComponent from './scripts/pages/slider';
 import AuthGuard from './scripts/utils/auth-guard';
 
 if ('serviceWorker' in navigator) {
@@ -34,25 +33,6 @@ function toggleHeaderFooter() {
   document.body.classList.toggle('main-page', !isAuthRoute);
 }
 
-function handleSliderOnRouteChange() {
-  const currentHash = window.location.hash.slice(1);
-  const isHomePage = currentHash === '/home' || currentHash === '/' || currentHash === '';
-  
-  try {
-    if (isHomePage) {
-      if (SliderComponent && typeof SliderComponent.init === 'function') {
-        SliderComponent.init();
-      }
-    } else {
-      if (SliderComponent && typeof SliderComponent.cleanup === 'function') {
-        SliderComponent.cleanup();
-      }
-    }
-  } catch (error) {
-    console.warn('Error handling slider:', error);
-  }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
   if (AuthGuard.isAuthenticated()) {
     const isValidToken = await AuthGuard.verifyToken();
@@ -74,10 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.addEventListener('hashchange', () => {
     toggleHeaderFooter();
-    handleSliderOnRouteChange();
   });
-
-  handleSliderOnRouteChange();
 
   const app = new App({
     content: document.querySelector('main'),

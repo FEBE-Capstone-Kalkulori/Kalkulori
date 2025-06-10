@@ -6,6 +6,8 @@ class App {
     this.content = content;
     this.header = document.querySelector('header');
     this.footer = document.querySelector('footer');
+    this.currentRoute = null;
+    this.SliderComponent = null;
   }
 
   toggleHeaderFooter(show = true) {
@@ -26,16 +28,39 @@ class App {
     return url === '/home' || url === '/' || url === '';
   }
 
-  handleSlider(url) {
-    import('./pages/slider').then(SliderComponent => {
-      if (this.isHomePage(url)) {
-        SliderComponent.default.init();
-      } else {
-        SliderComponent.default.cleanup();
+  async loadSliderModule() {
+    if (!this.SliderComponent) {
+      try {
+        const SliderModule = await import('./pages/slider');
+        this.SliderComponent = SliderModule.default;
+      } catch (error) {
+        console.warn('Could not load slider component:', error);
       }
-    }).catch(error => {
-      console.warn('Could not load slider component:', error);
-    });
+    }
+    return this.SliderComponent;
+  }
+
+  async handleSlider(url) {
+    const SliderComponent = await this.loadSliderModule();
+    
+    if (!SliderComponent) {
+      return;
+    }
+
+    if (typeof SliderComponent.forceCleanup === 'function') {
+      SliderComponent.forceCleanup();
+    } else if (typeof SliderComponent.cleanup === 'function') {
+      SliderComponent.cleanup();
+    }
+    
+    if (this.isHomePage(url)) {
+      setTimeout(() => {
+        const currentUrl = window.location.hash.slice(1);
+        if (this.isHomePage(currentUrl) && typeof SliderComponent.init === 'function') {
+          SliderComponent.init();
+        }
+      }, 250);
+    }
   }
 
   async renderPage() {
@@ -64,6 +89,16 @@ class App {
       window.location.hash = '#/home';
     }
 
+    if (this.SliderComponent) {
+      if (typeof this.SliderComponent.forceCleanup === 'function') {
+        this.SliderComponent.forceCleanup();
+      } else if (typeof this.SliderComponent.cleanup === 'function') {
+        this.SliderComponent.cleanup();
+      }
+    }
+
+    this.currentRoute = url;
+
     const showHeaderFooter = !this.isAuthRoute(url);
     this.toggleHeaderFooter(showHeaderFooter);
     
@@ -85,12 +120,14 @@ class App {
     this.content.innerHTML = await page.render();
     await page.afterRender();
     
-    this.handleSlider(url);
+    await this.handleSlider(url);
     
     window.scrollTo(0, 0);
   }
 
   async init() {
+    await this.loadSliderModule();
+    
     window.addEventListener('hashchange', () => {
       this.renderPage();
     });
