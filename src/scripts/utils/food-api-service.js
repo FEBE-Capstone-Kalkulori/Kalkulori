@@ -68,6 +68,38 @@ class FoodApiService {
     }
   }
 
+  async getMealDetailsByRecipeId(recipeId) {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      const response = await fetch(`${this.baseUrl}/meals/${recipeId}/details`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to fetch meal details');
+      }
+    } catch (error) {
+      console.error('Error fetching meal details by recipe ID:', error);
+      throw error;
+    }
+  }
+
   async searchFoods(searchQuery, limit = 12) {
     try {
       if (!searchQuery || searchQuery.trim() === '') {
@@ -128,8 +160,7 @@ class FoodApiService {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      // Use suggestion endpoint instead of search/add to ensure proper user_id
-      const response = await fetch(`${this.baseUrl}/meals/suggestion/add`, {
+      const response = await fetch(`${this.baseUrl}/search/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,9 +168,17 @@ class FoodApiService {
         },
         body: JSON.stringify({
           recipe_id: searchFoodData.recipe_id,
+          food_name: searchFoodData.food_name,
+          calories_per_serving: searchFoodData.calories_per_serving,
+          protein_per_serving: searchFoodData.protein_per_serving,
+          carbs_per_serving: searchFoodData.carbs_per_serving,
+          fat_per_serving: searchFoodData.fat_per_serving,
+          serving_size: searchFoodData.serving_size,
+          serving_unit: searchFoodData.serving_unit,
           meal_type: searchFoodData.meal_type,
           servings: searchFoodData.servings || 1,
-          log_date: searchFoodData.log_date
+          log_date: searchFoodData.log_date,
+          image_url: searchFoodData.image_url
         })
       });
 

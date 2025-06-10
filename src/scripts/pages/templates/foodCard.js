@@ -1,8 +1,11 @@
-function createFoodCard(imageUrl, foodName, calories, foodId = null, servingSize = null, servingUnit = null) {
+function createFoodCard(imageUrl, foodName, calories, foodId = null, servingSize = null, servingUnit = null, isFromSearch = false, recipeId = null, protein = null, carbs = null, fat = null) {
     return `
-        <div class="food-card" data-food-id="${foodId || ''}" data-serving-size="${servingSize || 1}" data-serving-unit="${servingUnit || 'serving'}">
+        <div class="food-card" data-food-id="${foodId || ''}" data-serving-size="${servingSize || 1}" data-serving-unit="${servingUnit || 'serving'}" data-is-from-search="${isFromSearch || false}" data-recipe-id="${recipeId || ''}" data-protein="${protein || 0}" data-carbs="${carbs || 0}" data-fat="${fat || 0}">
             <div class="food-image">
                 <img src="${imageUrl}" alt="${foodName}">
+                <button class="view-details-button">
+                    <span class="details-icon">ⓘ</span>
+                </button>
             </div>
             <div class="food-info">
                 <h3 class="food-name">${foodName}</h3>
@@ -28,7 +31,12 @@ function renderFoodCards(foodData, containerId) {
             food.calories, 
             food.id,
             food.serving_size,
-            food.serving_unit
+            food.serving_unit,
+            food.is_from_search,
+            food.recipe_id,
+            food.protein,
+            food.carbs,
+            food.fat
         );
         container.innerHTML += cardHTML;
     });
@@ -40,10 +48,16 @@ function bindFoodCardEvents(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
-    const newButtons = container.querySelectorAll('.add-button');
-    newButtons.forEach(button => {
+    const newAddButtons = container.querySelectorAll('.add-button');
+    newAddButtons.forEach(button => {
         button.removeEventListener('click', handleAddButtonClick);
         button.addEventListener('click', handleAddButtonClick);
+    });
+
+    const newDetailsButtons = container.querySelectorAll('.view-details-button');
+    newDetailsButtons.forEach(button => {
+        button.removeEventListener('click', handleDetailsButtonClick);
+        button.addEventListener('click', handleDetailsButtonClick);
     });
 }
 
@@ -60,16 +74,266 @@ function handleAddButtonClick(event) {
     const foodId = foodCard.dataset.foodId || null;
     const servingSize = foodCard.dataset.servingSize || 1;
     const servingUnit = foodCard.dataset.servingUnit || 'serving';
+    const recipeId = foodCard.dataset.recipeId || null;
     
-    console.log('Add button clicked for:', { foodName, foodCalories, foodId });
+    console.log('Add button clicked for:', { foodName, foodCalories, foodId, recipeId });
     
     showAddMealPopup({
         id: foodId,
+        recipe_id: recipeId,
         name: foodName,
         calories: foodCalories,
         serving_size: servingSize,
         serving_unit: servingUnit
     });
+}
+
+function handleDetailsButtonClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const foodCard = event.target.closest('.food-card');
+    if (!foodCard) return;
+    
+    const foodName = foodCard.querySelector('.food-name')?.textContent || 'Unknown Food';
+    const foodCaloriesText = foodCard.querySelector('.food-calories')?.textContent || '0 kcal';
+    const foodCalories = parseInt(foodCaloriesText.replace(' kcal', '')) || 0;
+    const foodId = foodCard.dataset.foodId || null;
+    const recipeId = foodCard.dataset.recipeId || null;
+    const isFromSearch = foodCard.dataset.isFromSearch === 'true';
+    const servingSize = foodCard.dataset.servingSize || 1;
+    const servingUnit = foodCard.dataset.servingUnit || 'serving';
+    const protein = parseFloat(foodCard.dataset.protein) || 0;
+    const carbs = parseFloat(foodCard.dataset.carbs) || 0;
+    const fat = parseFloat(foodCard.dataset.fat) || 0;
+    
+    console.log('Details button clicked for:', { foodName, foodId, recipeId, isFromSearch });
+    
+    if (isFromSearch && recipeId) {
+        showFoodDetailsFromRecipe(recipeId, {
+            name: foodName,
+            calories: foodCalories,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            serving_size: servingSize,
+            serving_unit: servingUnit
+        });
+    } else if (foodId) {
+        showFoodDetailsFromId(foodId);
+    } else {
+        showFoodDetailsFromData({
+            name: foodName,
+            calories: foodCalories,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            serving_size: servingSize,
+            serving_unit: servingUnit
+        });
+    }
+}
+
+async function showFoodDetailsFromRecipe(recipeId, fallbackData = null) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('No auth token found, showing fallback data');
+            if (fallbackData) {
+                showFoodDetailsPopup(fallbackData);
+            }
+            return;
+        }
+
+        const response = await fetch(`https://kalkulori.up.railway.app/api/meals/${recipeId}/details`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data) {
+            const mealData = result.data;
+            showFoodDetailsPopup({
+                name: mealData.food_name || mealData.Name,
+                calories: mealData.calories_per_serving || Math.round(mealData.Calories),
+                protein: mealData.protein_per_serving || parseFloat(mealData.ProteinContent),
+                carbs: mealData.carbs_per_serving || parseFloat(mealData.CarbohydrateContent),
+                fat: mealData.fat_per_serving || parseFloat(mealData.FatContent),
+                serving_size: mealData.serving_size || mealData.ServingSize || 1,
+                serving_unit: mealData.serving_unit || mealData.ServingUnit || 'Porsi',
+                image_url: mealData.image_url || (mealData.Image ? mealData.Image.split(',')[0].trim().replace(/^"|"$/g, '') : null),
+                description: mealData.description || mealData.Description,
+                instructions: mealData.instructions || mealData.RecipeInstructions,
+                ingredients: mealData.ingredients || mealData.RecipeIngredient
+            });
+        } else {
+            throw new Error('Invalid response format');
+        }
+    } catch (error) {
+        console.error('Error fetching meal details:', error);
+        if (fallbackData) {
+            showFoodDetailsPopup(fallbackData);
+        } else {
+            alert('Failed to load food details. Please try again.');
+        }
+    }
+}
+
+async function showFoodDetailsFromId(foodId) {
+    try {
+        const response = await fetch(`https://kalkulori.up.railway.app/api/foods/${foodId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data && result.data.food) {
+            const foodData = result.data.food;
+            showFoodDetailsPopup({
+                name: foodData.food_name,
+                calories: foodData.calories_per_serving,
+                protein: foodData.protein_per_serving,
+                carbs: foodData.carbs_per_serving,
+                fat: foodData.fat_per_serving,
+                serving_size: foodData.serving_size,
+                serving_unit: foodData.serving_unit,
+                image_url: foodData.image_url
+            });
+        } else {
+            throw new Error('Invalid response format');
+        }
+    } catch (error) {
+        console.error('Error fetching food details:', error);
+        alert('Failed to load food details. Please try again.');
+    }
+}
+
+function showFoodDetailsFromData(data) {
+    showFoodDetailsPopup(data);
+}
+
+function showFoodDetailsPopup(foodData) {
+    console.log('Showing details popup for:', foodData);
+    
+    const existingPopup = document.getElementById('food-details-popup-overlay');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const defaultImage = 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+    const imageUrl = foodData.image_url || defaultImage;
+    
+    const formatNutrient = (value) => {
+        return parseFloat(value).toFixed(1);
+    };
+
+    const popupHTML = `
+        <div class="food-details-popup-overlay" id="food-details-popup-overlay">
+            <div class="food-details-popup">
+                <div class="food-details-header">
+                    <h3>${foodData.name}</h3>
+                    <button class="popup-close" id="details-popup-close">&times;</button>
+                </div>
+                <div class="food-details-content">
+                    <div class="food-details-image">
+                        <img src="${imageUrl}" alt="${foodData.name}" onerror="this.src='${defaultImage}'">
+                    </div>
+                    <div class="food-details-info">
+                        <div class="nutrition-section">
+                            <h4>Nutrition Information</h4>
+                            <div class="nutrition-grid">
+                                <div class="nutrition-item">
+                                    <span class="nutrition-label">Calories:</span>
+                                    <span class="nutrition-value">${foodData.calories} kcal</span>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-label">Protein:</span>
+                                    <span class="nutrition-value">${formatNutrient(foodData.protein || 0)}g</span>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-label">Carbohydrates:</span>
+                                    <span class="nutrition-value">${formatNutrient(foodData.carbs || 0)}g</span>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-label">Fat:</span>
+                                    <span class="nutrition-value">${formatNutrient(foodData.fat || 0)}g</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="serving-section">
+                            <h4>Serving Information</h4>
+                            <div class="serving-info">
+                                <span class="serving-label">Serving Size:</span>
+                                <span class="serving-value">${foodData.serving_size} ${foodData.serving_unit}</span>
+                            </div>
+                        </div>
+                        ${foodData.description ? `
+                            <div class="description-section">
+                                <h4>Description</h4>
+                                <p class="food-description">${foodData.description}</p>
+                            </div>
+                        ` : ''}
+                        ${foodData.ingredients ? `
+                            <div class="ingredients-section">
+                                <h4>Ingredients</h4>
+                                <p class="food-ingredients">${Array.isArray(foodData.ingredients) ? foodData.ingredients.join(', ') : foodData.ingredients}</p>
+                            </div>
+                        ` : ''}
+                        ${foodData.instructions ? `
+                            <div class="instructions-section">
+                                <h4>Instructions</h4>
+                                <p class="food-instructions">${Array.isArray(foodData.instructions) ? foodData.instructions.join(' ') : foodData.instructions}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="food-details-actions">
+                    <button class="btn-close" id="btn-details-close">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+    
+    const overlay = document.getElementById('food-details-popup-overlay');
+    const closeBtn = document.getElementById('details-popup-close');
+    const closeBtnBottom = document.getElementById('btn-details-close');
+    
+    function closePopup() {
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePopup);
+    }
+    
+    if (closeBtnBottom) {
+        closeBtnBottom.addEventListener('click', closePopup);
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closePopup();
+        });
+    }
 }
 
 function showAddMealPopup(foodData) {
@@ -158,12 +422,28 @@ function showAddMealPopup(foodData) {
                 addBtn.textContent = 'Adding...';
                 
                 if (window.mealApiService && foodData.id) {
-                    await window.mealApiService.createMealEntry({
-                        food_item_id: foodData.id,
-                        meal_type: mealType,
-                        servings: servings,
-                        log_date: logDate
-                    });
+                    if (foodData.recipe_id) {
+                        await window.foodApiService.addFoodFromSearch({
+                            recipe_id: foodData.recipe_id,
+                            food_name: foodData.name,
+                            calories_per_serving: foodData.calories,
+                            protein_per_serving: foodData.protein || 0,
+                            carbs_per_serving: foodData.carbs || 0,
+                            fat_per_serving: foodData.fat || 0,
+                            serving_size: foodData.serving_size,
+                            serving_unit: foodData.serving_unit,
+                            meal_type: mealType,
+                            servings: servings,
+                            log_date: logDate
+                        });
+                    } else {
+                        await window.mealApiService.createMealEntry({
+                            food_item_id: foodData.id,
+                            meal_type: mealType,
+                            servings: servings,
+                            log_date: logDate
+                        });
+                    }
                     
                     alert('Meal added successfully!');
                     closePopup();
@@ -286,9 +566,9 @@ const defaultMealsData = [
 ];
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, sampleFoodData, defaultMealsData };
+    module.exports = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, showFoodDetailsPopup, sampleFoodData, defaultMealsData };
 }
 
 if (typeof window !== 'undefined') {
-    window.FoodCard = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, sampleFoodData, defaultMealsData };
+    window.FoodCard = { createFoodCard, renderFoodCards, bindFoodCardEvents, showAddMealPopup, showFoodDetailsPopup, sampleFoodData, defaultMealsData };
 }
