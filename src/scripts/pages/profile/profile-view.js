@@ -96,9 +96,9 @@ const createProfileTemplate = (userData, isEditMode = false) => {
                     : `
                   <div class="bg-white rounded-full px-5 py-3 text-base text-gray-800 shadow-sm">${
                     userData.gender === "male"
-                      ? "I am Male"
+                      ? "Male"
                       : userData.gender === "female"
-                      ? "I am Female"
+                      ? "Female"
                       : ""
                   }</div>
                 `
@@ -229,7 +229,7 @@ const createProfileTemplate = (userData, isEditMode = false) => {
             </div>
           </div>
           
-          <div class="mt-8 flex justify-end">
+          <div class="mt-8 flex justify-center">
             ${
               isEditMode
                 ? `
