@@ -1,89 +1,56 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
-
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/11.9.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/11.9.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/11.9.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+<!doctype html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>kalkulori - Aplikasi Penghitung Kalori</title><script src="https://cdn.tailwindcss.com"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"><script type="module" src="../routes/routes.js"></script><script>tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-bg': '#feffd8',
+                        'primary-text': '#4f3422',
+                        'accent-green': '#9bcf53',
+                        'accent-yellow': '#ffdf64'
+                    },
+                    fontFamily: {
+                        'cal-sans': ['"Cal Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }</script><style>.slide-1 {
+            background-image: url("../public/image/flat-lay-delicious-food-plate.jpg");
         }
-      });
-    </script>
-  </body>
-</html>
+
+        .slide-2 {
+            background-image: url("../public/image/different-goodies-with-copy-space.jpg");
+        }
+
+        .slide-3 {
+            background-image: url("../public/image/measuring-tape-near-slices-fruit-crisp-bread.jpg");
+        }
+
+        .slide-overlay {
+            background: rgba(255, 223, 100, 0.5);
+            box-shadow: inset 0 0 200px rgba(255, 200, 0, 0.4);
+        }
+
+        .gender-option input[type="radio"]:checked+.gender-label {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .signup-step.hidden {
+            display: none;
+        }
+
+        .error-message,
+        .success-message {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }</style><script defer="defer" src="397.bundle.js"></script><script defer="defer" src="app~84781932.bundle.js"></script><script defer="defer" src="app~49ea73a0.bundle.js"></script><script defer="defer" src="app~e9bfe506.bundle.js"></script><script defer="defer" src="app~87be12fe.bundle.js"></script><script defer="defer" src="app~28c8c3f7.bundle.js"></script><script defer="defer" src="app~c3e02e18.bundle.js"></script><script defer="defer" src="app~3a552275.bundle.js"></script><script defer="defer" src="app~d51e692e.bundle.js"></script><script defer="defer" src="app~f461186e.bundle.js"></script><script defer="defer" src="app~1aa7b3ff.bundle.js"></script><script defer="defer" src="app~7352050e.bundle.js"></script><script defer="defer" src="app~4a2de6a5.bundle.js"></script><script defer="defer" src="app~e4317507.bundle.js"></script><script defer="defer" src="app~39e2f3b7.bundle.js"></script><script defer="defer" src="app~fc2771c0.bundle.js"></script><script defer="defer" src="app~f6563343.bundle.js"></script><link href="styles/app~f6563343.4abbff669de6346a8861.css" rel="stylesheet"></head><body class="bg-primary-bg text-primary-text font-light"><div id="content" class="min-h-screen"><header class="relative font-cal-sans tracking-wider"><div class="absolute top-0 left-0 w-full z-10 flex justify-between items-center px-8 py-2 bg-transparent h-20"><div class="flex items-center"><img src="./public/image/logo-text.png" alt="Kalkulori Logo" class="h-auto w-60 mr-1"></div><nav class="flex gap-6"><a href="#/" class="text-primary-text/70 no-underline text-sm transition-colors duration-300 ease-in-out hover:text-primary-text hover:underline">Home</a> <a href="#/history" class="text-primary-text/70 no-underline text-sm transition-colors duration-300 ease-in-out hover:text-primary-text hover:underline">History</a> <a href="#/profile" class="text-primary-text/70 no-underline text-sm transition-colors duration-300 ease-in-out hover:text-primary-text hover:underline">Profile</a></nav></div><div class="w-full overflow-hidden relative h-screen max-h-[600px]"><div class="slider flex transition-transform duration-500 ease-in-out h-full"><div class="slide slide-2 min-w-full h-full bg-cover bg-center flex relative flex-col justify-center items-center text-primary-text text-center p-4"><div class="slide-overlay absolute top-0 left-0 w-full h-full z-10"></div><h2 class="relative z-20 text-4xl mb-4 max-w-4/5" style="text-shadow: 2px 2px 4px rgba(184, 147, 0, 0.7);">Welcome to Kalkulori!</h2><p class="relative z-20 text-2xl max-w-3/5" style="text-shadow: 1px 1px 2px rgba(255, 174, 0, 0.7);">Ready to live a healthy life?</p></div><div class="slide slide-1 min-w-full h-full bg-cover bg-center flex relative flex-col justify-center items-center text-primary-text text-center p-4"><div class="slide-overlay absolute top-0 left-0 w-full h-full z-10"></div><h2 class="relative z-20 text-4xl mb-4 max-w-4/5" style="text-shadow: 2px 2px 4px rgba(184, 147, 0, 0.7);">Count your calories easily everyday</h2><p class="relative z-20 text-2xl max-w-3/5" style="text-shadow: 1px 1px 2px rgba(255, 174, 0, 0.7);">Maintain a healthy eating habit with Kalkulori</p></div><div class="slide slide-3 min-w-full h-full bg-cover bg-center flex relative flex-col justify-center items-center text-primary-text text-center p-4"><div class="slide-overlay absolute top-0 left-0 w-full h-full z-10"></div><h2 class="relative z-20 text-4xl mb-4 max-w-4/5" style="text-shadow: 2px 2px 4px rgba(184, 147, 0, 0.7);">Track your progress</h2><p class="relative z-20 text-2xl max-w-3/5" style="text-shadow: 1px 1px 2px rgba(255, 174, 0, 0.7);">view charts and statistics of your eating habits over a selected period of time</p></div></div><div class="flex justify-center absolute bottom-5 w-full"><span class="dot w-3 h-3 bg-primary-text rounded-full mx-1 cursor-pointer active" data-slide="0"></span> <span class="dot w-3 h-3 bg-primary-text rounded-full mx-1 cursor-pointer" data-slide="1"></span> <span class="dot w-3 h-3 bg-primary-text rounded-full mx-1 cursor-pointer" data-slide="2"></span></div></div></header><main id="main-content" class="font-cal-sans min-h-[500px] max-w-6xl tracking-wide mx-8 my-8 px-0 text-primary-text lg:mx-auto"><div class="main-content p-8 text-center"><h1>Selamat Datang di kalkulori</h1><p>Loading content...</p></div></main><footer class="bg-accent-green text-primary-text px-8 pt-12 pb-4 relative font-roboto-slab tracking-wide"><div class="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-accent-yellow via-accent-green to-accent-yellow"></div><div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"><div class="flex flex-col px-10 md:col-span-2 lg:col-span-1"><h3 class="text-xl mb-6 text-primary-text relative pb-2.5 font-semibold after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-12 after:h-0.5 after:bg-accent-yellow">About Kalkulori</h3><p class="text-primary-text mb-3 leading-relaxed font-light">Kalkulori is a comprehensive calorie tracking application designed to help you effortlessly monitor and manage your daily food intake. By offering detailed information on the calorie content of various foods and personalized recommendations, Kalkulori empowers you to make informed dietary choices and maintain a healthier, more balanced lifestyle.</p></div><div class="flex flex-col px-10"><h3 class="text-xl mb-6 text-primary-text relative pb-2.5 font-semibold after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-12 after:h-0.5 after:bg-accent-yellow">Quick Links</h3><a href="#/" class="text-primary-text mb-3 no-underline flex items-center transition-all duration-200 hover:text-primary-text hover:translate-x-1 hover:font-semibold"><i class="fas fa-home mr-2.5 w-5 text-center"></i> Home </a><a href="#/history" class="text-primary-text mb-3 no-underline flex items-center transition-all duration-200 hover:text-primary-text hover:translate-x-1 hover:font-semibold"><i class="fas fa-history mr-2.5 w-5 text-center"></i> History </a><a href="#/profile" class="text-primary-text mb-3 no-underline flex items-center transition-all duration-200 hover:text-primary-text hover:translate-x-1 hover:font-semibold"><i class="fas fa-user mr-2.5 w-5 text-center"></i> Profile</a></div><div class="flex flex-col px-10"><h3 class="text-xl mb-6 text-primary-text relative pb-2.5 font-semibold after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-12 after:h-0.5 after:bg-accent-yellow">Our Team</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4"><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Muhammad Akmal Athallah</span> <span class="text-xs opacity-90">MC006D5Y1912</span></div><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Andri Martin</span> <span class="text-xs opacity-90">MC331D5Y2088</span></div><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Muhammad Adika Zahran</span> <span class="text-xs opacity-90">MC624D5Y2108</span></div><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Audi Aulia</span> <span class="text-xs opacity-90">FC331D5X2378</span></div><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Vania Rahma Dewi</span> <span class="text-xs opacity-90">FC331D5X2382</span></div><div class="team-member flex flex-col bg-white/20 p-2.5 rounded-md transition-transform duration-200 hover:-translate-y-1 hover:bg-white/30"><span class="font-semibold mb-1">Kharisma Maulida Saara</span> <span class="text-xs opacity-90">FC331D5X2383</span></div></div></div><div class="text-center pt-8 mt-8 border-t border-primary-text/30 col-span-full font-semibold"><div class="flex justify-center gap-4 mb-4"><a href="#" class="flex items-center justify-center w-10 h-10 bg-white/30 rounded-full text-primary-text transition-all duration-300 hover:bg-primary-text hover:text-accent-yellow hover:-translate-y-1"><i class="fab fa-facebook-f"></i> </a><a href="#" class="flex items-center justify-center w-10 h-10 bg-white/30 rounded-full text-primary-text transition-all duration-300 hover:bg-primary-text hover:text-accent-yellow hover:-translate-y-1"><i class="fab fa-twitter"></i> </a><a href="#" class="flex items-center justify-center w-10 h-10 bg-white/30 rounded-full text-primary-text transition-all duration-300 hover:bg-primary-text hover:text-accent-yellow hover:-translate-y-1"><i class="fab fa-instagram"></i> </a><a href="#" class="flex items-center justify-center w-10 h-10 bg-white/30 rounded-full text-primary-text transition-all duration-300 hover:bg-primary-text hover:text-accent-yellow hover:-translate-y-1"><i class="fab fa-linkedin-in"></i></a></div><p>&copy; 2025 Kalkulori. All Rights Reserved.</p></div></div></footer></div></body></html>
