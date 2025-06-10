@@ -59,8 +59,8 @@
 
 .meal-plan-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
   margin-top: 10px;
 }
 
@@ -215,7 +215,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: #9BCF53;
   color: white;
   border: none;
   border-radius: 12px;
@@ -228,7 +228,7 @@
 }
 
 .generate-plan-btn:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: #7fa944;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
 }
@@ -251,12 +251,12 @@
 }
 
 .add-plan-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #4F3422;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .add-plan-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: #855b3e;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
@@ -283,7 +283,7 @@
 }
 
 .current-calories {
-  color: #22c55e;
+  color: #9BCF53;
   font-size: 24px;
 }
 

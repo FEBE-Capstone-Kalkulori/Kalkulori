@@ -426,6 +426,7 @@
 /* Suggestion Food Cards */
 .suggestion-food-card {
   background: white;
+  height: 250px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -441,7 +442,7 @@
 
 .suggestion-food-image {
   position: relative;
-  height: 160px;
+  height: 135px;
   overflow: hidden;
   cursor: pointer;
 }
