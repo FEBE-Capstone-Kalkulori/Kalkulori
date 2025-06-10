@@ -16,15 +16,16 @@ const createProfileTemplate = (userData, isEditMode = false) => {
   const generateFormFields = (
     userData,
     isEditMode,
-    getActivityLevelDisplay
+    getActivityLevelDisplay,
+    layoutPrefix = ""
   ) => {
     return `
       <!-- Name Field -->
       <div class="flex flex-col">
-        <label for="name" class="text-base text-gray-800 mb-2 font-cal-sans">Name</label>
+        <label for="name${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Name</label>
         ${
           isEditMode
-            ? `<input type="text" id="name" class="bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
+            ? `<input type="text" id="name${layoutPrefix}" class="profile-name-input bg-white border-none rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green" value="${
                 userData.name || ""
               }" placeholder="Enter your name">`
             : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
@@ -42,28 +43,28 @@ const createProfileTemplate = (userData, isEditMode = false) => {
             isEditMode
               ? `
             <div class="flex gap-2 sm:gap-4">
-              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
+              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm profile-male-option ${
                 userData.gender === "male"
                   ? "bg-blue-300 text-white"
                   : "hover:bg-blue-100 hover:text-blue-600"
-              }" id="male-option">
-                <i class="fas fa-male mr-1 sm:mr-2"></i> <span class="hidden sm:inline">I am </span>Male
+              }" data-gender="male">
+                <i class="fas fa-male mr-1 sm:mr-2"></i> I am Male
               </button>
-              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm ${
+              <button class="flex-1 bg-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base text-gray-400 cursor-pointer transition-all duration-200 shadow-sm profile-female-option ${
                 userData.gender === "female"
                   ? "bg-pink-300 text-white"
                   : "hover:bg-pink-100 hover:text-pink-600"
-              }" id="female-option">
-                <i class="fas fa-female mr-1 sm:mr-2"></i> <span class="hidden sm:inline">I am </span>Female
+              }" data-gender="female">
+                <i class="fas fa-female mr-1 sm:mr-2"></i> I am Female
               </button>
             </div>
           `
               : `
             <div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
               userData.gender === "male"
-                ? "Male"
+                ? "I am Male"
                 : userData.gender === "female"
-                ? "Female"
+                ? "I am Female"
                 : ""
             }</div>
           `
@@ -72,16 +73,16 @@ const createProfileTemplate = (userData, isEditMode = false) => {
         
         <!-- Age Field -->
         <div class="flex flex-col">
-          <label for="age" class="text-base text-gray-800 mb-2 font-cal-sans">Age</label>
+          <label for="age${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Age</label>
           ${
             isEditMode
               ? `<div class="relative flex items-center">
-              <input type="number" id="age" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                userData.age || ""
-              }" min="1" max="120">
+              <input type="number" id="age${layoutPrefix}" class="profile-age-input bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                  userData.age || ""
+                }" min="1" max="120">
               <div class="absolute right-2 flex flex-col gap-0.5">
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="age" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="age" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="age" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
               </div>
             </div>`
               : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
@@ -95,17 +96,17 @@ const createProfileTemplate = (userData, isEditMode = false) => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
         <!-- Weight Field -->
         <div class="flex flex-col">
-          <label for="weight" class="text-base text-gray-800 mb-2 font-cal-sans">Weight</label>
+          <label for="weight${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Weight</label>
           ${
             isEditMode
               ? `<div class="relative flex items-center">
-              <input type="number" id="weight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                userData.weight || ""
-              }" min="1" max="500">
+              <input type="number" id="weight${layoutPrefix}" class="profile-weight-input bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                  userData.weight || ""
+                }" min="1" max="500">
               <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
               <div class="absolute right-2 flex flex-col gap-0.5">
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="weight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="weight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
               </div>
             </div>`
               : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
@@ -116,17 +117,17 @@ const createProfileTemplate = (userData, isEditMode = false) => {
         
         <!-- Height Field -->
         <div class="flex flex-col">
-          <label for="height" class="text-base text-gray-800 mb-2 font-cal-sans">Height</label>
+          <label for="height${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Height</label>
           ${
             isEditMode
               ? `<div class="relative flex items-center">
-              <input type="number" id="height" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                userData.height || ""
-              }" min="1" max="300">
+              <input type="number" id="height${layoutPrefix}" class="profile-height-input bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                  userData.height || ""
+                }" min="1" max="300">
               <span class="absolute right-14 font-cal-sans text-gray-400">cm</span>
               <div class="absolute right-2 flex flex-col gap-0.5">
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="height" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="height" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="height" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
               </div>
             </div>`
               : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
@@ -140,17 +141,17 @@ const createProfileTemplate = (userData, isEditMode = false) => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
         <!-- Target Weight Field -->
         <div class="flex flex-col">
-          <label for="targetWeight" class="text-base text-gray-800 mb-2 font-cal-sans">Target Weight</label>
+          <label for="targetWeight${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Target Weight</label>
           ${
             isEditMode
               ? `<div class="relative flex items-center">
-              <input type="number" id="targetWeight" class="bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
-                userData.targetWeight || ""
-              }" min="1" max="500">
+              <input type="number" id="targetWeight${layoutPrefix}" class="profile-target-weight-input bg-white border-none rounded-full px-5 py-3 pr-16 font-cal-sans text-base text-gray-400 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-green [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]" value="${
+                  userData.targetWeight || ""
+                }" min="1" max="500">
               <span class="absolute right-14 font-cal-sans text-gray-400">kg</span>
               <div class="absolute right-2 flex flex-col gap-0.5">
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
-                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="targetWeight" data-action="increment"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button type="button" class="w-6 h-6 flex items-center justify-center text-gray-300 transition-colors duration-200 hover:text-accent-green bg-none border-none cursor-pointer profile-number-control" data-input="targetWeight" data-action="decrement"><i class="fas fa-chevron-down text-xs"></i></button>
               </div>
             </div>`
               : `<div class="bg-white rounded-full px-5 py-3 font-cal-sans text-base text-gray-400 shadow-sm">${
@@ -161,12 +162,12 @@ const createProfileTemplate = (userData, isEditMode = false) => {
         
         <!-- Activity Level Field -->
         <div class="flex flex-col">
-          <label for="activityLevel" class="text-base text-gray-800 mb-2 font-cal-sans">Activity Level</label>
+          <label for="activityLevel${layoutPrefix}" class="text-base text-gray-800 mb-2 font-cal-sans">Activity Level</label>
           ${
             isEditMode
               ? `
             <div class="relative">
-              <select id="activityLevel" class="bg-white border-none rounded-full px-5 py-3 pr-10 font-cal-sans text-base text-gray-400 w-full shadow-sm cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-accent-green">
+              <select id="activityLevel${layoutPrefix}" class="profile-activity-level-input bg-white border-none rounded-full px-5 py-3 pr-10 font-cal-sans text-base text-gray-400 w-full shadow-sm cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-accent-green">
                 <option value="" disabled ${
                   !userData.activityLevel ? "selected" : ""
                 }>Select level</option>
@@ -215,26 +216,26 @@ const createProfileTemplate = (userData, isEditMode = false) => {
             <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-yellow transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <img src="${
                 userData.avatar || "./public/image/default-avatar.png"
-              }" alt="User Avatar" id="user-avatar" class="w-full h-full object-cover transition-all duration-300">
+              }" alt="User Avatar" id="user-avatar-mobile" class="profile-avatar w-full h-full object-cover transition-all duration-300">
             </div>
             ${
               isEditMode
                 ? `
-              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green" id="edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
+              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green profile-edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
                 <i class="fas fa-pencil-alt text-sm"></i>
               </div>
-              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max" id="avatar-options">
-                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100" id="camera-option">
+              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max profile-avatar-options">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 profile-camera-option">
                   <i class="fas fa-camera w-4 text-amber-900"></i> 
                   <span class="font-cal-sans text-sm text-gray-500">Take photo</span>
                 </div>
-                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3" id="gallery-option">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 profile-gallery-option">
                   <i class="fas fa-images w-4 text-amber-900"></i> 
                   <span class="font-cal-sans text-sm text-gray-500">Choose from gallery</span>
                 </div>
               </div>
-              <input type="file" id="file-input" accept="image/*" style="display: none;">
-              <canvas id="camera-canvas" style="display: none;"></canvas>
+              <input type="file" class="profile-file-input" accept="image/*" style="display: none;">
+              <canvas class="profile-camera-canvas" style="display: none;"></canvas>
             `
                 : ""
             }
@@ -246,7 +247,7 @@ const createProfileTemplate = (userData, isEditMode = false) => {
           !isEditMode
             ? `
           <div class="flex justify-center mb-8">
-            <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white hover:bg-amber-800" id="sign-out-btn">Sign Out</button>
+            <button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white hover:bg-amber-800 profile-sign-out-btn">Sign Out</button>
           </div>
         `
             : ""
@@ -254,15 +255,20 @@ const createProfileTemplate = (userData, isEditMode = false) => {
         
         <!-- Form fields for mobile -->
         <div class="space-y-6">
-          ${generateFormFields(userData, isEditMode, getActivityLevelDisplay)}
+          ${generateFormFields(
+            userData,
+            isEditMode,
+            getActivityLevelDisplay,
+            "-mobile"
+          )}
         </div>
         
         <!-- Action button for mobile -->
         <div class="mt-8 flex justify-center">
           ${
             isEditMode
-              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="save-data-btn">Save Data</button>`
-              : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="update-data-btn">Update Data</button>`
+              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200 profile-save-data-btn">Save Data</button>`
+              : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200 profile-update-data-btn">Update Data</button>`
           }
         </div>
       </div>
@@ -279,26 +285,26 @@ const createProfileTemplate = (userData, isEditMode = false) => {
             <div class="w-full h-full bg-white rounded-full overflow-hidden shadow-lg border-4 border-accent-yellow transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <img src="${
                 userData.avatar || "./public/image/default-avatar.png"
-              }" alt="User Avatar" id="user-avatar" class="w-full h-full object-cover transition-all duration-300">
+              }" alt="User Avatar" id="user-avatar-desktop" class="profile-avatar w-full h-full object-cover transition-all duration-300">
             </div>
             ${
               isEditMode
                 ? `
-              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green" id="edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
+              <div class="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-lg text-amber-900 transition-all duration-200 hover:bg-accent-green hover:text-white z-10 border-2 border-accent-green profile-edit-avatar-btn" style="right: 0.375rem; bottom: 0.375rem;">
                 <i class="fas fa-pencil-alt text-sm"></i>
               </div>
-              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max" id="avatar-options">
-                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100" id="camera-option">
+              <div class="absolute right-4 bottom-16 bg-white rounded-lg shadow-xl z-20 overflow-hidden hidden min-w-max profile-avatar-options">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 profile-camera-option">
                   <i class="fas fa-camera w-4 text-amber-900"></i> 
                   <span class="font-cal-sans text-sm text-gray-500">Take photo</span>
                 </div>
-                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3" id="gallery-option">
+                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 whitespace-nowrap hover:bg-gray-50 flex items-center gap-3 profile-gallery-option">
                   <i class="fas fa-images w-4 text-amber-900"></i> 
                   <span class="font-cal-sans text-sm text-gray-500">Choose from gallery</span>
                 </div>
               </div>
-              <input type="file" id="file-input" accept="image/*" style="display: none;">
-              <canvas id="camera-canvas" style="display: none;"></canvas>
+              <input type="file" class="profile-file-input" accept="image/*" style="display: none;">
+              <canvas class="profile-camera-canvas" style="display: none;"></canvas>
             `
                 : ""
             }
@@ -307,7 +313,7 @@ const createProfileTemplate = (userData, isEditMode = false) => {
           <!-- Sign Out Button for desktop -->
           ${
             !isEditMode
-              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white w-4/5 hover:bg-amber-800" id="sign-out-btn">Sign Out</button>`
+              ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none font-cal-sans bg-amber-900 text-white w-4/5 hover:bg-amber-800 profile-sign-out-btn">Sign Out</button>`
               : ""
           }
         </div>
@@ -315,15 +321,20 @@ const createProfileTemplate = (userData, isEditMode = false) => {
         <!-- Right side - Form fields -->
         <div class="flex-1 min-w-0">
           <div class="space-y-6">
-            ${generateFormFields(userData, isEditMode, getActivityLevelDisplay)}
+            ${generateFormFields(
+              userData,
+              isEditMode,
+              getActivityLevelDisplay,
+              "-desktop"
+            )}
           </div>
           
           <!-- Action button for desktop -->
           <div class="mt-8 flex justify-center">
             ${
               isEditMode
-                ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="save-data-btn">Save Data</button>`
-                : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200" id="update-data-btn">Update Data</button>`
+                ? `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200 profile-save-data-btn">Save Data</button>`
+                : `<button class="px-8 py-3 rounded-full text-base cursor-pointer transition-all duration-200 border-none bg-yellow-300 text-amber-900 font-cal-sans hover:bg-yellow-200 profile-update-data-btn">Update Data</button>`
             }
           </div>
         </div>
@@ -420,19 +431,19 @@ export default {
   },
 
   showAvatarOptions() {
-    const avatarOptions = document.getElementById("avatar-options");
-    if (avatarOptions) {
-      avatarOptions.classList.remove("hidden");
-      avatarOptions.style.display = "block";
-    }
+    const avatarOptions = document.querySelectorAll(".profile-avatar-options");
+    avatarOptions.forEach((option) => {
+      option.classList.remove("hidden");
+      option.style.display = "block";
+    });
   },
 
   hideAvatarOptions() {
-    const avatarOptions = document.getElementById("avatar-options");
-    if (avatarOptions) {
-      avatarOptions.classList.add("hidden");
-      avatarOptions.style.display = "none";
-    }
+    const avatarOptions = document.querySelectorAll(".profile-avatar-options");
+    avatarOptions.forEach((option) => {
+      option.classList.add("hidden");
+      option.style.display = "none";
+    });
   },
 
   validateImageFile(file) {
@@ -526,73 +537,124 @@ export default {
   },
 
   toggleGenderOption(gender) {
-    const maleOption = document.getElementById("male-option");
-    const femaleOption = document.getElementById("female-option");
+    const maleOptions = document.querySelectorAll(".profile-male-option");
+    const femaleOptions = document.querySelectorAll(".profile-female-option");
 
     if (gender === "male") {
-      maleOption.className =
-        "flex-1 bg-accent-green text-white border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm";
-      femaleOption.className =
-        "flex-1 bg-white text-gray-800 border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
+      maleOptions.forEach((option) => {
+        option.className =
+          "flex-1 bg-accent-green text-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base cursor-pointer transition-all duration-200 shadow-sm profile-male-option";
+      });
+      femaleOptions.forEach((option) => {
+        option.className =
+          "flex-1 bg-white text-gray-800 border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50 profile-female-option";
+      });
     } else if (gender === "female") {
-      femaleOption.className =
-        "flex-1 bg-accent-green text-white border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm";
-      maleOption.className =
-        "flex-1 bg-white text-gray-800 border-none rounded-full px-5 py-3 text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50";
+      femaleOptions.forEach((option) => {
+        option.className =
+          "flex-1 bg-accent-green text-white border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base cursor-pointer transition-all duration-200 shadow-sm profile-female-option";
+      });
+      maleOptions.forEach((option) => {
+        option.className =
+          "flex-1 bg-white text-gray-800 border-none rounded-full px-3 sm:px-5 py-3 font-cal-sans text-sm sm:text-base cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50 profile-male-option";
+      });
     }
   },
 
   getUserData() {
-    if (!document.getElementById("name")) return null;
+    // Try to get from visible inputs (mobile or desktop)
+    const nameInput =
+      document.querySelector(
+        ".profile-name-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-name-input");
+    const ageInput =
+      document.querySelector(
+        ".profile-age-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-age-input");
+    const weightInput =
+      document.querySelector(
+        ".profile-weight-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-weight-input");
+    const heightInput =
+      document.querySelector(
+        ".profile-height-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-height-input");
+    const targetWeightInput =
+      document.querySelector(
+        ".profile-target-weight-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-target-weight-input");
+    const activityLevelInput =
+      document.querySelector(
+        ".profile-activity-level-input:not([style*='display: none'])"
+      ) || document.querySelector(".profile-activity-level-input");
 
+    if (!nameInput) return null;
+
+    // Get gender from active option
     let gender = "male";
-    const femaleOption = document.getElementById("female-option");
-    if (femaleOption && femaleOption.classList.contains("bg-accent-green")) {
+    const femaleOption = document.querySelector(
+      ".profile-female-option.bg-accent-green"
+    );
+    if (femaleOption) {
       gender = "female";
     }
 
     return {
-      name: document.getElementById("name").value,
+      name: nameInput.value,
       gender,
-      age: document.getElementById("age").value,
-      weight: document.getElementById("weight").value,
-      height: document.getElementById("height").value,
-      targetWeight: document.getElementById("targetWeight").value,
-      activityLevel: document.getElementById("activityLevel").value,
+      age: ageInput.value,
+      weight: weightInput.value,
+      height: heightInput.value,
+      targetWeight: targetWeightInput.value,
+      activityLevel: activityLevelInput.value,
     };
   },
 
   attachEventHandlers(handlers) {
-    const editAvatarBtn = document.getElementById("edit-avatar-btn");
-    const cameraOption = document.getElementById("camera-option");
-    const galleryOption = document.getElementById("gallery-option");
-    const fileInput = document.getElementById("file-input");
-    const maleOption = document.getElementById("male-option");
-    const femaleOption = document.getElementById("female-option");
-    const updateDataBtn = document.getElementById("update-data-btn");
-    const saveDataBtn = document.getElementById("save-data-btn");
-    const signOutBtn = document.getElementById("sign-out-btn");
+    // Use class selectors for elements that appear in both layouts
+    const editAvatarBtns = document.querySelectorAll(
+      ".profile-edit-avatar-btn"
+    );
+    const cameraOptions = document.querySelectorAll(".profile-camera-option");
+    const galleryOptions = document.querySelectorAll(".profile-gallery-option");
+    const fileInputs = document.querySelectorAll(".profile-file-input");
+    const maleOptions = document.querySelectorAll(".profile-male-option");
+    const femaleOptions = document.querySelectorAll(".profile-female-option");
+    const updateDataBtns = document.querySelectorAll(
+      ".profile-update-data-btn"
+    );
+    const saveDataBtns = document.querySelectorAll(".profile-save-data-btn");
+    const signOutBtns = document.querySelectorAll(".profile-sign-out-btn");
 
+    // Single elements (camera modal)
     const cameraCloseBtn = document.getElementById("camera-close-btn");
     const cameraCaptureBtn = document.getElementById("camera-capture-btn");
     const cameraRetakeBtn = document.getElementById("camera-retake-btn");
     const cameraUseBtn = document.getElementById("camera-use-btn");
 
-    if (editAvatarBtn && handlers.onEditAvatarClicked) {
-      editAvatarBtn.addEventListener("click", handlers.onEditAvatarClicked);
-    }
+    editAvatarBtns.forEach((btn) => {
+      if (handlers.onEditAvatarClicked) {
+        btn.addEventListener("click", handlers.onEditAvatarClicked);
+      }
+    });
 
-    if (cameraOption && handlers.onCameraOptionClicked) {
-      cameraOption.addEventListener("click", handlers.onCameraOptionClicked);
-    }
+    cameraOptions.forEach((option) => {
+      if (handlers.onCameraOptionClicked) {
+        option.addEventListener("click", handlers.onCameraOptionClicked);
+      }
+    });
 
-    if (galleryOption && handlers.onGalleryOptionClicked) {
-      galleryOption.addEventListener("click", handlers.onGalleryOptionClicked);
-    }
+    galleryOptions.forEach((option) => {
+      if (handlers.onGalleryOptionClicked) {
+        option.addEventListener("click", handlers.onGalleryOptionClicked);
+      }
+    });
 
-    if (fileInput && handlers.onFileSelected) {
-      fileInput.addEventListener("change", handlers.onFileSelected);
-    }
+    fileInputs.forEach((input) => {
+      if (handlers.onFileSelected) {
+        input.addEventListener("change", handlers.onFileSelected);
+      }
+    });
 
     if (cameraCloseBtn && handlers.onCameraModalClose) {
       cameraCloseBtn.addEventListener("click", handlers.onCameraModalClose);
@@ -610,35 +672,53 @@ export default {
       cameraUseBtn.addEventListener("click", handlers.onCameraUse);
     }
 
-    if (maleOption && handlers.onGenderOptionClicked) {
-      maleOption.addEventListener("click", () =>
-        handlers.onGenderOptionClicked("male")
-      );
-    }
+    maleOptions.forEach((option) => {
+      if (handlers.onGenderOptionClicked) {
+        option.addEventListener("click", () =>
+          handlers.onGenderOptionClicked("male")
+        );
+      }
+    });
 
-    if (femaleOption && handlers.onGenderOptionClicked) {
-      femaleOption.addEventListener("click", () =>
-        handlers.onGenderOptionClicked("female")
-      );
-    }
+    femaleOptions.forEach((option) => {
+      if (handlers.onGenderOptionClicked) {
+        option.addEventListener("click", () =>
+          handlers.onGenderOptionClicked("female")
+        );
+      }
+    });
 
-    if (updateDataBtn && handlers.onUpdateDataClicked) {
-      updateDataBtn.addEventListener("click", handlers.onUpdateDataClicked);
-    }
+    updateDataBtns.forEach((btn) => {
+      if (handlers.onUpdateDataClicked) {
+        btn.addEventListener("click", handlers.onUpdateDataClicked);
+      }
+    });
 
-    if (saveDataBtn && handlers.onSaveDataClicked) {
-      saveDataBtn.addEventListener("click", handlers.onSaveDataClicked);
-    }
+    saveDataBtns.forEach((btn) => {
+      if (handlers.onSaveDataClicked) {
+        btn.addEventListener("click", handlers.onSaveDataClicked);
+      }
+    });
 
-    if (signOutBtn && handlers.onSignOutClicked) {
-      signOutBtn.addEventListener("click", handlers.onSignOutClicked);
-    }
+    signOutBtns.forEach((btn) => {
+      if (handlers.onSignOutClicked) {
+        btn.addEventListener("click", handlers.onSignOutClicked);
+      }
+    });
 
-    const numberControls = document.querySelectorAll("[data-action]");
+    // Number controls
+    const numberControls = document.querySelectorAll(".profile-number-control");
     numberControls.forEach((button) => {
       button.addEventListener("click", () => {
         const inputId = button.getAttribute("data-input");
         const action = button.getAttribute("data-action");
+
+        // Find the correct input in the current layout
+        const input =
+          button
+            .closest(".space-y-6")
+            .querySelector(`[data-input="${inputId}"]`) ||
+          document.querySelector(`.profile-${inputId}-input`);
 
         if (action === "increment" && handlers.onNumberIncrease) {
           handlers.onNumberIncrease(inputId);
@@ -648,20 +728,29 @@ export default {
       });
     });
 
+    // Click outside to close avatar options
     document.addEventListener("click", (event) => {
-      const avatarOptions = document.getElementById("avatar-options");
-      const editAvatarBtn = document.getElementById("edit-avatar-btn");
+      const avatarOptions = document.querySelectorAll(
+        ".profile-avatar-options"
+      );
+      const editAvatarBtns = document.querySelectorAll(
+        ".profile-edit-avatar-btn"
+      );
 
-      if (avatarOptions && editAvatarBtn) {
-        if (
-          !avatarOptions.contains(event.target) &&
-          !editAvatarBtn.contains(event.target)
-        ) {
-          this.hideAvatarOptions();
-        }
+      let clickedInsideAny = false;
+      avatarOptions.forEach((option) => {
+        if (option.contains(event.target)) clickedInsideAny = true;
+      });
+      editAvatarBtns.forEach((btn) => {
+        if (btn.contains(event.target)) clickedInsideAny = true;
+      });
+
+      if (!clickedInsideAny) {
+        this.hideAvatarOptions();
       }
     });
 
+    // Camera modal click outside to close
     const cameraModal = document.getElementById("camera-modal");
     if (cameraModal && handlers.onCameraModalClose) {
       cameraModal.addEventListener("click", (event) => {
