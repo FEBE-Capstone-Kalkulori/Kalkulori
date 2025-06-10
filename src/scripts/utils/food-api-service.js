@@ -128,13 +128,19 @@ class FoodApiService {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch(`${this.baseUrl}/search/add`, {
+      // Use suggestion endpoint instead of search/add to ensure proper user_id
+      const response = await fetch(`${this.baseUrl}/meals/suggestion/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(searchFoodData)
+        body: JSON.stringify({
+          recipe_id: searchFoodData.recipe_id,
+          meal_type: searchFoodData.meal_type,
+          servings: searchFoodData.servings || 1,
+          log_date: searchFoodData.log_date
+        })
       });
 
       if (!response.ok) {

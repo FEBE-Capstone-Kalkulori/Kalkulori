@@ -458,101 +458,22 @@ class HomePresenter {
 
   async _handleDeleteMeal(mealId) {
     try {
-      console.log('🗑️ Attempting to delete meal with ID:', mealId);
-      
-      // DEBUGGING: Cari meal entry yang akan dihapus untuk debugging
-      const mealToDelete = this.data.mealEntries.find(meal => meal.id === mealId);
-      if (mealToDelete) {
-        console.log('🔍 Meal to delete details:', {
-          id: mealToDelete.id,
-          user_id: mealToDelete.user_id,
-          food_name: mealToDelete.food_details?.food_name,
-          is_from_recipe: mealToDelete.is_from_recipe,
-          is_from_search: mealToDelete.is_from_search,
-          debug_info: mealToDelete._debug_info
-        });
-      } else {
-        console.error('❌ Meal not found in current data with ID:', mealId);
-        throw new Error('Meal not found in current data');
+      if (!confirm('Are you sure you want to remove this meal?')) {
+        return;
       }
-      
-      // TAMBAHAN: Validasi auth token sebelum delete
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        console.error('❌ No auth token found');
-        throw new Error('Authentication token not found. Please login again.');
-      }
-      console.log('✅ Auth token exists:', token.substring(0, 20) + '...');
       
       this.data.loading = true;
       this._renderView();
       
-      console.log('🚀 Calling delete API for meal ID:', mealId);
+      await mealApiService.deleteMealEntry(mealId);
       
-      // CRITICAL: Pastikan menggunakan ID asli meal entry dari database
-      try {
-        const deleteResponse = await mealApiService.deleteMealEntry(mealId);
-        console.log('✅ Delete API response:', deleteResponse);
-        
-        // Force immediate refresh untuk memastikan data terbaru
-        this.lastFetchDate = null;
-        await this._fetchDailyData();
-        
-        console.log('✅ Meal deleted and data refreshed successfully');
-        
-      } catch (deleteError) {
-        console.error('❌ Delete API failed:', deleteError);
-        
-        // TAMBAHAN: Parsing error yang lebih detail
-        let detailedError = deleteError.message;
-        if (deleteError.message.includes('403')) {
-          // Coba ambil detail user dari token untuk debugging
-          try {
-            const tokenParts = token.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              console.log('🔍 Current token user ID:', payload.uid || payload.user_id || payload.sub);
-              console.log('🔍 Meal user ID:', mealToDelete.user_id);
-            }
-          } catch (tokenError) {
-            console.warn('Could not parse token for debugging:', tokenError);
-          }
-          
-          detailedError = `Permission denied. User ID mismatch detected. This meal may belong to another user session.`;
-        }
-        
-        // Tetap refresh data untuk melihat status terkini
-        this.lastFetchDate = null;
-        await this._fetchDailyData();
-        
-        // Check if meal was actually deleted despite the error
-        const mealStillExists = this.data.mealEntries.find(meal => meal.id === mealId);
-        
-        if (!mealStillExists) {
-          console.log('✅ Meal was actually deleted despite API error');
-        } else {
-          console.error('❌ Meal still exists after delete attempt');
-          throw new Error(detailedError);
-        }
-      }
+      // Refresh data
+      this.lastFetchDate = null;
+      await this._fetchDailyData();
       
     } catch (error) {
-      console.error('💥 Error deleting meal:', error);
-      
-      let errorMessage = 'Failed to delete meal. Please try again.';
-      
-      if (error.message.includes('403') || error.message.includes('Permission denied')) {
-        errorMessage = 'Permission denied. This meal may belong to another session. Please refresh the page and try again.';
-      } else if (error.message.includes('404') || error.message.includes('not found')) {
-        errorMessage = 'Meal not found or already deleted.';
-      } else if (error.message.includes('Authentication')) {
-        errorMessage = 'Authentication expired. Please login again.';
-      } else if (error.message.includes('Network') || error.message.includes('network')) {
-        errorMessage = 'Network error. Please check your connection.';
-      }
-      
-      alert(errorMessage);
-      
+      console.error('Delete failed:', error);
+      alert('Failed to delete meal. Please try again.');
     } finally {
       this.data.loading = false;
       this._renderView();
