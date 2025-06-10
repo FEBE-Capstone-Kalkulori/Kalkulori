@@ -90,9 +90,9 @@ class HistoryPresenter {
       const week = parseInt(btn.dataset.week);
       
       if (week === this.currentWeek) {
-        btn.className = 'week-btn px-4 py-2 md:px-6 md:py-3 bg-lime-600 text-white border-none rounded-xl md:rounded-2xl text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-700 hover:-translate-y-0.5';
+        btn.className = 'week-btn flex-1 min-w-0 sm:flex-none px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-lime-600 text-white border-none rounded-lg sm:rounded-xl text-xs sm:text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-700 hover:-translate-y-0.5 active:scale-95';
       } else {
-        btn.className = 'week-btn px-4 py-2 md:px-6 md:py-3 bg-lime-300 text-amber-900 border-none rounded-xl md:rounded-2xl text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5';
+        btn.className = 'week-btn flex-1 min-w-0 sm:flex-none px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-lime-300 text-amber-900 border-none rounded-lg sm:rounded-xl text-xs sm:text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5 active:scale-95';
       }
     });
   }
@@ -178,14 +178,12 @@ class HistoryPresenter {
     }
   }
 
-  // FIX: Enhanced _enrichMealEntries for better image and calories handling
   async _enrichMealEntries(mealEntries) {
     const enrichedEntries = [];
     
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
-      // FIX: Ensure proper field mapping like in home-presenter
       if (!enrichedMeal.calories && enrichedMeal.calories_consumed) {
         enrichedMeal.calories = enrichedMeal.calories_consumed;
       }
@@ -199,7 +197,6 @@ class HistoryPresenter {
         enrichedMeal.fat = enrichedMeal.fat_consumed;
       }
       
-      // FIX: Enhanced handling for recipe and search meals with proper image fetching
       if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
         try {
           console.log(`🔍 Fetching details for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, meal.recipe_id);
@@ -216,7 +213,7 @@ class HistoryPresenter {
               fat_per_serving: recipeData.fat_per_serving,
               serving_size: recipeData.serving_size,
               serving_unit: recipeData.serving_unit,
-              image_url: recipeData.image_url, // FIX: Keep the actual image from API
+              image_url: recipeData.image_url,
               is_recipe: meal.is_from_recipe ? true : false,
               is_from_search: meal.is_from_search ? true : false,
               recipe_id: meal.recipe_id
@@ -228,7 +225,6 @@ class HistoryPresenter {
         } catch (error) {
           console.warn(`⚠️ Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
           
-          // FIX: Better fallback with proper calorie calculation
           const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
           const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
           const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
@@ -243,7 +239,7 @@ class HistoryPresenter {
             fat_per_serving: fatPerServing,
             serving_size: 1,
             serving_unit: "serving",
-            image_url: null, // Will use fallback in UI
+            image_url: null,
             is_recipe: meal.is_from_recipe ? true : false,
             is_from_search: meal.is_from_search ? true : false,
             recipe_id: meal.recipe_id
@@ -251,10 +247,8 @@ class HistoryPresenter {
           console.log(`⚠️ Using fallback data for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name);
         }
       } else if (meal.food_details) {
-        // Regular food items with existing food_details
         enrichedMeal.food_details = meal.food_details;
       } else {
-        // FIX: Better fallback for regular foods without food_details
         const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
         const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
         const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
@@ -321,10 +315,8 @@ class HistoryPresenter {
           const entryKey = `${foodId}_${entry.meal_type}_${entry.id}`;
           
           if (!uniqueFoods.has(entryKey)) {
-            // FIX: Better calorie calculation with multiple fallbacks
             let totalCalories = 0;
             
-            // Try different methods to get calories
             if (entry.calories) {
               totalCalories = Math.round(entry.calories);
             } else if (entry.calories_consumed) {
@@ -337,13 +329,11 @@ class HistoryPresenter {
               totalCalories = 0;
             }
             
-            // FIX: Better image handling with proper fallback
             let imageUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
             
             if (foodItem && foodItem.image_url) {
               imageUrl = foodItem.image_url;
             } else {
-              // Use more specific fallback images based on meal type
               const fallbackImages = {
                 breakfast: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
                 lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
@@ -458,7 +448,7 @@ class HistoryPresenter {
     }
     
     if (this.foodHistory.length === 0) {
-      container.innerHTML = '<div class="text-center text-gray-500 py-6 md:py-8 text-sm">No food history found</div>';
+      container.innerHTML = '<div class="text-center text-gray-500 py-4 sm:py-6 text-xs sm:text-sm">No food history found</div>';
       return;
     }
     
@@ -474,35 +464,30 @@ class HistoryPresenter {
     this.bindFoodCardEvents();
   }
 
-  // IMPROVED: Better food card layout with proper spacing and mobile responsiveness
   createSmallFoodCard(food) {
     const cardElement = document.createElement('div');
-    cardElement.className = 'bg-gray-50 rounded-2xl md:rounded-3xl p-3 md:p-4 hover:bg-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border border-gray-200 group';
+    cardElement.className = 'bg-gray-50 rounded-xl sm:rounded-2xl p-2 sm:p-3 hover:bg-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border border-gray-200 group touch-manipulation';
     cardElement.dataset.foodId = food.id;
     cardElement.dataset.servingSize = food.serving_size;
     cardElement.dataset.servingUnit = food.serving_unit;
     
-    // Improved layout with better spacing and responsiveness
     cardElement.innerHTML = `
-      <div class="flex items-center gap-3 md:gap-4">
-        <!-- Food Image -->
-        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
           <img src="${food.image}" alt="${food.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'">
         </div>
         
-        <!-- Food Info -->
-        <div class="flex-1 min-w-0 pr-2">
-          <h4 class="font-medium text-sm md:text-base text-gray-900 truncate leading-tight">${food.name}</h4>
-          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
-            <p class="text-xs md:text-sm text-gray-600 font-medium">${food.calories} kcal</p>
-            <span class="text-xs px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full w-fit">${food.meal_type}</span>
+        <div class="flex-1 min-w-0 pr-1 sm:pr-2">
+          <h4 class="font-medium text-xs sm:text-sm md:text-base text-gray-900 truncate leading-tight">${food.name}</h4>
+          <div class="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-2 mt-0.5 sm:mt-1">
+            <p class="text-xs sm:text-sm text-gray-600 font-medium">${food.calories} kcal</p>
+            <span class="text-xs px-1.5 py-0.5 sm:px-2 bg-lime-100 text-lime-700 rounded-full w-fit">${food.meal_type}</span>
           </div>
         </div>
         
-        <!-- Add Button -->
         <div class="flex-shrink-0">
-          <button class="w-8 h-8 md:w-10 md:h-10 bg-lime-500 text-white rounded-full flex items-center justify-center hover:bg-lime-600 hover:scale-110 active:scale-95 transition-all duration-200 border-none outline-none shadow-sm group-hover:shadow-md">
-            <span class="text-lg md:text-xl font-bold leading-none">+</span>
+          <button class="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-lime-500 text-white rounded-full flex items-center justify-center hover:bg-lime-600 hover:scale-110 active:scale-95 transition-all duration-200 border-none outline-none shadow-sm group-hover:shadow-md touch-manipulation">
+            <span class="text-sm sm:text-lg md:text-xl font-bold leading-none">+</span>
           </button>
         </div>
       </div>
@@ -555,24 +540,24 @@ class HistoryPresenter {
     }
     
     const popupHTML = `
-      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 p-4" id="meal-popup-overlay">
-        <div class="bg-white rounded-2xl p-4 md:p-6 w-full max-w-md animate-in zoom-in-95 duration-200">
-          <div class="flex justify-between items-center mb-4 md:mb-6">
-            <h3 class="text-lg md:text-xl font-semibold text-gray-900">Add ${foodData.name}</h3>
-            <button class="text-gray-500 hover:text-gray-700 text-2xl transition-colors duration-200 w-8 h-8 flex items-center justify-center" id="popup-close">&times;</button>
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 p-3 sm:p-4" id="meal-popup-overlay">
+        <div class="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md animate-in zoom-in-95 duration-200 mx-3 sm:mx-0">
+          <div class="flex justify-between items-center mb-4 sm:mb-6">
+            <h3 class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 truncate pr-2">Add ${foodData.name}</h3>
+            <button class="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl transition-colors duration-200 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0 touch-manipulation" id="popup-close">&times;</button>
           </div>
           
-          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 mb-6">
+          <div class="bg-gray-50 border-2 border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
             <div class="text-center">
-              <div class="text-lg font-semibold text-gray-900 mb-2">${foodData.name}</div>
-              <div class="text-sm text-gray-600">${foodData.calories} calories per serving</div>
+              <div class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">${foodData.name}</div>
+              <div class="text-xs sm:text-sm text-gray-600">${foodData.calories} calories per serving</div>
             </div>
           </div>
           
-          <div class="space-y-4">
+          <div class="space-y-3 sm:space-y-4">
             <div>
-              <label for="meal-type" class="block text-sm font-medium text-gray-700 mb-2">Meal Type:</label>
-              <select id="meal-type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
+              <label for="meal-type" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Meal Type:</label>
+              <select id="meal-type" required class="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
                 <option value="">Select meal type</option>
                 <option value="breakfast">Breakfast</option>
                 <option value="lunch">Lunch</option>
@@ -581,16 +566,16 @@ class HistoryPresenter {
               </select>
             </div>
             <div>
-              <label for="servings" class="block text-sm font-medium text-gray-700 mb-2">Servings:</label>
-              <input type="number" id="servings" min="0.1" step="0.1" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
+              <label for="servings" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Servings:</label>
+              <input type="number" id="servings" min="0.1" step="0.1" value="1" required class="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
             </div>
             <div>
-              <label for="log-date" class="block text-sm font-medium text-gray-700 mb-2">Date:</label>
-              <input type="date" id="log-date" value="${new Date().toISOString().split('T')[0]}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
+              <label for="log-date" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Date:</label>
+              <input type="date" id="log-date" value="${new Date().toISOString().split('T')[0]}" required class="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
             </div>
-            <div class="flex gap-3 mt-6 pt-2">
-              <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200" id="btn-cancel">Cancel</button>
-              <button class="flex-1 px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 active:bg-lime-700 transition-all duration-200" id="btn-add">Add</button>
+            <div class="flex gap-2 sm:gap-3 mt-4 sm:mt-6 pt-2">
+              <button class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 touch-manipulation" id="btn-cancel">Cancel</button>
+              <button class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-lime-500 text-white rounded-lg hover:bg-lime-600 active:bg-lime-700 transition-all duration-200 touch-manipulation" id="btn-add">Add</button>
             </div>
           </div>
         </div>
@@ -696,13 +681,33 @@ class HistoryPresenter {
     chartXAxis.innerHTML = '';
     
     const maxCalories = Math.max(...this.chartData.map(d => d.calories), 2500);
-    const chartHeight = window.innerWidth < 768 ? 224 : 288; // Responsive chart height
+    
+    const screenWidth = window.innerWidth;
+    let chartHeight, barWidth, barMargin;
+    
+    if (screenWidth < 640) {
+      chartHeight = 160;
+      barWidth = 'w-4';
+      barMargin = 'mx-0.5';
+    } else if (screenWidth < 768) {
+      chartHeight = 192;
+      barWidth = 'w-5';
+      barMargin = 'mx-0.5';
+    } else if (screenWidth < 1024) {
+      chartHeight = 224;
+      barWidth = 'w-6';
+      barMargin = 'mx-1';
+    } else {
+      chartHeight = 256;
+      barWidth = 'w-8';
+      barMargin = 'mx-1';
+    }
     
     this.chartData.forEach((data, index) => {
       const barHeight = data.calories > 0 ? (data.calories / maxCalories) * chartHeight : 0;
       
       const bar = document.createElement('div');
-      bar.className = 'chart-bar bg-amber-800 w-6 sm:w-8 md:w-12 mx-0.5 md:mx-1 rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group';
+      bar.className = `chart-bar bg-amber-800 ${barWidth} ${barMargin} rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group touch-manipulation`;
       bar.style.height = `${barHeight}px`;
       
       bar.addEventListener('click', () => {
@@ -710,12 +715,12 @@ class HistoryPresenter {
       });
       
       const tooltip = document.createElement('div');
-      tooltip.className = 'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10';
+      tooltip.className = 'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 sm:mb-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10';
       tooltip.textContent = `${data.calories} cal`;
       bar.appendChild(tooltip);
       
       if (this.isToday(data.date)) {
-        bar.classList.add('ring-2', 'ring-lime-500', 'ring-offset-2');
+        bar.classList.add('ring-1', 'sm:ring-2', 'ring-lime-500', 'ring-offset-1', 'sm:ring-offset-2');
         tooltip.textContent = `${data.calories} cal (Today)`;
       }
       
@@ -724,7 +729,7 @@ class HistoryPresenter {
     
     this.chartData.forEach(data => {
       const label = document.createElement('span');
-      label.className = 'text-xs sm:text-sm';
+      label.className = 'text-xs sm:text-sm text-center flex-1';
       
       if (this.isToday(data.date)) {
         label.className += ' font-bold text-lime-600';
@@ -751,14 +756,14 @@ class HistoryPresenter {
   showLoading() {
     const chartBars = document.getElementById('chart-bars');
     if (chartBars) {
-      chartBars.innerHTML = '<div class="flex items-center justify-center h-56 md:h-72 w-full"><div class="animate-spin rounded-full h-6 md:h-8 w-6 md:w-8 border-b-2 border-amber-800"></div></div>';
+      chartBars.innerHTML = '<div class="flex items-center justify-center h-40 sm:h-48 md:h-56 lg:h-64 w-full"><div class="animate-spin rounded-full h-5 sm:h-6 md:h-8 w-5 sm:w-6 md:w-8 border-b-2 border-amber-800"></div></div>';
     }
   }
 
   showFoodLoading() {
     const container = document.getElementById('history-food-container');
     if (container) {
-      container.innerHTML = '<div class="flex items-center justify-center h-32 md:h-40 text-gray-500"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-800"></div></div>';
+      container.innerHTML = '<div class="flex items-center justify-center h-24 sm:h-32 md:h-40 text-gray-500"><div class="animate-spin rounded-full h-4 sm:h-5 md:h-6 w-4 sm:w-5 md:w-6 border-b-2 border-amber-800"></div></div>';
     }
   }
 
@@ -768,14 +773,14 @@ class HistoryPresenter {
   showError(message) {
     const chartBars = document.getElementById('chart-bars');
     if (chartBars) {
-      chartBars.innerHTML = `<div class="flex items-center justify-center h-56 md:h-72 w-full text-red-600 text-sm">${message}</div>`;
+      chartBars.innerHTML = `<div class="flex items-center justify-center h-40 sm:h-48 md:h-56 lg:h-64 w-full text-red-600 text-xs sm:text-sm px-4 text-center">${message}</div>`;
     }
   }
 
   showFoodError(message) {
     const container = document.getElementById('history-food-container');
     if (container) {
-      container.innerHTML = `<div class="text-center text-gray-500 py-6 md:py-8 text-sm">${message}</div>`;
+      container.innerHTML = `<div class="text-center text-gray-500 py-4 sm:py-6 text-xs sm:text-sm px-2">${message}</div>`;
     }
   }
 }
