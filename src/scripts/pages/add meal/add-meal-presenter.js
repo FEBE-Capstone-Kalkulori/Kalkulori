@@ -223,8 +223,7 @@ class AddMealPresenter {
   }
 
   _renderView() {
-    AddMealView.render(this.container, this.data);
-    AddMealView.afterRender(this.eventHandlers);
+    AddMealView.render(this.container, this.data, this.eventHandlers);
   }
 
   async _handleSearch(query) {

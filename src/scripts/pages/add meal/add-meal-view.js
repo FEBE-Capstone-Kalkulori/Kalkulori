@@ -177,65 +177,66 @@ const createPaginationSection = (data) => {
   `;
 };
 
-export default {
-  render(container, data) {
-    container.innerHTML = createAddMealTemplate(data);
-  },
+const bindEventListeners = (eventHandlers) => {
+  const backButton = document.getElementById('back-button');
+  const searchButton = document.getElementById('search-button');
+  const searchInput = document.getElementById('search-input');
+  const clearSearchButton = document.getElementById('clear-search-button');
+  const browseAllButton = document.getElementById('browse-all-button');
+  const foodContainer = document.getElementById('food-container');
+  const prevButton = document.getElementById('prev-button');
+  const nextButton = document.getElementById('next-button');
   
-  afterRender(eventHandlers) {
-    const backButton = document.getElementById('back-button');
-    const searchButton = document.getElementById('search-button');
-    const searchInput = document.getElementById('search-input');
-    const clearSearchButton = document.getElementById('clear-search-button');
-    const browseAllButton = document.getElementById('browse-all-button');
-    const foodContainer = document.getElementById('food-container');
-    const prevButton = document.getElementById('prev-button');
-    const nextButton = document.getElementById('next-button');
-    
-    if (backButton && eventHandlers.onBackClicked) {
-      backButton.addEventListener('click', eventHandlers.onBackClicked);
-    }
-    
-    if (searchButton && eventHandlers.onSearchClicked) {
-      searchButton.addEventListener('click', () => {
+  if (backButton && eventHandlers.onBackClicked) {
+    backButton.addEventListener('click', eventHandlers.onBackClicked);
+  }
+  
+  if (searchButton && eventHandlers.onSearchClicked) {
+    searchButton.addEventListener('click', () => {
+      const query = searchInput.value.trim();
+      if (query) {
+        eventHandlers.onSearchClicked(query);
+      }
+    });
+  }
+  
+  if (searchInput && eventHandlers.onSearchClicked) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
         const query = searchInput.value.trim();
         if (query) {
           eventHandlers.onSearchClicked(query);
         }
-      });
-    }
+      }
+    });
     
-    if (searchInput && eventHandlers.onSearchClicked) {
-      searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const query = searchInput.value.trim();
-          if (query) {
-            eventHandlers.onSearchClicked(query);
-          }
-        }
-      });
-      
-      searchInput.focus();
-    }
+    searchInput.focus();
+  }
 
-    if (clearSearchButton && eventHandlers.onClearSearchClicked) {
-      clearSearchButton.addEventListener('click', eventHandlers.onClearSearchClicked);
-    }
+  if (clearSearchButton && eventHandlers.onClearSearchClicked) {
+    clearSearchButton.addEventListener('click', eventHandlers.onClearSearchClicked);
+  }
 
-    if (browseAllButton && eventHandlers.onClearSearchClicked) {
-      browseAllButton.addEventListener('click', eventHandlers.onClearSearchClicked);
-    }
+  if (browseAllButton && eventHandlers.onClearSearchClicked) {
+    browseAllButton.addEventListener('click', eventHandlers.onClearSearchClicked);
+  }
 
-    if (prevButton && eventHandlers.onPreviousClicked) {
-      prevButton.addEventListener('click', eventHandlers.onPreviousClicked);
-    }
+  if (prevButton && eventHandlers.onPreviousClicked) {
+    prevButton.addEventListener('click', eventHandlers.onPreviousClicked);
+  }
 
-    if (nextButton && eventHandlers.onNextClicked) {
-      nextButton.addEventListener('click', eventHandlers.onNextClicked);
-    }
-    
-    if (foodContainer) {
-      window.FoodCard.bindFoodCardEvents('food-container');
-    }
+  if (nextButton && eventHandlers.onNextClicked) {
+    nextButton.addEventListener('click', eventHandlers.onNextClicked);
+  }
+  
+  if (foodContainer) {
+    window.FoodCard.bindFoodCardEvents('food-container');
+  }
+};
+
+export default {
+  render(container, data, eventHandlers) {
+    container.innerHTML = createAddMealTemplate(data);
+    bindEventListeners(eventHandlers);
   }
 };
