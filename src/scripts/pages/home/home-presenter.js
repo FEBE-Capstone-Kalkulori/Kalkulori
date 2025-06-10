@@ -116,6 +116,8 @@ class HomePresenter {
       
       localStorage.setItem('lastAppDate', today);
       sessionStorage.removeItem('mealSuggestions');
+      sessionStorage.removeItem('dailyLogs');
+      sessionStorage.removeItem('mealPlan');
       
       this.data.selectedKeywords = [];
       this.data.mealSuggestions = {
@@ -150,10 +152,18 @@ class HomePresenter {
       this.data.currentCalories = 0;
       this.data.mealEntries = [];
       this.data.dailyLog = null;
+      this.data.mealPlan = {
+        plans: [],
+        totalCalories: 0,
+        targetCalories: 1500,
+        loading: false,
+        error: null
+      };
       this.lastFetchDate = null;
       
       if (this.container && this.container.innerHTML) {
         this._fetchDailyData();
+        this._fetchMealPlan();
       }
     }
   }
@@ -168,7 +178,8 @@ class HomePresenter {
 
   _saveToSessionStorage() {
     const today = this._getTodayString();
-    const sessionData = {
+    
+    const mealSuggestionsData = {
       date: today,
       selectedKeywords: this.data.selectedKeywords,
       mealSuggestions: {
@@ -179,16 +190,32 @@ class HomePresenter {
       },
       suggestedMeals: this.data.suggestedMeals
     };
-    sessionStorage.setItem('mealSuggestions', JSON.stringify(sessionData));
+    sessionStorage.setItem('mealSuggestions', JSON.stringify(mealSuggestionsData));
+
+    const dailyLogsData = {
+      date: today,
+      currentCalories: this.data.currentCalories,
+      calorieLimit: this.data.calorieLimit,
+      dailyLog: this.data.dailyLog,
+      mealEntries: this.data.mealEntries,
+      lastFetchDate: this.lastFetchDate
+    };
+    sessionStorage.setItem('dailyLogs', JSON.stringify(dailyLogsData));
+
+    const mealPlanData = {
+      date: today,
+      mealPlan: this.data.mealPlan
+    };
+    sessionStorage.setItem('mealPlan', JSON.stringify(mealPlanData));
   }
 
   _loadFromSessionStorage() {
+    const today = this._getTodayString();
+    
     try {
-      const stored = sessionStorage.getItem('mealSuggestions');
-      if (stored) {
-        const sessionData = JSON.parse(stored);
-        const today = this._getTodayString();
-        
+      const mealSuggestionsStored = sessionStorage.getItem('mealSuggestions');
+      if (mealSuggestionsStored) {
+        const sessionData = JSON.parse(mealSuggestionsStored);
         if (sessionData.date === today) {
           this.data.selectedKeywords = sessionData.selectedKeywords || [];
           this.data.mealSuggestions = {
@@ -198,25 +225,52 @@ class HomePresenter {
             isFromAPI: sessionData.mealSuggestions?.isFromAPI || false
           };
           this.data.suggestedMeals = sessionData.suggestedMeals || this.data.suggestedMeals;
-          
           console.log('Restored meal suggestions from session storage');
-          this._renderView();
         } else {
           sessionStorage.removeItem('mealSuggestions');
-          console.log('Session storage cleared - different day');
+        }
+      }
+
+      const dailyLogsStored = sessionStorage.getItem('dailyLogs');
+      if (dailyLogsStored) {
+        const dailyData = JSON.parse(dailyLogsStored);
+        if (dailyData.date === today) {
+          this.data.currentCalories = dailyData.currentCalories || 0;
+          this.data.calorieLimit = dailyData.calorieLimit || 1500;
+          this.data.dailyLog = dailyData.dailyLog;
+          this.data.mealEntries = dailyData.mealEntries || [];
+          this.lastFetchDate = dailyData.lastFetchDate;
+          console.log('Restored daily logs from session storage');
+        } else {
+          sessionStorage.removeItem('dailyLogs');
+        }
+      }
+
+      const mealPlanStored = sessionStorage.getItem('mealPlan');
+      if (mealPlanStored) {
+        const planData = JSON.parse(mealPlanStored);
+        if (planData.date === today && planData.mealPlan) {
+          this.data.mealPlan = planData.mealPlan;
+          console.log('Restored meal plan from session storage');
+        } else {
+          sessionStorage.removeItem('mealPlan');
         }
       }
     } catch (error) {
       console.error('Error loading from session storage:', error);
       sessionStorage.removeItem('mealSuggestions');
+      sessionStorage.removeItem('dailyLogs');
+      sessionStorage.removeItem('mealPlan');
     }
   }
 
-  async _fetchDailyData() {
+  async _fetchDailyData(forceRefresh = false) {
     try {
       const today = this._getTodayString();
       
-      if (this.lastFetchDate === today) {
+      if (!forceRefresh && this.lastFetchDate === today && this.data.mealEntries.length > 0) {
+        this.data.loading = false;
+        this._renderView();
         return;
       }
       
@@ -237,6 +291,7 @@ class HomePresenter {
       }
       
       this.lastFetchDate = today;
+      this._saveToSessionStorage();
       
     } catch (error) {
       console.error('Error fetching daily data:', error);
@@ -257,10 +312,8 @@ class HomePresenter {
     for (const meal of mealEntries) {
       let enrichedMeal = { ...meal };
       
-      // PENTING: Pastikan ID asli meal entry tidak berubah
-      const originalMealId = meal.id; // Simpan ID asli dari database
+      const originalMealId = meal.id;
       
-      // FIX: Ensure calories field is properly mapped from both possible field names
       if (!enrichedMeal.calories && enrichedMeal.calories_consumed) {
         enrichedMeal.calories = enrichedMeal.calories_consumed;
       }
@@ -274,7 +327,6 @@ class HomePresenter {
         enrichedMeal.fat = enrichedMeal.fat_consumed;
       }
       
-      // FIX: Handle search results and recipes with better fallback
       if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
         try {
           const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
@@ -301,7 +353,6 @@ class HomePresenter {
         } catch (error) {
           console.warn(`Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
           
-          // FIX: Improved fallback with proper calculation
           const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
           const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
           const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
@@ -324,11 +375,9 @@ class HomePresenter {
           console.log(`⚠️ Using fallback data for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name);
         }
       }
-      // Handle regular food items yang sudah ada food_details
       else if (meal.food_details) {
         enrichedMeal.food_details = meal.food_details;
       }
-      // Handle regular food items yang belum ada food_details
       else {
         const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
         const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
@@ -348,10 +397,8 @@ class HomePresenter {
         };
       }
       
-      // CRITICAL FIX: Pastikan ID asli meal entry tidak berubah
       enrichedMeal.id = originalMealId;
       
-      // TAMBAHAN: Simpan juga metadata penting untuk debugging
       enrichedMeal._debug_info = {
         original_id: originalMealId,
         user_id: meal.user_id,
@@ -367,9 +414,16 @@ class HomePresenter {
     return enrichedEntries;
   }
 
-
-  async _fetchMealPlan() {
+  async _fetchMealPlan(forceRefresh = false) {
     try {
+      const today = this._getTodayString();
+      const hasCachedPlan = this.data.mealPlan.plans && this.data.mealPlan.plans.length > 0;
+      
+      if (!forceRefresh && hasCachedPlan) {
+        console.log('🍽️ Using cached meal plan');
+        return;
+      }
+
       this.data.mealPlan.loading = true;
       this.data.mealPlan.error = null;
       this._renderView();
@@ -389,6 +443,7 @@ class HomePresenter {
       this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
       this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
       
+      this._saveToSessionStorage();
       console.log('✅ Meal plan formatted successfully');
       
     } catch (error) {
@@ -440,11 +495,16 @@ class HomePresenter {
 
     document.addEventListener('mealPlanMealAdded', () => {
       console.log('🔄 Meal plan meal added, refreshing data...');
-      setTimeout(async () => {
-        this.lastFetchDate = null;
-        await this._fetchDailyData();
-      }, 500);
+      this._refreshDailyData();
     });
+  }
+
+  async _refreshDailyData() {
+    try {
+      await this._fetchDailyData(true);
+    } catch (error) {
+      console.error('Error refreshing daily data:', error);
+    }
   }
 
   _renderView() {
@@ -458,18 +518,12 @@ class HomePresenter {
 
   async _handleDeleteMeal(mealId) {
     try {
-      if (!confirm('Are you sure you want to remove this meal?')) {
-        return;
-      }
-      
       this.data.loading = true;
       this._renderView();
       
       await mealApiService.deleteMealEntry(mealId);
       
-      // Refresh data
-      this.lastFetchDate = null;
-      await this._fetchDailyData();
+      await this._refreshDailyData();
       
     } catch (error) {
       console.error('Delete failed:', error);
@@ -684,7 +738,7 @@ class HomePresenter {
   }
 
   async _handleGenerateMealPlan() {
-    await this._fetchMealPlan();
+    await this._fetchMealPlan(true);
   }
 
   _handleMealPlanItemClicked(mealData) {
@@ -816,10 +870,7 @@ class HomePresenter {
             alert('Meal added successfully!');
             closePopup();
             
-            setTimeout(async () => {
-              this.lastFetchDate = null;
-              await this._fetchDailyData();
-            }, 500);
+            await this._refreshDailyData();
             
           } else {
             console.log(`Demo: Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);

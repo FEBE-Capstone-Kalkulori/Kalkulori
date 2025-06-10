@@ -257,10 +257,8 @@ const createTodaysMeals = (data) => {
 const createCompactMealCard = (meal) => {
   const foodDetails = meal.food_details;
   
-  // FIX: Improved calorie calculation with multiple fallbacks
   let totalCalories = 0;
   
-  // Try different field combinations for calories
   if (meal.calories) {
     totalCalories = Math.round(meal.calories);
   } else if (meal.calories_consumed) {
@@ -268,20 +266,16 @@ const createCompactMealCard = (meal) => {
   } else if (foodDetails && foodDetails.calories_per_serving && meal.servings) {
     totalCalories = Math.round(foodDetails.calories_per_serving * meal.servings);
   } else if (meal.servings && foodDetails) {
-    // Fallback calculation
     const caloriesPerServing = foodDetails.calories_per_serving || 0;
     totalCalories = Math.round(caloriesPerServing * meal.servings);
   }
 
-  // Ensure we have a non-zero value
   if (totalCalories === 0 && meal.servings > 0) {
-    // Last resort: use any available calorie data
     const anyCalories = meal.calories || meal.calories_consumed || 
                        (foodDetails && foodDetails.calories_per_serving) || 0;
     totalCalories = Math.round(anyCalories);
   }
   
-  // FIX: Better food name handling
   let foodName = 'Unknown Food';
   if (foodDetails && foodDetails.food_name) {
     foodName = foodDetails.food_name;
@@ -293,7 +287,6 @@ const createCompactMealCard = (meal) => {
     foodName = 'Recipe Meal';
   }
   
-  // FIX: Better image handling with multiple fallbacks
   let imageUrl = 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
   if (foodDetails && foodDetails.image_url) {
     imageUrl = foodDetails.image_url;
@@ -392,7 +385,7 @@ export default {
         button.addEventListener('click', (e) => {
           e.preventDefault();
           const mealId = button.dataset.mealId;
-          if (mealId && confirm('Are you sure you want to remove this meal?')) {
+          if (mealId) {
             eventHandlers.onDeleteMealClicked(mealId);
           }
         });
