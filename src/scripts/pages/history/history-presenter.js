@@ -90,9 +90,9 @@ class HistoryPresenter {
       const week = parseInt(btn.dataset.week);
       
       if (week === this.currentWeek) {
-        btn.className = 'week-btn px-6 py-3 bg-lime-600 text-white border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-700 hover:-translate-y-0.5';
+        btn.className = 'week-btn px-4 py-2 md:px-6 md:py-3 bg-lime-600 text-white border-none rounded-xl md:rounded-2xl text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-700 hover:-translate-y-0.5';
       } else {
-        btn.className = 'week-btn px-6 py-3 bg-lime-300 text-amber-900 border-none rounded-2xl text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5';
+        btn.className = 'week-btn px-4 py-2 md:px-6 md:py-3 bg-lime-300 text-amber-900 border-none rounded-xl md:rounded-2xl text-sm md:text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-lime-400 hover:-translate-y-0.5';
       }
     });
   }
@@ -361,7 +361,10 @@ class HistoryPresenter {
               image: imageUrl,
               serving_size: entry.servings || 1,
               serving_unit: foodItem?.serving_unit || 'serving',
-              meal_type: entry.meal_type
+              meal_type: entry.meal_type,
+              recipe_id: entry.recipe_id || null,
+              is_from_recipe: entry.is_from_recipe || false,
+              is_from_search: entry.is_from_search || false
             };
             
             console.log(`🍽️ Created food card data:`, foodData);
@@ -455,7 +458,7 @@ class HistoryPresenter {
     }
     
     if (this.foodHistory.length === 0) {
-      container.innerHTML = '<div class="text-center text-gray-500 py-8 text-sm">No food history found</div>';
+      container.innerHTML = '<div class="text-center text-gray-500 py-6 md:py-8 text-sm">No food history found</div>';
       return;
     }
     
@@ -471,27 +474,38 @@ class HistoryPresenter {
     this.bindFoodCardEvents();
   }
 
+  // IMPROVED: Better food card layout with proper spacing and mobile responsiveness
   createSmallFoodCard(food) {
     const cardElement = document.createElement('div');
-    cardElement.className = 'bg-gray-50 rounded-2xl p-3 flex items-center gap-3 hover:bg-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border border-gray-200';
+    cardElement.className = 'bg-gray-50 rounded-2xl md:rounded-3xl p-3 md:p-4 hover:bg-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border border-gray-200 group';
     cardElement.dataset.foodId = food.id;
     cardElement.dataset.servingSize = food.serving_size;
     cardElement.dataset.servingUnit = food.serving_unit;
     
+    // Improved layout with better spacing and responsiveness
     cardElement.innerHTML = `
-      <div class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-        <img src="${food.image}" alt="${food.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'">
-      </div>
-      <div class="flex-1 min-w-0">
-        <h4 class="font-medium text-sm text-gray-900 truncate">${food.name}</h4>
-        <div class="flex items-center gap-2">
-          <p class="text-xs text-gray-600">${food.calories} kcal</p>
-          <span class="text-xs px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full">${food.meal_type}</span>
+      <div class="flex items-center gap-3 md:gap-4">
+        <!-- Food Image -->
+        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+          <img src="${food.image}" alt="${food.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'">
+        </div>
+        
+        <!-- Food Info -->
+        <div class="flex-1 min-w-0 pr-2">
+          <h4 class="font-medium text-sm md:text-base text-gray-900 truncate leading-tight">${food.name}</h4>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+            <p class="text-xs md:text-sm text-gray-600 font-medium">${food.calories} kcal</p>
+            <span class="text-xs px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full w-fit">${food.meal_type}</span>
+          </div>
+        </div>
+        
+        <!-- Add Button -->
+        <div class="flex-shrink-0">
+          <button class="w-8 h-8 md:w-10 md:h-10 bg-lime-500 text-white rounded-full flex items-center justify-center hover:bg-lime-600 hover:scale-110 active:scale-95 transition-all duration-200 border-none outline-none shadow-sm group-hover:shadow-md">
+            <span class="text-lg md:text-xl font-bold leading-none">+</span>
+          </button>
         </div>
       </div>
-      <button class="w-8 h-8 bg-lime-500 text-white rounded-full flex items-center justify-center hover:bg-lime-600 hover:scale-110 active:scale-95 transition-all duration-200 flex-shrink-0 border-none outline-none">
-        <span class="text-sm font-bold">+</span>
-      </button>
     `;
     
     return cardElement;
@@ -516,13 +530,19 @@ class HistoryPresenter {
         const foodId = foodCard.dataset.foodId;
         const servingSize = foodCard.dataset.servingSize;
         const servingUnit = foodCard.dataset.servingUnit;
+        const recipeId = foodCard.dataset.recipeId;
+        const isFromRecipe = foodCard.dataset.isFromRecipe === 'true';
+        const isFromSearch = foodCard.dataset.isFromSearch === 'true';
         
         this.showAddMealPopup({
           id: foodId,
           name: foodName,
           calories: calories,
           serving_size: servingSize,
-          serving_unit: servingUnit
+          serving_unit: servingUnit,
+          recipe_id: recipeId,
+          is_from_recipe: isFromRecipe,
+          is_from_search: isFromSearch
         });
       });
     });
@@ -535,15 +555,23 @@ class HistoryPresenter {
     }
     
     const popupHTML = `
-      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200" id="meal-popup-overlay">
-        <div class="bg-white rounded-2xl p-6 w-96 max-w-90vw animate-in zoom-in-95 duration-200">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-semibold text-gray-900">Add ${foodData.name}</h3>
-            <button class="text-gray-500 hover:text-gray-700 text-2xl transition-colors duration-200" id="popup-close">&times;</button>
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 p-4" id="meal-popup-overlay">
+        <div class="bg-white rounded-2xl p-4 md:p-6 w-full max-w-md animate-in zoom-in-95 duration-200">
+          <div class="flex justify-between items-center mb-4 md:mb-6">
+            <h3 class="text-lg md:text-xl font-semibold text-gray-900">Add ${foodData.name}</h3>
+            <button class="text-gray-500 hover:text-gray-700 text-2xl transition-colors duration-200 w-8 h-8 flex items-center justify-center" id="popup-close">&times;</button>
           </div>
+          
+          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 mb-6">
+            <div class="text-center">
+              <div class="text-lg font-semibold text-gray-900 mb-2">${foodData.name}</div>
+              <div class="text-sm text-gray-600">${foodData.calories} calories per serving</div>
+            </div>
+          </div>
+          
           <div class="space-y-4">
             <div>
-              <label for="meal-type" class="block text-sm font-medium text-gray-700 mb-1">Meal Type:</label>
+              <label for="meal-type" class="block text-sm font-medium text-gray-700 mb-2">Meal Type:</label>
               <select id="meal-type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
                 <option value="">Select meal type</option>
                 <option value="breakfast">Breakfast</option>
@@ -553,14 +581,14 @@ class HistoryPresenter {
               </select>
             </div>
             <div>
-              <label for="servings" class="block text-sm font-medium text-gray-700 mb-1">Servings:</label>
-              <input type="number" id="servings" min="1" step="1" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
+              <label for="servings" class="block text-sm font-medium text-gray-700 mb-2">Servings:</label>
+              <input type="number" id="servings" min="0.1" step="0.1" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
             </div>
             <div>
-              <label for="log-date" class="block text-sm font-medium text-gray-700 mb-1">Date:</label>
+              <label for="log-date" class="block text-sm font-medium text-gray-700 mb-2">Date:</label>
               <input type="date" id="log-date" value="${new Date().toISOString().split('T')[0]}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-all duration-200">
             </div>
-            <div class="flex gap-3 mt-6">
+            <div class="flex gap-3 mt-6 pt-2">
               <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200" id="btn-cancel">Cancel</button>
               <button class="flex-1 px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 active:bg-lime-700 transition-all duration-200" id="btn-add">Add</button>
             </div>
@@ -568,66 +596,95 @@ class HistoryPresenter {
         </div>
       </div>
     `;
-    
-    document.body.insertAdjacentHTML('beforeend', popupHTML);
-    
-    const overlay = document.getElementById('meal-popup-overlay');
-    const closeBtn = document.getElementById('popup-close');
-    const cancelBtn = document.getElementById('btn-cancel');
-    const addBtn = document.getElementById('btn-add');
-    
-    const closePopup = () => {
-      if (overlay && overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    };
-    
-    closeBtn?.addEventListener('click', closePopup);
-    cancelBtn?.addEventListener('click', closePopup);
-    overlay?.addEventListener('click', (e) => {
-      if (e.target === overlay) closePopup();
-    });
-    
-    addBtn?.addEventListener('click', async () => {
-      const mealType = document.getElementById('meal-type')?.value;
-      const servings = parseFloat(document.getElementById('servings')?.value);
-      const logDate = document.getElementById('log-date')?.value;
       
-      if (!mealType || !servings || !logDate) {
-        alert('Please fill all fields');
-        return;
-      }
+      document.body.insertAdjacentHTML('beforeend', popupHTML);
       
-      try {
-        addBtn.disabled = true;
-        addBtn.textContent = 'Adding...';
+      const overlay = document.getElementById('meal-popup-overlay');
+      const closeBtn = document.getElementById('popup-close');
+      const cancelBtn = document.getElementById('btn-cancel');
+      const addBtn = document.getElementById('btn-add');
+      
+      const closePopup = () => {
+        if (overlay && overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      };
+      
+      closeBtn?.addEventListener('click', closePopup);
+      cancelBtn?.addEventListener('click', closePopup);
+      overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay) closePopup();
+      });
+      
+      addBtn?.addEventListener('click', async () => {
+        const mealType = document.getElementById('meal-type')?.value;
+        const servings = parseFloat(document.getElementById('servings')?.value);
+        const logDate = document.getElementById('log-date')?.value;
         
-        await mealApiService.createMealEntry({
-          food_item_id: foodData.id,
-          meal_type: mealType,
-          servings: servings,
-          log_date: logDate
-        });
+        if (!mealType || !servings || !logDate) {
+          alert('Please fill all fields');
+          return;
+        }
         
-        alert('Meal added successfully!');
-        closePopup();
-        
-        // FIX: Force refresh both history and chart data
-        setTimeout(() => {
-          if (logDate === this.formatDateForAPI(this.selectedDate)) {
-            this.loadFoodHistory(logDate);
+        try {
+          addBtn.disabled = true;
+          addBtn.textContent = 'Adding...';
+          
+          console.log('🔍 Food data for adding:', foodData);
+          
+          if (foodData.recipe_id && (foodData.is_from_recipe || foodData.is_from_search)) {
+            console.log('📍 Using addMealFromSuggestion endpoint for recipe/search meal');
+            await mealApiService.addMealFromSuggestion({
+              recipe_id: foodData.recipe_id,
+              meal_type: mealType,
+              servings: servings,
+              log_date: logDate
+            });
+          } else if (foodData.id && foodData.id.toString().startsWith('recipe_')) {
+            const recipeId = foodData.id.replace('recipe_', '');
+            console.log('📍 Using addMealFromSuggestion endpoint for recipe ID format:', recipeId);
+            await mealApiService.addMealFromSuggestion({
+              recipe_id: recipeId,
+              meal_type: mealType,
+              servings: servings,
+              log_date: logDate
+            });
+          } else {
+            let foodItemId = foodData.id;
+            if (foodItemId && foodItemId.toString().includes('_')) {
+              const parts = foodItemId.split('_');
+              if (parts[0] && !isNaN(parts[0])) {
+                foodItemId = parts[0];
+              }
+            }
+            
+            console.log('📍 Using createMealEntry endpoint for regular food item:', foodItemId);
+            await mealApiService.createMealEntry({
+              food_item_id: foodItemId,
+              meal_type: mealType,
+              servings: servings,
+              log_date: logDate
+            });
           }
-          this.loadChartData();
-        }, 500);
-        
-      } catch (error) {
-        console.error('Error adding meal:', error);
-        alert('Failed to add meal. Please try again.');
-        addBtn.disabled = false;
-        addBtn.textContent = 'Add';
-      }
-    });
-  }
+          
+          alert('Meal added successfully!');
+          closePopup();
+          
+          setTimeout(() => {
+            if (logDate === this.formatDateForAPI(this.selectedDate)) {
+              this.loadFoodHistory(logDate);
+            }
+            this.loadChartData();
+          }, 500);
+          
+        } catch (error) {
+          console.error('Error adding meal:', error);
+          alert('Failed to add meal. Please try again.');
+          addBtn.disabled = false;
+          addBtn.textContent = 'Add';
+        }
+      });
+    }
 
   renderChart() {
     const chartBars = document.getElementById('chart-bars');
@@ -639,13 +696,13 @@ class HistoryPresenter {
     chartXAxis.innerHTML = '';
     
     const maxCalories = Math.max(...this.chartData.map(d => d.calories), 2500);
-    const chartHeight = 288;
+    const chartHeight = window.innerWidth < 768 ? 224 : 288; // Responsive chart height
     
     this.chartData.forEach((data, index) => {
       const barHeight = data.calories > 0 ? (data.calories / maxCalories) * chartHeight : 0;
       
       const bar = document.createElement('div');
-      bar.className = 'chart-bar bg-amber-800 w-8 sm:w-12 mx-1 rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group';
+      bar.className = 'chart-bar bg-amber-800 w-6 sm:w-8 md:w-12 mx-0.5 md:mx-1 rounded-t-sm transition-all duration-300 hover:bg-amber-700 cursor-pointer relative group';
       bar.style.height = `${barHeight}px`;
       
       bar.addEventListener('click', () => {
@@ -694,14 +751,14 @@ class HistoryPresenter {
   showLoading() {
     const chartBars = document.getElementById('chart-bars');
     if (chartBars) {
-      chartBars.innerHTML = '<div class="flex items-center justify-center h-72 w-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-800"></div></div>';
+      chartBars.innerHTML = '<div class="flex items-center justify-center h-56 md:h-72 w-full"><div class="animate-spin rounded-full h-6 md:h-8 w-6 md:w-8 border-b-2 border-amber-800"></div></div>';
     }
   }
 
   showFoodLoading() {
     const container = document.getElementById('history-food-container');
     if (container) {
-      container.innerHTML = '<div class="flex items-center justify-center h-40 text-gray-500"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-800"></div></div>';
+      container.innerHTML = '<div class="flex items-center justify-center h-32 md:h-40 text-gray-500"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-800"></div></div>';
     }
   }
 
@@ -711,14 +768,14 @@ class HistoryPresenter {
   showError(message) {
     const chartBars = document.getElementById('chart-bars');
     if (chartBars) {
-      chartBars.innerHTML = `<div class="flex items-center justify-center h-72 w-full text-red-600 text-sm">${message}</div>`;
+      chartBars.innerHTML = `<div class="flex items-center justify-center h-56 md:h-72 w-full text-red-600 text-sm">${message}</div>`;
     }
   }
 
   showFoodError(message) {
     const container = document.getElementById('history-food-container');
     if (container) {
-      container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm">${message}</div>`;
+      container.innerHTML = `<div class="text-center text-gray-500 py-6 md:py-8 text-sm">${message}</div>`;
     }
   }
 }
