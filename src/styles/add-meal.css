@@ -108,6 +108,7 @@
 
 #food-container {
   padding: 20px;
+  justify-content: center;
 }
 
 .pagination-container {
