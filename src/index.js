@@ -6,18 +6,6 @@ import './styles/meal-plan.css';
 import App from './scripts/app';
 import AuthGuard from './scripts/utils/auth-guard';
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(registration => {
-        console.log('SW registered: ', registration);
-      })
-      .catch(error => {
-        console.log('SW registration failed: ', error);
-      });
-  });
-}
-
 function toggleHeaderFooter() {
   const url = window.location.hash.slice(1);
   const authRoutes = ['/signin', '/signup', '/forgot-password'];
