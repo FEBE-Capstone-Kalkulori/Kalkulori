@@ -250,6 +250,16 @@ const createTodaysMeals = (data) => {
 const createCompactMealCard = (meal) => {
   const foodDetails = meal.food_details;
   
+  console.log('🔍 Creating compact meal card for meal:', {
+    id: meal.id,
+    food_name: meal.food_name,
+    is_from_search: meal.is_from_search,
+    is_from_recipe: meal.is_from_recipe,
+    recipe_id: meal.recipe_id,
+    food_item_id: meal.food_item_id,
+    raw_meal: meal
+  });
+  
   let totalCalories = 0;
   
   if (meal.calories) {
@@ -285,8 +295,11 @@ const createCompactMealCard = (meal) => {
     imageUrl = foodDetails.image_url;
   }
   
+  const mealId = meal.id;
+  console.log(`🎯 Using meal ID for delete button: ${mealId} for food: ${foodName}`);
+  
   return `
-    <div class="compact-meal-card" data-meal-id="${meal.id}">
+    <div class="compact-meal-card" data-meal-id="${mealId}">
       <div class="compact-meal-image">
         <img src="${imageUrl}" alt="${foodName}" onerror="this.src='https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'">
       </div>
@@ -294,7 +307,7 @@ const createCompactMealCard = (meal) => {
         <span class="compact-meal-name">${foodName}</span>
         <span class="compact-meal-details">${meal.servings || 1}x • ${totalCalories} kcal</span>
       </div>
-      <button class="delete-meal-btn" data-meal-id="${meal.id}" title="Remove meal">
+      <button class="delete-meal-btn" data-meal-id="${mealId}" title="Remove meal">
         <span>&times;</span>
       </button>
     </div>
@@ -374,12 +387,29 @@ export default {
     }
     
     if (deleteMealButtons && eventHandlers.onDeleteMealClicked) {
-      deleteMealButtons.forEach(button => {
+      console.log(`🔍 Found ${deleteMealButtons.length} delete buttons to bind`);
+      
+      deleteMealButtons.forEach((button, index) => {
+        const mealId = button.dataset.mealId;
+        console.log(`🔍 Binding delete event ${index + 1}: meal ID = "${mealId}" (type: ${typeof mealId})`);
+        
+        if (!mealId || mealId === 'undefined' || mealId === 'null') {
+          console.error(`❌ Invalid meal ID for delete button ${index + 1}:`, mealId);
+          return;
+        }
+        
         button.addEventListener('click', (e) => {
           e.preventDefault();
-          const mealId = button.dataset.mealId;
-          if (mealId) {
+          e.stopPropagation();
+          
+          console.log(`🗑️ Delete clicked for meal ID: "${mealId}"`);
+          
+          const isConfirmed = confirm('Are you sure you want to remove this meal from your log?');
+          if (isConfirmed) {
+            console.log(`✅ Confirmed delete for meal ID: "${mealId}"`);
             eventHandlers.onDeleteMealClicked(mealId);
+          } else {
+            console.log(`❌ Delete cancelled for meal ID: "${mealId}"`);
           }
         });
       });

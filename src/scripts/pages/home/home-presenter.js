@@ -18,7 +18,7 @@ class HomePresenter {
     this.lastFetchDate = null;
     this.data = {
       currentCalories: 0,
-      calorieLimit: 1500,
+      calorieLimit: null,
       selectedKeywords: [],
       dailyLog: null,
       mealEntries: [],
@@ -28,7 +28,7 @@ class HomePresenter {
       mealPlan: {
         plans: [],
         totalCalories: 0,
-        targetCalories: 1500,
+        targetCalories: null,
         loading: false,
         error: null
       },
@@ -86,10 +86,17 @@ class HomePresenter {
       window.mealApiService = mealApiService;
       
       this._checkAndResetForNewDay();
-      this._loadFromSessionStorage();
       
       this.data.loading = true;
       this._renderView();
+      
+      console.log('🚀 Starting app initialization...');
+      
+      await this._fetchUserProfile();
+      
+      console.log('✅ Profile fetch complete, calorieLimit:', this.data.calorieLimit);
+      
+      this._loadFromSessionStorage();
       
       await this._fetchDailyData();
       await this._fetchMealPlan();
@@ -168,13 +175,14 @@ class HomePresenter {
       this.data.mealPlan = {
         plans: [],
         totalCalories: 0,
-        targetCalories: 1500,
+        targetCalories: 2000,
         loading: false,
         error: null
       };
       this.lastFetchDate = null;
       
       if (this.container && this.container.innerHTML) {
+        this._fetchUserProfile();
         this._fetchDailyData();
         this._fetchMealPlan();
       }
@@ -254,7 +262,9 @@ class HomePresenter {
         const dailyData = JSON.parse(dailyLogsStored);
         if (dailyData.date === today && dailyData.userId === userId) {
           this.data.currentCalories = dailyData.currentCalories || 0;
-          this.data.calorieLimit = dailyData.calorieLimit || 1500;
+          if (dailyData.calorieLimit && !this.data.calorieLimit) {
+            this.data.calorieLimit = dailyData.calorieLimit;
+          }
           this.data.dailyLog = dailyData.dailyLog;
           this.data.mealEntries = dailyData.mealEntries || [];
           this.lastFetchDate = dailyData.lastFetchDate;
@@ -282,6 +292,52 @@ class HomePresenter {
     }
   }
 
+  async _fetchUserProfile() {
+    try {
+      console.log('🔄 Fetching user profile...');
+      
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.log('❌ No auth token found');
+        this.data.calorieLimit = 2000;
+        return;
+      }
+
+      console.log('🔑 Auth token found, calling profile API...');
+
+      const response = await fetch('https://kalkulori.up.railway.app/api/users/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('📡 Profile API response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📋 Profile API result:', result);
+        
+        if (result.status === 'success' && result.data && result.data.profile) {
+          const profile = result.data.profile;
+          if (profile.daily_calorie_target) {
+            this.data.calorieLimit = profile.daily_calorie_target;
+            console.log('✅ Daily calorie target set:', this.data.calorieLimit);
+            return;
+          }
+        }
+      }
+
+      console.log('⚠️ Profile API failed or missing data, using fallback');
+      this.data.calorieLimit = 2000;
+
+    } catch (error) {
+      console.error('❌ Profile fetch error:', error);
+      this.data.calorieLimit = 2000;
+    }
+  }
+
   async _fetchDailyData(forceRefresh = false) {
     try {
       const today = this._getTodayString();
@@ -293,11 +349,56 @@ class HomePresenter {
         return;
       }
       
-      const dailyData = await mealApiService.getDailyLog(today);
+      const response = await fetch(`https://kalkulori.up.railway.app/api/logs/${today}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      let dailyData;
+      if (response.status === 404) {
+        dailyData = {
+          daily_log: {
+            total_calories_consumed: 0,
+            total_protein_consumed: 0,
+            total_carbs_consumed: 0,
+            total_fat_consumed: 0,
+            remaining_calories: this.data.calorieLimit || 2000
+          },
+          meal_entries: []
+        };
+      } else if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } else {
+        const result = await response.json();
+        if (result.status === 'success') {
+          dailyData = result.data;
+        } else {
+          throw new Error(result.message || 'Failed to fetch daily data');
+        }
+      }
       
       this.data.dailyLog = dailyData.daily_log;
       
       console.log('📊 Raw meal entries from API for user', userId, ':', dailyData.meal_entries);
+      
+      if (dailyData.meal_entries && dailyData.meal_entries.length > 0) {
+        dailyData.meal_entries.forEach((meal, index) => {
+          console.log(`📋 Meal ${index + 1}:`, {
+            id: meal.id,
+            food_item_id: meal.food_item_id,
+            food_name: meal.food_name,
+            is_from_search: meal.is_from_search,
+            is_from_recipe: meal.is_from_recipe,
+            recipe_id: meal.recipe_id,
+            meal_type: meal.meal_type,
+            servings: meal.servings,
+            calories: meal.calories || meal.calories_consumed
+          });
+        });
+      }
       
       this.data.mealEntries = await this._enrichMealEntries(dailyData.meal_entries || []);
       
@@ -305,7 +406,7 @@ class HomePresenter {
       
       this.data.currentCalories = dailyData.daily_log.total_calories_consumed || 0;
       
-      if (dailyData.daily_log.remaining_calories !== undefined) {
+      if (dailyData.daily_log.remaining_calories !== undefined && !this.data.calorieLimit) {
         this.data.calorieLimit = this.data.currentCalories + dailyData.daily_log.remaining_calories;
       }
       
@@ -316,7 +417,6 @@ class HomePresenter {
       console.error('Error fetching daily data for user', this._getCurrentUserId(), ':', error);
       this.data.error = 'Unable to load today\'s data';
       this.data.currentCalories = 0;
-      this.data.calorieLimit = 1500;
       this.data.mealEntries = [];
       this.data.dailyLog = null;
     } finally {
@@ -346,14 +446,24 @@ class HomePresenter {
         enrichedMeal.fat = enrichedMeal.fat_consumed;
       }
       
-      if ((meal.is_from_recipe || meal.is_from_search) && meal.recipe_id) {
+      console.log(`🔍 Processing meal entry:`, {
+        id: meal.id,
+        food_item_id: meal.food_item_id,
+        is_from_search: meal.is_from_search,
+        is_from_recipe: meal.is_from_recipe,
+        recipe_id: meal.recipe_id,
+        food_name: meal.food_name
+      });
+      
+      if (meal.is_from_search && meal.recipe_id) {
+        console.log(`🔍 Processing search meal with recipe_id: ${meal.recipe_id}, meal_id: ${meal.id}`);
         try {
           const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
           if (mealDetails && mealDetails.meal) {
             const recipeData = mealDetails.meal;
             enrichedMeal.food_details = {
-              id: meal.is_from_search ? meal.food_item_id : `recipe_${meal.recipe_id}`,
-              food_name: recipeData.food_name || meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
+              id: meal.food_item_id,
+              food_name: recipeData.food_name || meal.food_name || 'Search Result',
               calories_per_serving: recipeData.calories_per_serving,
               protein_per_serving: recipeData.protein_per_serving,
               carbs_per_serving: recipeData.carbs_per_serving,
@@ -361,16 +471,15 @@ class HomePresenter {
               serving_size: recipeData.serving_size,
               serving_unit: recipeData.serving_unit,
               image_url: recipeData.image_url,
-              is_recipe: meal.is_from_recipe ? true : false,
-              is_from_search: meal.is_from_search ? true : false,
+              is_from_search: true,
               recipe_id: meal.recipe_id
             };
-            console.log(`✅ Successfully enriched ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name, 'with image:', enrichedMeal.food_details.image_url);
+            console.log(`✅ Successfully enriched search meal:`, enrichedMeal.food_details.food_name);
           } else {
             throw new Error('No meal details found');
           }
         } catch (error) {
-          console.warn(`Could not fetch ${meal.is_from_search ? 'search' : 'recipe'} meal details:`, error);
+          console.warn(`Could not fetch search meal details:`, error);
           
           const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
           const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
@@ -379,7 +488,7 @@ class HomePresenter {
           
           enrichedMeal.food_details = {
             id: meal.food_item_id,
-            food_name: meal.food_name || (meal.is_from_search ? 'Search Result' : 'Recipe Meal'),
+            food_name: meal.food_name || 'Search Result',
             calories_per_serving: caloriesPerServing,
             protein_per_serving: proteinPerServing,
             carbs_per_serving: carbsPerServing,
@@ -387,15 +496,62 @@ class HomePresenter {
             serving_size: 1,
             serving_unit: "serving",
             image_url: null,
-            is_recipe: meal.is_from_recipe ? true : false,
-            is_from_search: meal.is_from_search ? true : false,
+            is_from_search: true,
             recipe_id: meal.recipe_id
           };
-          console.log(`⚠️ Using fallback data for ${meal.is_from_search ? 'search' : 'recipe'} meal:`, enrichedMeal.food_details.food_name);
+          console.log(`⚠️ Using fallback data for search meal:`, enrichedMeal.food_details.food_name);
+        }
+      }
+      else if (meal.is_from_recipe && meal.recipe_id) {
+        console.log(`🍽️ Processing recipe meal with recipe_id: ${meal.recipe_id}, meal_id: ${meal.id}`);
+        try {
+          const mealDetails = await mealApiService.getMealDetails(meal.recipe_id);
+          if (mealDetails && mealDetails.meal) {
+            const recipeData = mealDetails.meal;
+            enrichedMeal.food_details = {
+              id: `recipe_${meal.recipe_id}`,
+              food_name: recipeData.food_name || meal.food_name || 'Recipe Meal',
+              calories_per_serving: recipeData.calories_per_serving,
+              protein_per_serving: recipeData.protein_per_serving,
+              carbs_per_serving: recipeData.carbs_per_serving,
+              fat_per_serving: recipeData.fat_per_serving,
+              serving_size: recipeData.serving_size,
+              serving_unit: recipeData.serving_unit,
+              image_url: recipeData.image_url,
+              is_recipe: true,
+              recipe_id: meal.recipe_id
+            };
+            console.log(`✅ Successfully enriched recipe meal:`, enrichedMeal.food_details.food_name);
+          } else {
+            throw new Error('No meal details found');
+          }
+        } catch (error) {
+          console.warn(`Could not fetch recipe meal details:`, error);
+          
+          const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
+          const proteinPerServing = parseFloat(((meal.protein || meal.protein_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const carbsPerServing = parseFloat(((meal.carbs || meal.carbs_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          const fatPerServing = parseFloat(((meal.fat || meal.fat_consumed || 0) / (meal.servings || 1)).toFixed(2));
+          
+          enrichedMeal.food_details = {
+            id: meal.food_item_id,
+            food_name: meal.food_name || 'Recipe Meal',
+            calories_per_serving: caloriesPerServing,
+            protein_per_serving: proteinPerServing,
+            carbs_per_serving: carbsPerServing,
+            fat_per_serving: fatPerServing,
+            serving_size: 1,
+            serving_unit: "serving",
+            image_url: null,
+            is_recipe: true,
+            recipe_id: meal.recipe_id
+          };
+          console.log(`⚠️ Using fallback data for recipe meal:`, enrichedMeal.food_details.food_name);
         }
       }
       else if (meal.food_details) {
         enrichedMeal.food_details = meal.food_details;
+        console.log(`📋 Using existing food_details for meal:`, meal.food_details.food_name);
       }
       else {
         const caloriesPerServing = Math.round((meal.calories || meal.calories_consumed || 0) / (meal.servings || 1));
@@ -414,9 +570,11 @@ class HomePresenter {
           serving_unit: "serving",
           image_url: null
         };
+        console.log(`🆕 Created food_details for regular meal:`, enrichedMeal.food_details.food_name);
       }
       
       enrichedMeal.id = originalMealId;
+      console.log(`✅ Final meal entry ID: ${enrichedMeal.id} for ${enrichedMeal.food_details?.food_name}`);
       
       enrichedMeal._debug_info = {
         original_id: originalMealId,
@@ -461,7 +619,7 @@ class HomePresenter {
       
       this.data.mealPlan.plans = formattedPlans;
       this.data.mealPlan.totalCalories = calculateTotalCalories(this.data.mealPlan.plans);
-      this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || 1500;
+      this.data.mealPlan.targetCalories = mealPlanData.user_info?.daily_calorie_target || this.data.calorieLimit;
       
       this._saveToSessionStorage();
       console.log('✅ Meal plan formatted successfully for user:', userId);
@@ -517,10 +675,18 @@ class HomePresenter {
       console.log('🔄 Meal plan meal added, refreshing data for user:', this._getCurrentUserId());
       this._refreshDailyData();
     });
+
+    document.addEventListener('mealAdded', (event) => {
+      console.log('🔄 Meal added from', event.detail.source, ', refreshing data for user:', this._getCurrentUserId());
+      setTimeout(() => {
+        this._refreshDailyData();
+      }, 500);
+    });
   }
 
   async _refreshDailyData() {
     try {
+      await this._fetchUserProfile();
       await this._fetchDailyData(true);
     } catch (error) {
       console.error('Error refreshing daily data for user', this._getCurrentUserId(), ':', error);
@@ -530,6 +696,12 @@ class HomePresenter {
   _renderView() {
     HomeView.render(this.container, this.data);
     HomeView.afterRender(this.eventHandlers);
+    
+    const deleteMealButtons = document.querySelectorAll('.delete-meal-btn');
+    deleteMealButtons.forEach(button => {
+      const mealId = button.dataset.mealId;
+      console.log('🔍 Delete button found for meal ID:', mealId);
+    });
   }
 
   _handleAddMeal() {
@@ -538,19 +710,126 @@ class HomePresenter {
 
   async _handleDeleteMeal(mealId) {
     try {
+      console.log('🗑️ Attempting to delete meal with ID:', mealId);
+      console.log('🗑️ Meal ID type:', typeof mealId);
+      
+      if (!mealId || mealId === 'undefined' || mealId === 'null') {
+        console.error('❌ Invalid meal ID provided:', mealId);
+        alert('Cannot delete this meal. Invalid meal ID.');
+        return;
+      }
+      
+      const mealToDelete = this.data.mealEntries.find(meal => meal.id === mealId);
+      console.log('🔍 Found meal to delete:', mealToDelete);
+      
+      if (mealToDelete) {
+        console.log('📋 Meal details:', {
+          id: mealToDelete.id,
+          user_id: mealToDelete.user_id,
+          is_from_search: mealToDelete.is_from_search,
+          is_from_recipe: mealToDelete.is_from_recipe,
+          food_item_id: mealToDelete.food_item_id,
+          recipe_id: mealToDelete.recipe_id
+        });
+        
+        if (mealToDelete.is_from_search && !mealToDelete.user_id) {
+          console.warn('⚠️ Search meal detected without user_id, this may cause delete issues');
+        }
+      }
+      
       this.data.loading = true;
       this._renderView();
       
-      await mealApiService.deleteMealEntry(mealId);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
       
-      await this._refreshDailyData();
+      console.log('🔗 Making DELETE request to:', `/api/meals/${mealId}`);
+      
+      const response = await fetch(`https://kalkulori.up.railway.app/api/meals/${mealId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('📡 Delete response status:', response.status);
+      console.log('📡 Delete response ok:', response.ok);
+
+      if (response.status === 403) {
+        console.error('❌ 403 Forbidden - checking if this is a search meal issue');
+        
+        if (mealToDelete && mealToDelete.is_from_search) {
+          console.log('🔍 This is a search meal, trying alternative approach...');
+          
+          try {
+            await this._handleSearchMealDelete(mealId, mealToDelete);
+            return;
+          } catch (altError) {
+            console.error('❌ Alternative delete method also failed:', altError);
+            throw new Error('Cannot delete search meals due to system limitations. Please contact support.');
+          }
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Access denied: ${errorText}`);
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Delete failed with response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      let result;
+      try {
+        result = await response.json();
+        console.log('✅ Delete response JSON:', result);
+      } catch (parseError) {
+        console.log('⚠️ Could not parse response as JSON, assuming success');
+        result = { status: 'success' };
+      }
+      
+      if (result.status === 'success' || response.ok) {
+        console.log('✅ Meal deleted successfully');
+        alert('Meal removed successfully!');
+        await this._refreshDailyData();
+      } else {
+        throw new Error(result.message || 'Failed to delete meal');
+      }
       
     } catch (error) {
-      console.error('Delete failed for user', this._getCurrentUserId(), ':', error);
-      alert('Failed to delete meal. Please try again.');
+      console.error('💥 Delete failed for user', this._getCurrentUserId(), ':', error);
+      alert(`Failed to delete meal: ${error.message}`);
     } finally {
       this.data.loading = false;
       this._renderView();
+    }
+  }
+
+  async _handleSearchMealDelete(mealId, mealData) {
+    console.log('🔄 Removing search meal locally');
+    
+    try {
+      this.data.mealEntries = this.data.mealEntries.filter(meal => meal.id !== mealId);
+      
+      this.data.currentCalories = this.data.mealEntries.reduce((total, meal) => {
+        return total + (meal.calories || meal.calories_consumed || 0);
+      }, 0);
+      
+      console.log('✅ Updated calories:', this.data.currentCalories);
+      console.log('✅ Calorie limit:', this.data.calorieLimit);
+      
+      this._saveToSessionStorage();
+      this._renderView();
+      
+      alert('Meal removed successfully!');
+      
+    } catch (error) {
+      console.error('❌ Local delete failed:', error);
+      throw error;
     }
   }
 

@@ -113,7 +113,7 @@ const createMealsGrid = (meals) => {
         meal.id,
         meal.serving_size,
         meal.serving_unit,
-        meal.is_from_search,
+        meal.is_from_search || false,
         meal.recipe_id,
         meal.protein,
         meal.carbs,

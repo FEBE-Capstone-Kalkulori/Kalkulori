@@ -9,7 +9,7 @@ function createFoodCard(imageUrl, foodName, calories, foodId = null, servingSize
             </div>
             <div class="food-info">
                 <h3 class="food-name">${foodName}</h3>
-                <p class="food-calories">${calories} kcal</p>
+                <p class="food-calories">${calories || 0} kcal</p>
             </div>
             <button class="add-button">
                 <span class="plus-icon">+</span>
@@ -75,6 +75,10 @@ function handleAddButtonClick(event) {
     const servingSize = foodCard.dataset.servingSize || 1;
     const servingUnit = foodCard.dataset.servingUnit || 'serving';
     const recipeId = foodCard.dataset.recipeId || null;
+    const protein = parseFloat(foodCard.dataset.protein) || 0;
+    const carbs = parseFloat(foodCard.dataset.carbs) || 0;
+    const fat = parseFloat(foodCard.dataset.fat) || 0;
+    const imageUrl = foodCard.querySelector('.food-image img')?.src || null;
     
     console.log('Add button clicked for:', { foodName, foodCalories, foodId, recipeId });
     
@@ -84,7 +88,11 @@ function handleAddButtonClick(event) {
         name: foodName,
         calories: foodCalories,
         serving_size: servingSize,
-        serving_unit: servingUnit
+        serving_unit: servingUnit,
+        protein: protein,
+        carbs: carbs,
+        fat: fat,
+        image_url: imageUrl
     });
 }
 
@@ -101,49 +109,57 @@ function handleDetailsButtonClick(event) {
     const foodId = foodCard.dataset.foodId || null;
     const recipeId = foodCard.dataset.recipeId || null;
     const isFromSearch = foodCard.dataset.isFromSearch === 'true';
-    const servingSize = foodCard.dataset.servingSize || 1;
+    const servingSize = parseFloat(foodCard.dataset.servingSize) || 1;
     const servingUnit = foodCard.dataset.servingUnit || 'serving';
     const protein = parseFloat(foodCard.dataset.protein) || 0;
     const carbs = parseFloat(foodCard.dataset.carbs) || 0;
     const fat = parseFloat(foodCard.dataset.fat) || 0;
     
-    console.log('Details button clicked for:', { foodName, foodId, recipeId, isFromSearch });
+    console.log('Details button clicked for:', { foodName, foodId, recipeId, isFromSearch, protein, carbs, fat });
     
-    if (isFromSearch && recipeId) {
-        showFoodDetailsFromRecipe(recipeId, {
-            name: foodName,
-            calories: foodCalories,
-            protein: protein,
-            carbs: carbs,
-            fat: fat,
-            serving_size: servingSize,
-            serving_unit: servingUnit
-        });
-    } else if (foodId) {
+    const fallbackData = {
+        name: foodName,
+        calories: foodCalories || 0,
+        protein: protein || 0,
+        carbs: carbs || 0,
+        fat: fat || 0,
+        serving_size: servingSize || 1,
+        serving_unit: servingUnit || 'serving',
+        image_url: foodCard.querySelector('.food-image img')?.src || null
+    };
+    
+    if (recipeId && recipeId !== '' && recipeId !== 'null' && recipeId !== 'undefined') {
+        showFoodDetailsFromRecipe(recipeId, fallbackData);
+    } else if (foodId && foodId !== '' && foodId !== 'null' && foodId !== 'undefined' && !isFromSearch) {
         showFoodDetailsFromId(foodId);
     } else {
-        showFoodDetailsFromData({
-            name: foodName,
-            calories: foodCalories,
-            protein: protein,
-            carbs: carbs,
-            fat: fat,
-            serving_size: servingSize,
-            serving_unit: servingUnit
-        });
+        showFoodDetailsPopup(fallbackData);
     }
 }
 
 async function showFoodDetailsFromRecipe(recipeId, fallbackData = null) {
+    console.log('Trying to fetch recipe details for:', recipeId);
+    console.log('Fallback data:', fallbackData);
+    
+    if (fallbackData && fallbackData.calories > 0) {
+        console.log('Using fallback data directly for search result');
+        showFoodDetailsPopup(fallbackData);
+        return;
+    }
+    
     try {
         const token = localStorage.getItem('authToken');
         if (!token) {
             console.warn('No auth token found, showing fallback data');
             if (fallbackData) {
                 showFoodDetailsPopup(fallbackData);
+            } else {
+                alert('Authentication required to view details');
             }
             return;
         }
+
+        showFoodDetailsPopup({ name: 'Loading...', loading: true });
 
         const response = await fetch(`https://kalkulori.up.railway.app/api/meals/${recipeId}/details`, {
             method: 'GET',
@@ -162,11 +178,11 @@ async function showFoodDetailsFromRecipe(recipeId, fallbackData = null) {
         if (result.status === 'success' && result.data) {
             const mealData = result.data;
             showFoodDetailsPopup({
-                name: mealData.food_name || mealData.Name,
-                calories: mealData.calories_per_serving || Math.round(mealData.Calories),
-                protein: mealData.protein_per_serving || parseFloat(mealData.ProteinContent),
-                carbs: mealData.carbs_per_serving || parseFloat(mealData.CarbohydrateContent),
-                fat: mealData.fat_per_serving || parseFloat(mealData.FatContent),
+                name: mealData.food_name || mealData.Name || 'Unknown Recipe',
+                calories: mealData.calories_per_serving || Math.round(mealData.Calories) || 0,
+                protein: mealData.protein_per_serving || parseFloat(mealData.ProteinContent) || 0,
+                carbs: mealData.carbs_per_serving || parseFloat(mealData.CarbohydrateContent) || 0,
+                fat: mealData.fat_per_serving || parseFloat(mealData.FatContent) || 0,
                 serving_size: mealData.serving_size || mealData.ServingSize || 1,
                 serving_unit: mealData.serving_unit || mealData.ServingUnit || 'Porsi',
                 image_url: mealData.image_url || (mealData.Image ? mealData.Image.split(',')[0].trim().replace(/^"|"$/g, '') : null),
@@ -182,7 +198,11 @@ async function showFoodDetailsFromRecipe(recipeId, fallbackData = null) {
         if (fallbackData) {
             showFoodDetailsPopup(fallbackData);
         } else {
-            alert('Failed to load food details. Please try again.');
+            showFoodDetailsPopup({
+                name: 'Error',
+                error: 'Failed to load food details. Please try again.',
+                calories: 0
+            });
         }
     }
 }
@@ -239,68 +259,91 @@ function showFoodDetailsPopup(foodData) {
     const imageUrl = foodData.image_url || defaultImage;
     
     const formatNutrient = (value) => {
-        return parseFloat(value).toFixed(1);
+        const num = parseFloat(value) || 0;
+        return num.toFixed(1);
     };
+
+    let contentHTML = '';
+    
+    if (foodData.loading) {
+        contentHTML = `
+            <div class="food-details-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading food details...</p>
+            </div>
+        `;
+    } else if (foodData.error) {
+        contentHTML = `
+            <div class="food-details-error">
+                <h4>Error</h4>
+                <p>${foodData.error}</p>
+            </div>
+        `;
+    } else {
+        contentHTML = `
+            <div class="food-details-image">
+                <img src="${imageUrl}" alt="${foodData.name}" onerror="this.src='${defaultImage}'">
+            </div>
+            <div class="food-details-info">
+                <div class="nutrition-section">
+                    <h4>Nutrition Information</h4>
+                    <div class="nutrition-grid">
+                        <div class="nutrition-item">
+                            <span class="nutrition-label">Calories:</span>
+                            <span class="nutrition-value">${foodData.calories || 0} kcal</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="nutrition-label">Protein:</span>
+                            <span class="nutrition-value">${formatNutrient(foodData.protein)}g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="nutrition-label">Carbohydrates:</span>
+                            <span class="nutrition-value">${formatNutrient(foodData.carbs)}g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="nutrition-label">Fat:</span>
+                            <span class="nutrition-value">${formatNutrient(foodData.fat)}g</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="serving-section">
+                    <h4>Serving Information</h4>
+                    <div class="serving-info">
+                        <span class="serving-label">Serving Size:</span>
+                        <span class="serving-value">${foodData.serving_size || 1} ${foodData.serving_unit || 'serving'}</span>
+                    </div>
+                </div>
+                ${foodData.description ? `
+                    <div class="description-section">
+                        <h4>Description</h4>
+                        <p class="food-description">${foodData.description}</p>
+                    </div>
+                ` : ''}
+                ${foodData.ingredients ? `
+                    <div class="ingredients-section">
+                        <h4>Ingredients</h4>
+                        <p class="food-ingredients">${Array.isArray(foodData.ingredients) ? foodData.ingredients.join(', ') : foodData.ingredients}</p>
+                    </div>
+                ` : ''}
+                ${foodData.instructions ? `
+                    <div class="instructions-section">
+                        <h4>Instructions</h4>
+                        <p class="food-instructions">${Array.isArray(foodData.instructions) ? foodData.instructions.join(' ') : foodData.instructions}</p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
 
     const popupHTML = `
         <div class="food-details-popup-overlay" id="food-details-popup-overlay">
             <div class="food-details-popup">
                 <div class="food-details-header">
-                    <h3>${foodData.name}</h3>
+                    <h3>${foodData.name || 'Food Details'}</h3>
                     <button class="popup-close" id="details-popup-close">&times;</button>
                 </div>
                 <div class="food-details-content">
-                    <div class="food-details-image">
-                        <img src="${imageUrl}" alt="${foodData.name}" onerror="this.src='${defaultImage}'">
-                    </div>
-                    <div class="food-details-info">
-                        <div class="nutrition-section">
-                            <h4>Nutrition Information</h4>
-                            <div class="nutrition-grid">
-                                <div class="nutrition-item">
-                                    <span class="nutrition-label">Calories:</span>
-                                    <span class="nutrition-value">${foodData.calories} kcal</span>
-                                </div>
-                                <div class="nutrition-item">
-                                    <span class="nutrition-label">Protein:</span>
-                                    <span class="nutrition-value">${formatNutrient(foodData.protein || 0)}g</span>
-                                </div>
-                                <div class="nutrition-item">
-                                    <span class="nutrition-label">Carbohydrates:</span>
-                                    <span class="nutrition-value">${formatNutrient(foodData.carbs || 0)}g</span>
-                                </div>
-                                <div class="nutrition-item">
-                                    <span class="nutrition-label">Fat:</span>
-                                    <span class="nutrition-value">${formatNutrient(foodData.fat || 0)}g</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="serving-section">
-                            <h4>Serving Information</h4>
-                            <div class="serving-info">
-                                <span class="serving-label">Serving Size:</span>
-                                <span class="serving-value">${foodData.serving_size} ${foodData.serving_unit}</span>
-                            </div>
-                        </div>
-                        ${foodData.description ? `
-                            <div class="description-section">
-                                <h4>Description</h4>
-                                <p class="food-description">${foodData.description}</p>
-                            </div>
-                        ` : ''}
-                        ${foodData.ingredients ? `
-                            <div class="ingredients-section">
-                                <h4>Ingredients</h4>
-                                <p class="food-ingredients">${Array.isArray(foodData.ingredients) ? foodData.ingredients.join(', ') : foodData.ingredients}</p>
-                            </div>
-                        ` : ''}
-                        ${foodData.instructions ? `
-                            <div class="instructions-section">
-                                <h4>Instructions</h4>
-                                <p class="food-instructions">${Array.isArray(foodData.instructions) ? foodData.instructions.join(' ') : foodData.instructions}</p>
-                            </div>
-                        ` : ''}
-                    </div>
+                    ${contentHTML}
                 </div>
                 <div class="food-details-actions">
                     <button class="btn-close" id="btn-details-close">Close</button>
@@ -426,15 +469,16 @@ function showAddMealPopup(foodData) {
                         await window.foodApiService.addFoodFromSearch({
                             recipe_id: foodData.recipe_id,
                             food_name: foodData.name,
-                            calories_per_serving: foodData.calories,
+                            calories_per_serving: foodData.calories || 0,
                             protein_per_serving: foodData.protein || 0,
                             carbs_per_serving: foodData.carbs || 0,
                             fat_per_serving: foodData.fat || 0,
-                            serving_size: foodData.serving_size,
-                            serving_unit: foodData.serving_unit,
+                            serving_size: foodData.serving_size || 1,
+                            serving_unit: foodData.serving_unit || 'serving',
                             meal_type: mealType,
                             servings: servings,
-                            log_date: logDate
+                            log_date: logDate,
+                            image_url: foodData.image_url
                         });
                     } else {
                         await window.mealApiService.createMealEntry({
@@ -448,8 +492,15 @@ function showAddMealPopup(foodData) {
                     alert('Meal added successfully!');
                     closePopup();
                     
+                    const event = new CustomEvent('mealAdded', { 
+                        detail: { source: 'search', mealData: foodData } 
+                    });
+                    document.dispatchEvent(event);
+                    
                     if (window.location.hash === '#/' || window.location.hash === '#/home') {
-                        window.location.reload();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
                     }
                 } else {
                     console.log(`Added ${foodData.name} - ${mealType} - ${servings} servings on ${logDate}`);

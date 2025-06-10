@@ -71,7 +71,22 @@ class AddMealPresenter {
         
         try {
           result = await foodApiService.searchFoods(searchQuery, 60);
-          this.data.meals = foodApiService.formatFoodsForCards(result.foods || []);
+          
+          const formattedMeals = result.foods.map(food => ({
+            id: food.recipe_id || food.id,
+            recipe_id: food.recipe_id,
+            name: food.food_name,
+            calories: food.calories_per_serving || 0,
+            protein: food.protein_per_serving || 0,
+            carbs: food.carbs_per_serving || 0,
+            fat: food.fat_per_serving || 0,
+            image: food.image_url || 'https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+            serving_size: food.serving_size || 1,
+            serving_unit: food.serving_unit || 'serving',
+            is_from_search: true
+          }));
+          
+          this.data.meals = formattedMeals;
           this.data.searchResults = result.foods || [];
           this.data.currentPage = 0;
           this.data.cursors = [null];
