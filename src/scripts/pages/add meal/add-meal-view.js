@@ -1,46 +1,52 @@
 const createAddMealTemplate = (data) => {
   return `
-    <div class="add-meal-container">
-      <div class="add-meal-header">
-        <button class="back-button" id="back-button">
-          <span class="back-icon">‹</span>
-          <span>Back</span>
+    <div class="fixed inset-0 bg-yellow-50 z-50 overflow-y-auto">
+      <!-- Header -->
+      <div class="px-4 py-4 sm:px-6 sm:py-4 flex items-center border-b-2 border-dotted border-white relative w-full" style="background-color: #9BCF53;">
+        <button class="flex items-center gap-2 text-gray-800 hover:text-gray-600 transition-colors duration-200 p-2 -ml-2" id="back-button">
+          <span class="text-2xl font-bold leading-none">‹</span>
+          <span class="text-base font-medium">Back</span>
         </button>
-        <h1 class="add-meal-title">${
-          data.isSearchMode ? "Search Results" : "Search Meal"
-        }</h1>
+        <h1 class="absolute left-1/2 transform -translate-x-1/2 text-xl sm:text-2xl font-semibold text-gray-800 m-0">
+          ${data.isSearchMode ? "Search Results" : "Search Meal"}
+        </h1>
       </div>
       
-      <div class="search-section">
-        <div class="search-container">
-          <input 
-            type="text" 
-            class="search-input" 
-            id="search-input"
-            placeholder="What food that you ate?"
-            value="${data.searchQuery}"
-            ${data.loading ? "disabled" : ""}
-          />
-          <button class="search-button" id="search-button" ${
-            data.loading ? "disabled" : ""
-          }>
-            ${data.loading ? "Searching..." : "Search"}
-          </button>
-          ${
-            data.isSearchMode && data.searchQuery
-              ? `
-            <button class="clear-search-button" id="clear-search-button">
-              Clear Search
+      <!-- Search Section -->
+      <div class="bg-yellow-50 px-4 py-5 sm:px-6 sm:py-6 flex justify-center">
+        <div class="w-full max-w-4xl">
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <input 
+              type="text" 
+              class="flex-1 px-4 py-3 sm:px-5 sm:py-4 border-2 border-dashed border-gray-600 rounded-lg text-base bg-white outline-none text-gray-600 placeholder-gray-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:border-green-500"
+              id="search-input"
+              placeholder="What food that you ate?"
+              value="${data.searchQuery}"
+              ${data.loading ? "disabled" : ""}
+            />
+            <button class="bg-amber-900 hover:bg-amber-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base font-semibold transition-colors duration-200 whitespace-nowrap" 
+                    id="search-button" 
+                    ${data.loading ? "disabled" : ""}>
+              ${data.loading ? "Searching..." : "Search"}
             </button>
-          `
-              : ""
-          }
+            ${
+              data.isSearchMode && data.searchQuery
+                ? `
+              <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-lg text-base font-semibold transition-colors duration-200 whitespace-nowrap" id="clear-search-button">
+                Clear Search
+              </button>
+            `
+                : ""
+            }
+          </div>
+          ${data.isSearchMode ? createSearchInfo(data) : ""}
         </div>
-        ${data.isSearchMode ? createSearchInfo(data) : ""}
       </div>
       
+      <!-- Content Section -->
       ${createContentSection(data)}
       
+      <!-- Pagination Section -->
       ${createPaginationSection(data)}
     </div>
   `;
@@ -53,17 +59,21 @@ const createSearchInfo = (data) => {
 const createContentSection = (data) => {
   if (data.loading) {
     return `
-      <div class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>${data.isSearchMode ? "Searching foods..." : "Loading foods..."}</p>
+      <div class="flex flex-col items-center justify-center py-12 px-4">
+        <div class="w-8 h-8 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-600 text-center text-base">${
+          data.isSearchMode ? "Searching foods..." : "Loading foods..."
+        }</p>
       </div>
     `;
   }
 
   if (data.error) {
     return `
-      <div class="error-container">
-        <p class="error-message">${data.error}</p>
+      <div class="px-4 py-6">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+          <p class="text-red-800 font-medium text-base">${data.error}</p>
+        </div>
         ${data.meals.length > 0 ? createMealsContainer(data.meals) : ""}
       </div>
     `;
@@ -71,8 +81,8 @@ const createContentSection = (data) => {
 
   if (data.meals.length === 0) {
     return `
-      <div class="no-results-container">
-        <p class="no-results-message">
+      <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <p class="text-gray-600 text-lg mb-6 max-w-md">
           ${
             data.searchQuery
               ? `No foods found for "${data.searchQuery}"`
@@ -82,7 +92,7 @@ const createContentSection = (data) => {
         ${
           data.isSearchMode
             ? `
-            <button class="browse-all-button" id="browse-all-button">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200" id="browse-all-button">
               Browse All Foods
             </button>
           `
@@ -97,8 +107,10 @@ const createContentSection = (data) => {
 
 const createMealsContainer = (meals) => {
   return `
-    <div class="container" id="food-container">
-      ${createMealsGrid(meals)}
+    <div class="px-4 py-4" id="food-container">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 justify-items-center max-w-6xl mx-auto">
+        ${createMealsGrid(meals)}
+      </div>
     </div>
   `;
 };
@@ -136,21 +148,21 @@ const createPaginationSection = (data) => {
   }
 
   return `
-    <div class="pagination-container">
+    <div class="flex justify-center items-center py-6 px-4 gap-4 sm:gap-6 bg-yellow-50 border-t border-gray-200">
       <button 
-        class="pagination-btn" 
+        class="bg-amber-900 hover:bg-amber-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-colors duration-200 min-w-20" 
         id="prev-button"
         ${!data.pagination.has_prev_page ? "disabled" : ""}
       >
         Previous
       </button>
       
-      <span class="pagination-info">
+      <span class="text-sm sm:text-base font-semibold text-gray-800 px-2 whitespace-nowrap">
         Page ${data.currentPage + 1}
       </span>
       
       <button 
-        class="pagination-btn" 
+        class="bg-amber-900 hover:bg-amber-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-colors duration-200 min-w-16" 
         id="next-button"
         ${!data.pagination.has_next_page ? "disabled" : ""}
       >
@@ -225,6 +237,11 @@ const bindEventListeners = (eventHandlers) => {
 
 export default {
   render(container, data, eventHandlers) {
+    if (!container) {
+      console.error("Container not found for add meal view");
+      return;
+    }
+
     container.innerHTML = createAddMealTemplate(data);
     bindEventListeners(eventHandlers);
   },
