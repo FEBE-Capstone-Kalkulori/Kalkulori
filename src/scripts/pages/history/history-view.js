@@ -10,12 +10,12 @@ class HistoryView {
       <div class="w-full pb-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <!-- Header Section -->
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 lg:mb-8 gap-4">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 lg:mb-12 gap-4 relative z-10">
             <h1 class="font-roboto-slab text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-amber-900 font-semibold text-center lg:text-left leading-tight">
               Your Daily Calories Journey
             </h1>
-            <div class="w-28 sm:w-40 lg:w-auto lg:min-w-48 mx-auto lg:mx-0">
-              <select id="month-dropdown" class="w-full px-2 sm:px-4 py-1.5 sm:py-3 bg-amber-800 text-white border-none rounded-md sm:rounded-full text-sm sm:text-base font-medium cursor-pointer appearance-none hover:bg-amber-700 focus:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all duration-300" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 12 12&quot;><path fill=&quot;white&quot; d=&quot;M6 9L1.5 4.5h9L6 9z&quot;/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
+            <div class="w-32 sm:w-40 lg:w-auto lg:min-w-48 mx-auto lg:mx-0 relative">
+              <select id="month-dropdown" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-amber-800 text-white border-none rounded-full text-base sm:text-base font-medium cursor-pointer appearance-none hover:bg-amber-700 focus:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all duration-300 relative z-20" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 12 12&quot;><path fill=&quot;white&quot; d=&quot;M6 9L1.5 4.5h9L6 9z&quot;/></svg>'); background-repeat: no-repeat; background-position: right 12px center;">
                 <option value="january">January</option>
                 <option value="february">February</option>
                 <option value="march">March</option>
