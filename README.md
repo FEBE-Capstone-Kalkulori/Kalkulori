@@ -1,6 +1,6 @@
 <h1 align="center"><b>Kalkulori</b>: Aplikasi Penghitung Kalori</h1>
 <div align="center">
-  <img src="./public/Kalkulori-LOGO-Text.png" width="300" alt="Logo Kalkulori" />
+  <img src="./src/public/image/Kalkulori-LOGO-Text.png" width="300" alt="Logo Kalkulori" />
   <h4>Aplikasi web untuk tracking kalori dan rekomendasi makanan dengan interface yang modern dan responsif.</h4>
 </div>
 
