@@ -14,8 +14,8 @@ class HistoryView {
             <h1 class="font-roboto-slab text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-amber-900 font-semibold text-center lg:text-left leading-tight">
               Your Daily Calories Journey
             </h1>
-            <div class="w-full lg:w-auto lg:min-w-48">
-              <select id="month-dropdown" class="w-full px-4 py-3 bg-amber-800 text-white border-none rounded-full text-base font-medium cursor-pointer appearance-none hover:bg-amber-700 focus:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all duration-300" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 12 12&quot;><path fill=&quot;white&quot; d=&quot;M6 9L1.5 4.5h9L6 9z&quot;/></svg>'); background-repeat: no-repeat; background-position: right 15px center;">
+            <div class="w-28 sm:w-40 lg:w-auto lg:min-w-48 mx-auto lg:mx-0">
+              <select id="month-dropdown" class="w-full px-2 sm:px-4 py-1.5 sm:py-3 bg-amber-800 text-white border-none rounded-md sm:rounded-full text-sm sm:text-base font-medium cursor-pointer appearance-none hover:bg-amber-700 focus:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all duration-300" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 12 12&quot;><path fill=&quot;white&quot; d=&quot;M6 9L1.5 4.5h9L6 9z&quot;/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
                 <option value="january">January</option>
                 <option value="february">February</option>
                 <option value="march">March</option>
